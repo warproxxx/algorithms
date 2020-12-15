@@ -1,0 +1,27 @@
+<html>
+
+    <head>
+        {% load staticfiles %}
+        <title>Daddy Login</title>
+        <link rel="apple-touch-icon" sizes="180x180" href="{% static 'apple-touch-icon.png' %}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
+        <link rel="manifest" href="{% static 'site.webmanifest' %}">
+    </head>
+
+
+
+<center>
+
+<form action="" method="post" style="margin-top:20vw">{% csrf_token %}
+   Username: {{ form.username }}
+
+    <br/>
+    Password: {{ form.password }}
+    <br/><br/>
+    <button type="submit" name="login">LOGIN</button>     
+
+</form>
+
+</center>
+</html>
