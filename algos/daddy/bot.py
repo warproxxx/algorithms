@@ -20,9 +20,12 @@ import redis
 import schedule
 import shutil
 
-from utils import print
-
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
+
+import sys
+sys.path.append("...") 
+
+from utils import print
 
 TESTNET = False
 EXCHANGES = pd.read_csv('exchanges.csv')
@@ -455,6 +458,9 @@ def start_schedlued():
         time.sleep(1)
 
 def daddy_bot():
+    if os.path.isdir("data/stream"):
+        shutil.rmtree('data/stream')
+
     update_price_from_rest()
     schedule.every().day.at("00:03").do(create_chart)
 

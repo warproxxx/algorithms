@@ -19,14 +19,13 @@ from utils import flush_redis
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book
 from algos.vol_trend.bot import vol_bot
 
+from utils import print
+
 PAIRS = pd.read_csv('pairs.csv')
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-if os.path.isdir("data/stream"):
-    shutil.rmtree('data/stream')
-
-if os.path.isfile("run.log"):
-    os.remove("run.log")
+if not os.path.isdir("logs/"):
+    os.makedirs("logs/")
 
 flush_redis(r, PAIRS)
 

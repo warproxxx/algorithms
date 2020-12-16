@@ -1,14 +1,20 @@
 import sys 
+import inspect
+import os
 
 def print(to_print):
+    frame = inspect.stack()[1]
+    module = inspect.getmodule(frame[0])
+    filename = module.__file__.split(".")[0]
+
     if isinstance(to_print, str) == False:
         try:
             to_print = "{}".format(to_print)
         except:
             to_print = "Error Printing"
-            
+        
     sys.stdout.write(to_print + "\n")
-    open("run.log", "a").write(to_print + "\n")
+    open("logs/{}.log".format(filename), "a").write(to_print + "\n")
 
 
 def flush_redis(r, EXCHANGES):
