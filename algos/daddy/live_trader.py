@@ -1,5 +1,5 @@
 import ccxt
-from huobi.HuobiDMService import HuobiDM
+from algos.daddy.huobi.HuobiDMService import HuobiDM
 
 import os
 import time
@@ -10,7 +10,7 @@ import redis
 import datetime
 import decimal
 import inspect
-from defines import trade_methods
+from algos.daddy.defines import trade_methods
 import sys
 from utils import print
 
@@ -25,7 +25,7 @@ def round_down(value, decimals):
 class liveTrading():
     def __init__(self, exchange, symbol='BTC/USD', testnet=True):
         self.symbol = symbol
-        self.parameters = json.load(open('parameters.json'))
+        self.parameters = json.load(open('algos/daddy/parameters.json'))
         self.lev = self.parameters['mult']
         self.symbol_here = ""
         self.exchange_name = exchange
@@ -154,7 +154,7 @@ class liveTrading():
         self.update_parameters()
     
     def update_parameters(self):
-        self.parameters = json.load(open('parameters.json'))
+        self.parameters = json.load(open('algos/daddy/parameters.json'))
         self.lev = self.parameters['mult']
         count = 0
         

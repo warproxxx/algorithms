@@ -5,7 +5,7 @@ import os
 def print(to_print):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
-    filename = module.__file__.split(".")[0]
+    filename = module.__file__.split("/")[-1].split(".")[0]
 
     if isinstance(to_print, str) == False:
         try:
@@ -38,3 +38,8 @@ def flush_redis(r, EXCHANGES):
 
     for idx, row in backups.items():
         r.set(idx, row)
+
+
+    r.set('first_execution', 1)
+    r.set('first_nine', 1)
+    r.set('got_this_turn', 0)

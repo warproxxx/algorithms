@@ -11,10 +11,6 @@ import json
 
 import threading
 
-from live_trader import liveTrading
-from historic import single_price_from_rest
-from plot import create_chart
-
 import ta
 import redis
 import schedule
@@ -22,9 +18,9 @@ import shutil
 
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
 
-import sys
-sys.path.append("...") 
-
+from algos.daddy.live_trader import liveTrading
+from algos.daddy.historic import single_price_from_rest
+from algos.daddy.plot import create_chart
 from utils import print
 
 TESTNET = False
@@ -37,7 +33,8 @@ for idx, details in EXCHANGES.iterrows():
 
     if details['trade'] == 1 or exchange_name == 'bitmex':       
         lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-        lts[exchange_name].set_position()
+        # lts[exchange_name].set_position()
+        #temp as it takes too much time
 
 def get_interferance_vars():
     try:
@@ -313,7 +310,7 @@ def single_process(manual_call=False):
         df['new_range'] = pd.cut(df['homeNotional'], readable_bins, include_lowest=True, labels=readable_labels).astype(str)
         total = total_buy + total_sell
 
-        parameters = json.load(open('parameters.json'))
+        parameters = json.load(open('algos/daddy/parameters.json'))
 
         changes =  []
         
@@ -339,7 +336,7 @@ def single_process(manual_call=False):
         print("There is no trade file on {}. Still performing".format(datetime.datetime.utcnow()))
 
         if exchange_name == 'bitmex':
-            parameters = json.load(open('parameters.json'))
+            parameters = json.load(open('algos/daddy/parameters.json'))
             trade_caller(parameters, 0, 0, np.array([0] * parameters['previous_days']), 0, 0, manual_call=manual_call)
 
     if os.path.isfile(price_file):
@@ -466,10 +463,6 @@ def daddy_bot():
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
-
-    r.set('first_execution', 1)
-    r.set('first_nine', 1)
-    r.set('got_this_turn', 0)
 
     calling_check_thread = threading.Thread(target=check_calling)
     calling_check_thread.start()
