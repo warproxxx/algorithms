@@ -44,11 +44,14 @@ def bot():
 bot_thread = threading.Thread(target=bot)
 bot_thread.start()
 
-async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):    
+async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):  
+    #if the following feed and pair is enabled for daddy
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
 
 async def book(feed, pair, book, timestamp, receipt_timestamp):    
+    #if the following feed and pair is enabled for daddy
+
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
 

@@ -33,8 +33,7 @@ for idx, details in EXCHANGES.iterrows():
 
     if details['trade'] == 1 or exchange_name == 'bitmex':       
         lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-        # lts[exchange_name].set_position()
-        #temp as it takes too much time
+        lts[exchange_name].set_position()
 
 def get_interferance_vars():
     try:
@@ -375,65 +374,66 @@ def check_calling():
                     single_process(manual_call=True) 
 
 async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
-    timestamp = pd.to_datetime(timestamp, unit='s')
-    current_full_time = str(timestamp.minute)
-    current_time_check = current_full_time[1:]
+    if feed == 'BITMEX':
+        timestamp = pd.to_datetime(timestamp, unit='s')
+        current_full_time = str(timestamp.minute)
+        current_time_check = current_full_time[1:]
 
-    if int(r.get('first_execution').decode()) == 0:
-        if feed == 'BITMEX':
-            foreignNotional = amount
-            homeNotional = round(amount/price, 5)
-        elif feed == "BINANCE_FUTURES":
-            homeNotional = amount
-            foreignNotional = round(amount * price, 5)
+        if int(r.get('first_execution').decode()) == 0:
+            if feed == 'BITMEX':
+                foreignNotional = amount
+                homeNotional = round(amount/price, 5)
+            elif feed == "BINANCE_FUTURES":
+                homeNotional = amount
+                foreignNotional = round(amount * price, 5)
 
-        df = pd.DataFrame(pd.Series({'Time': timestamp, 'side': side, 'homeNotional': homeNotional, 'foreignNotional': foreignNotional, 'price': price})).T
-        save_file = str(df.groupby(pd.Grouper(key='Time', freq="10Min", label='left')).sum().index[0])
+            df = pd.DataFrame(pd.Series({'Time': timestamp, 'side': side, 'homeNotional': homeNotional, 'foreignNotional': foreignNotional, 'price': price})).T
+            save_file = str(df.groupby(pd.Grouper(key='Time', freq="10Min", label='left')).sum().index[0])
 
-        buy_missed, buy_at, close_and_stop, stop_trading = get_interferance_vars()
+            buy_missed, buy_at, close_and_stop, stop_trading = get_interferance_vars()
 
-        if buy_missed == 1:
-            if price < buy_at:
-                custom_buy_thread = threading.Thread(target=custom_buy)
-                custom_buy_thread.start()
+            if buy_missed == 1:
+                if price < buy_at:
+                    custom_buy_thread = threading.Thread(target=custom_buy)
+                    custom_buy_thread.start()
 
-        if close_and_stop == 1:
-            custom_sell_thread = threading.Thread(target=custom_sell)
-            custom_sell_thread.start()   
+            if close_and_stop == 1:
+                custom_sell_thread = threading.Thread(target=custom_sell)
+                custom_sell_thread.start()   
 
-        if current_full_time == '8' or current_time_check == '8' or current_full_time == '9' or current_time_check == '9':
-            if int(r.get('first_nine').decode()) == 1:
+            if current_full_time == '8' or current_time_check == '8' or current_full_time == '9' or current_time_check == '9':
+                if int(r.get('first_nine').decode()) == 1:
 
-                if r.get(save_file) == None:
-                    r.set('first_nine', 0)
-                    t = threading.Thread(target=process_thread, args=(save_file,))
-                    t.start()          
-                else: #because sometimes binance API has delays in receiving data
-                    var_name = "{}_printed".format(save_file)
-                    
-                    if r.get(var_name) == None:
-                        r.set(var_name, 1)
-                        print("Prevented a multiple run. Potential delays taking place")                 
-        else:
-            r.set('first_nine', 1)
-            folder = "data/stream"
-            if not os.path.isdir(folder):
-                os.makedirs(folder)
-
-            trades_file = "{}/significant_trades_{}.csv".format(folder, save_file)
-
-            if os.path.isfile(trades_file):
-                df.to_csv(trades_file, mode='a', header=None, index=None)
+                    if r.get(save_file) == None:
+                        r.set('first_nine', 0)
+                        t = threading.Thread(target=process_thread, args=(save_file,))
+                        t.start()          
+                    else: #because sometimes binance API has delays in receiving data
+                        var_name = "{}_printed".format(save_file)
+                        
+                        if r.get(var_name) == None:
+                            r.set(var_name, 1)
+                            print("Prevented a multiple run. Potential delays taking place")                 
             else:
-                df.to_csv(trades_file, index=None)
+                r.set('first_nine', 1)
+                folder = "data/stream"
+                if not os.path.isdir(folder):
+                    os.makedirs(folder)
 
-    else:
-        print("Current Time check is {}/{}".format(current_time_check, current_full_time))
+                trades_file = "{}/significant_trades_{}.csv".format(folder, save_file)
 
-        if current_full_time == '0' or current_time_check == '0':             
-            r.set('first_execution', 0)    
-            delayed_thread = threading.Thread(target=delayed_price_from_rest)
-            delayed_thread.start()
+                if os.path.isfile(trades_file):
+                    df.to_csv(trades_file, mode='a', header=None, index=None)
+                else:
+                    df.to_csv(trades_file, index=None)
+
+        else:
+            print("Current Time check is {}/{}".format(current_time_check, current_full_time))
+
+            if current_full_time == '0' or current_time_check == '0':             
+                r.set('first_execution', 0)    
+                delayed_thread = threading.Thread(target=delayed_price_from_rest)
+                delayed_thread.start()
 
 async def daddy_book(feed, pair, book, timestamp, receipt_timestamp):
     bid = float(list(book[BID].keys())[-1])

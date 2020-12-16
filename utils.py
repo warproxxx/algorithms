@@ -5,7 +5,12 @@ import os
 def print(to_print):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
-    filename = module.__file__.split("/")[-1].split(".")[0]
+    dirs = module.__file__.split("/")
+
+    if len(dirs) > 1:
+        filename = dirs[-2] + "_" + dirs[-1].split(".")[0]
+    else:
+        filename = dirs[-1].split(".")[0]
 
     if isinstance(to_print, str) == False:
         try:
