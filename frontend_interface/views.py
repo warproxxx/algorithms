@@ -4,7 +4,7 @@ from shutil import copy
 import pandas as pd
 from .forms import adminLoginForm
 from django.http import HttpResponseRedirect, HttpResponse 
-from defines import trade_methods
+from algos.daddy.defines import trade_methods
 import json
 import redis
 from glob import glob
@@ -17,10 +17,39 @@ def index(request):
         if request.POST:
             dic = request.POST.dict()
         
-        return render(request, "frontend_interface/index.html", {})
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        algo_details = []
+        for file in glob("algos/*"):
+            config = json.load(open(file + "/config.json"))
+            config['code_name'] = file.split('/')[-1]
+
+            try:
+                config['enabled'] = int(r.get('{}_enabled'.format(config['code_name'])).decode())
+            except:
+                config['enabled'] = 0
+
+            algo_details.append(config)
+
+        print(algo_details)
+        return render(request, "frontend_interface/index.html", {'algos': algo_details})
     else:
         return HttpResponseRedirect('/login')
 
+def reverse_status(request):
+    if 'Adminlogin' in request.session:
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        var_name = request.GET['code_name'] + "_enabled"
+        try:
+            old_status = int(r.get(var_name).decode())
+        except:
+            old_status = 0
+
+        new_status = 1 - old_status
+        r.set(var_name, new_status)
+
+        return HttpResponseRedirect('/')
+    else:
+        return HttpResponseRedirect('/login')
 
 def daddy_interface(request):
 
@@ -33,7 +62,7 @@ def daddy_interface(request):
             if 'mult' in dic:
                 #if file not exist make, else update
 
-                parameters = json.load(open('parameters.json'))
+                parameters = json.load(open('algos/daddy/parameters.json'))
                 new_pars = pd.Series(dic)[parameters.keys()].to_dict()
 
                 new_pars['mult'] = int(new_pars['mult'])
@@ -51,10 +80,10 @@ def daddy_interface(request):
                 new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
                 new_pars['name'] = dic['pars_name']
 
-                with open('parameters.json', 'w') as f:
+                with open('algos/daddy/parameters.json', 'w') as f:
                     json.dump(new_pars, f)
 
-                with open('parameters/{}.json'.format(new_pars['name']), 'w') as f:
+                with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
                     json.dump(new_pars, f)
 
             elif 'bitmex[trade]' in dic:
@@ -103,7 +132,7 @@ def daddy_interface(request):
                     r.set('stop_trading', 0)
 
         
-        parameters = json.load(open('parameters.json'))
+        parameters = json.load(open('algos/daddy/parameters.json'))
 
         exchanges = pd.read_csv('exchanges.csv')
 
@@ -151,14 +180,14 @@ def daddy_interface(request):
         new_df = pd.DataFrame(new_df).set_index('exchange').T.to_dict()
         csv_file = open('exchanges.csv', 'r').read()
         try:
-            run_log = open("run.log").read()
+            run_log = open("logs/daddy_bot.log").read()
         except:
             run_log = ""
 
 
         all_parameters = {}
 
-        for f in glob("parameters/*"):
+        for f in glob("algos/daddy/parameters/*"):
             all_parameters[f.split("/")[-1].replace(".json", "")] = json.load(open(f))
 
         all_parameters_json = json.dumps(all_parameters)
@@ -198,18 +227,18 @@ def daddy_interface(request):
 
 def delete(request):
     req = request.GET.dict()
-    file = "parameters/" + req['name'] + ".json"
+    file = "algos/daddy/parameters/" + req['name'] + ".json"
 
     if os.path.isfile(file):
         os.remove(file)
-    return HttpResponseRedirect('/')
+    return HttpResponseRedirect('/daddy')
 
 def addParms(request):
     req = request.GET.dict()
 
     if 'key' in req:
         if req['key'] == 'cQyv3TuVGc9m7KTQ66q33hcjtyjvMD9RsPBogkYc4idhMDQhpcNUfZHRBMrepCRR7XdAPD9TYbMMU5Dr':
-            parameters = json.load(open('parameters.json'))
+            parameters = json.load(open('algos/daddy/parameters.json'))
             new_pars = {}
             new_pars['mult'] = float(req['mult'])
             new_pars['percentage_large'] = float(req['p_large'])
@@ -226,7 +255,7 @@ def addParms(request):
             new_pars['stop_percentage'] = float(req['stop'])
             new_pars['name'] = req['name']
 
-            with open('parameters/{}.json'.format(new_pars['name']), 'w') as f:
+            with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
 
             return HttpResponseRedirect('/')

@@ -130,17 +130,33 @@
                     <h4></h4>
                     <div class="col-lg-12">
                     </div>
+                        {% for algo in algos %}
+                        <div class="col-lg-4">
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                <b>
+                                    <a href="/{{algo.code_name}}" target="_blank"  style="text-align:left;">{{algo.name}}</a>
 
-                        <div class="col-lg-3">
-                        <div class="card mb-3">
-                            <div class="card-body">
-                            <b>Upper</b>
-                            <br/><br/>
-                            Average Entry
-                        
+
+                                    
+                                        <a href="/reverse_status?code_name={{algo.code_name}}" style="float:right; text-decoration: none;"> 
+                                            {% if algo.enabled == 1 %} 
+                                                ▍▍
+                                            {% else %}
+                                                ▶
+                                            {% endif %}
+                                        </a>
+                                    
+                                </b>
+                                
+                                
+
+                                <br/><br/>
+                                {{algo.about}}
+                                </div>
                             </div>
                         </div>
-                        </div>
+                        {% endfor %}
 
 
                     </div>
