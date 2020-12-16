@@ -1,7 +1,3 @@
-from cryptofeed.feedhandler import FeedHandler
-from cryptofeed.exchanges import BinanceFutures, Bitmex, OKEx, Bybit, HuobiSwap, FTX
-from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
-
 import os
 from glob import glob
 import requests
@@ -26,11 +22,19 @@ import shutil
 
 from utils import print
 
+from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
+
 TESTNET = False
 EXCHANGES = pd.read_csv('exchanges.csv')
-f = FeedHandler(retries=100000)
 r = redis.Redis(host='localhost', port=6379, db=0)
-calls = 0
+lts = {}
+
+for idx, details in EXCHANGES.iterrows():
+    exchange_name = details['exchange']
+
+    if details['trade'] == 1 or exchange_name == 'bitmex':       
+        lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
+        lts[exchange_name].set_position()
 
 def get_interferance_vars():
     try:
@@ -370,7 +374,7 @@ def check_calling():
                     print("\n\033[1m" + str(datetime.datetime.utcnow()) + "(Manual Call) \033[0;0m:")
                     single_process(manual_call=True) 
 
-async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
+async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     timestamp = pd.to_datetime(timestamp, unit='s')
     current_full_time = str(timestamp.minute)
     current_time_check = current_full_time[1:]
@@ -431,71 +435,12 @@ async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount
             delayed_thread = threading.Thread(target=delayed_price_from_rest)
             delayed_thread.start()
 
-async def book(feed, pair, book, timestamp, receipt_timestamp):
+async def daddy_book(feed, pair, book, timestamp, receipt_timestamp):
     bid = float(list(book[BID].keys())[-1])
     ask = float(list(book[ASK].keys())[0])
 
     r.set('{}_best_bid'.format(feed.lower()), bid)
     r.set('{}_best_ask'.format(feed.lower()), ask)
-
-    # global calls
-    # calls = calls + 1
-    
-    # if calls % 15000 == 0:
-    #     bid_df = pd.DataFrame(columns=['price', 'size'])
-    #     bid_df['price'] = book[BID].keys()
-    #     bid_df['size'] = book[BID].values()
-    #     bid_df = bid_df.iloc[::-1]
-        
-    #     ask_df  = pd.DataFrame(columns=['price', 'size'])
-    #     ask_df['price'] = book[ASK].keys()
-    #     ask_df['size'] = book[ASK].values()
-
-    #     # best_bid = bid_df.iloc[0]['price']
-    #     # best_ask = ask_df.iloc[0]['price']
-
-    #     if feed in ['BITMEX', 'BYBIT']:
-    #         ask_df['size_btc'] = ask_df['size']/ask_df['price']
-    #         ask_df['size_usd'] = ask_df['size']
-    #         bid_df['size_btc'] = bid_df['size']/bid_df['price']
-    #         bid_df['size_usd'] = bid_df['size']
-    #     elif feed in ['BINANCE_FUTURES', 'FTX']:
-    #         ask_df['size_btc'] = ask_df['size']
-    #         ask_df['size_usd'] = ask_df['size_btc'] * ask_df['price']
-    #         bid_df['size_btc'] = bid_df['size']
-    #         bid_df['size_usd'] = bid_df['size_btc'] * bid_df['price']
-    #     elif feed in ['HUOBI_SWAP','OKEX']:
-    #         ask_df['size_usd'] = ask_df['size'] * 100
-    #         ask_df['size_btc'] = ask_df['size_usd']/ask_df['price']
-    #         bid_df['size_usd'] = bid_df['size'] * 100
-    #         bid_df['size_btc'] = bid_df['size_usd']/ask_df['price']
-
-    #     bid_df['sum'] = bid_df['size_usd'].cumsum()
-    #     ask_df['sum'] = ask_df['size_usd'].cumsum()
-
-    #     bid_df=bid_df[['price', 'size_btc', 'size_usd', 'sum']]
-    #     ask_df=ask_df[['price', 'size_btc', 'size_usd', 'sum']]
-
-    #     one_bid = float(bid_df[bid_df['price'] >= bid_df['price'].iloc[0] - 1].iloc[-1]['sum'])
-    #     two_bid = float(bid_df[bid_df['price'] >= bid_df['price'].iloc[0] - 2].iloc[-1]['sum'])
-
-    #     r.set('{}_one_bid'.format(feed.lower()), one_bid)
-    #     r.set('{}_two_bid'.format(feed.lower()), two_bid)
-
-    #     one_ask = float(ask_df[ask_df['price'] <= ask_df['price'].iloc[0] + 1].iloc[-1]['sum'])
-    #     two_ask = float(ask_df[ask_df['price'] <= ask_df['price'].iloc[0] + 2].iloc[-1]['sum'])
-
-    #     r.set('{}_one_ask'.format(feed.lower()), one_ask)
-    #     r.set('{}_two_ask'.format(feed.lower()), two_ask)
-
-    
-    #     folder = "bid_ask/" + feed
-
-    #     if not os.path.isdir(folder):
-    #         os.makedirs(folder)
-
-    #     bid_df.to_csv('{}/bid_{}.csv'.format(folder, int(time.time())), index=None)
-    #     ask_df.to_csv('{}/ask_{}.csv'.format(folder, int(time.time())),  index=None)
 
 def delayed_price_from_rest():
     time.sleep(60) #because API gives data ~15 seconds late.
@@ -509,110 +454,16 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
-def flush_redis():
-    backups = {}
+def daddy_bot():
+    update_price_from_rest()
+    schedule.every().day.at("00:03").do(create_chart)
 
-    try:
-        backups['buy_missed'] = int(r.get('buy_missed').decode())
-    except:
-        backups['buy_missed'] = 0
+    schedule_thread = threading.Thread(target=start_schedlued)
+    schedule_thread.start()
 
-    try:
-        backups['buy_at'] = int(r.get('buy_at').decode())
-    except:
-        backups['buy_at'] = 0
+    r.set('first_execution', 1)
+    r.set('first_nine', 1)
+    r.set('got_this_turn', 0)
 
-    try:
-        backups['close_and_stop'] = int(r.get('close_and_stop').decode())
-    except:
-        backups['close_and_stop'] = 0
-
-    try:
-        backups['stop_trading'] = int(r.get('stop_trading').decode())
-    except:
-        backups['stop_trading'] = 0
-
-
-    for idx, details in EXCHANGES.iterrows():
-        exchange_name = details['exchange']
-
-        try:
-            backups['{}_position_since'.format(exchange_name)] = r.get('{}_position_since'.format(exchange_name)).decode()
-        except:
-            pass
-
-        try:
-            backups['{}_avgEntryPrice'.format(exchange_name)] = r.get('{}_avgEntryPrice'.format(exchange_name)).decode()
-        except:
-            pass
-
-        try: 
-            backups['{}_current_pos'.format(exchange_name)] = r.get('{}_current_pos'.format(exchange_name)).decode()
-        except:
-            pass
-        
-        try:
-            backups['{}_pos_size'.format(exchange_name)] = r.get('{}_pos_size'.format(exchange_name)).decode()
-        except:
-            pass
-
-        try:
-            backups['{}_best_ask'.format(exchange_name)] = r.get('{}_best_ask'.format(exchange_name)).decode()
-        except:
-            pass
-
-        try:        
-            backups['{}_best_bid'.format(exchange_name)] = r.get('{}_best_bid'.format(exchange_name)).decode()
-        except:
-            pass
-    
-    r.flushdb()
-
-    for idx, row in backups.items():
-        r.set(idx, row)
-
-if os.path.isdir("data/stream"):
-    shutil.rmtree('data/stream')
-
-if os.path.isfile("run.log"):
-    os.remove("run.log")
-
-flush_redis()
-update_price_from_rest()
-schedule.every().day.at("00:03").do(create_chart)
-
-schedule_thread = threading.Thread(target=start_schedlued)
-schedule_thread.start()
-
-
-r.set('first_execution', 1)
-r.set('first_nine', 1)
-r.set('got_this_turn', 0)
-
-calling_check_thread = threading.Thread(target=check_calling)
-calling_check_thread.start()
-
-lts = {}
-
-for idx, details in EXCHANGES.iterrows():
-    exchange_name = details['exchange']
-
-    if details['trade'] == 1 or exchange_name == 'bitmex':       
-        lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-        lts[exchange_name].set_position()
-
-    if exchange_name == 'bitmex':
-        f.add_feed(Bitmex(pairs=[details['cryptofeed_symbol']],channels=[TRADES, L2_BOOK], callbacks={TRADES: trade, L2_BOOK: book}), timeout=-1)
-    elif exchange_name == 'binance_futures':
-        f.add_feed(BinanceFutures(pairs=[details['cryptofeed_symbol']],channels=[L2_BOOK], callbacks={L2_BOOK: book}), timeout=-1)
-    elif exchange_name == 'bybit':
-        f.add_feed(Bybit(pairs=[details['cryptofeed_symbol']],channels=[L2_BOOK], callbacks={L2_BOOK: book}), timeout=-1)
-    elif exchange_name == 'ftx':
-        f.add_feed(FTX(pairs=[details['cryptofeed_symbol']],channels=[L2_BOOK], callbacks={L2_BOOK: book}), timeout=-1)
-    elif exchange_name == 'huobi_swap':
-        f.add_feed(HuobiSwap(pairs=[details['cryptofeed_symbol']],channels=[L2_BOOK], callbacks={L2_BOOK: book}), timeout=-1)
-    elif exchange_name == 'okex':
-        f.add_feed(OKEx(pairs=[details['cryptofeed_symbol']],channels=[L2_BOOK], callbacks={L2_BOOK: book}), timeout=-1)
-
-
-f.run()
+    calling_check_thread = threading.Thread(target=check_calling)
+    calling_check_thread.start()

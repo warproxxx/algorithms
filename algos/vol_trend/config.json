@@ -1,0 +1,4 @@
+{
+    "name": "Volatilty Trader",
+    "about": "Trades BTC-MOVE and BTC-PERP with a low leverage in FTX using the volatility algorithm as the basis"
+}

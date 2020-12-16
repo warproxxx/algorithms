@@ -14,10 +14,10 @@
 <center>
 
 <form action="" method="post" style="margin-top:20vw">{% csrf_token %}
-   Username: {{ form.username }}
+   {{ form.username }}
 
-    <br/>
-    Password: {{ form.password }}
+    <br/><br/>
+    {{ form.password }}
     <br/><br/>
     <button type="submit" name="login">LOGIN</button>     
 

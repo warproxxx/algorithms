@@ -12,8 +12,17 @@ import os
 from shutil import copy
 
 #create login then interface is done
-
 def index(request):
+    if 'Adminlogin' in request.session:
+        if request.POST:
+            dic = request.POST.dict()
+        
+        return render(request, "frontend_interface/index.html", {})
+    else:
+        return HttpResponseRedirect('/login')
+
+
+def daddy_interface(request):
 
     r = redis.Redis(host='localhost', port=6379, db=0)
 
@@ -182,7 +191,7 @@ def index(request):
         except:
             stop_trading = 0
             
-        return render(request, "frontend_interface/index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
 
     else:
         return HttpResponseRedirect('/login')

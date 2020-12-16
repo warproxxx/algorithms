@@ -9,7 +9,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Pars Virilis Interface</title>
+  <title>Algos Interface</title>
   {% load staticfiles %}
 
 
@@ -114,358 +114,56 @@
 </head>
 
 <body id="page-top">
+    <!-- Wrapper -->
+    <div id="wrapper">
+    
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+    
+            <!-- Main Content -->
+            <div id="content">
+                <!-- Page Content -->
+                <div class="container-fluid">
+                    <!-- Row -->
+                    <div class="row">
 
-  <!-- Page Wrapper -->
-  <div id="wrapper">
+                    <h4></h4>
+                    <div class="col-lg-12">
+                    </div>
 
-    <!-- Sidebar -->
-    <!-- End of Sidebar -->
-
-    <!-- Content Wrapper -->
-    <div id="content-wrapper" class="d-flex flex-column">
-
-      <!-- Main Content -->
-      <div id="content">
-        <!-- Begin Page Content -->
-        <div class="container-fluid">
-
-          <!-- Page Heading -->
-          <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Daddy Bot</h1>
-          </div>
-
-          <div class="row">
-
-            <!-- Page Heading -->
-            <h4>Positions</h4>
-            <div class="col-lg-12">
-            </div>
-
-            
-              
-              {% for key, value in new_df.items %}
-              {% if value.trade == 1 %}
-              <div class="col-lg-4">
-                <div class="card mb-4 border-left-{{value.html_color}}">
-                  <div class="card-body">
-                    <b>{{key|upper}}</b>
-                    <br/><br/>
-                    Average Entry: {{value.avgEntryPrice }}$<br/>
-                    PnL Percentage: {{ value.pnl_percentage }}%<br/>
-                    Position Since: {{ value.position_since }}<br/>
-                    Position Size: {{ value.pos_size }}<br/>
-                    Free Balance: {{ value.balance }}<br/>
-                
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-              {% endfor %}
-
-
-          </div>
-
-          <div class="row">
-
-            <!-- Page Heading -->
-            <h4>Manual Interference</h4>
-            <div class="col-lg-12 mb-4">
-            
-
-            
-            <div class="card-body">
-                <table>
-                  <tr>
-                    <td style="width: 33vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="buy_missed_form">
-                        <input type="checkbox" name="buy_missed" value="enable_missed" {% if buy_missed == 1 %} checked {% endif %}> <b>Buy missed</b>                           
-                        <br/><br/>
-                      
-                        Price:  <input type="number" name="buy_at" style="width: 100px" value="{{buy_at}}">
-                        <br/><br/>
-                        <input type="submit" value="Update">
-                        
-                      </form>
-                    </td>
-                    <td style="width: 33vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="enable_close_and_stop_form">
-                        <input type="checkbox" name="close_and_stop" value="enable_close_and_stop" {% if close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions and Stop</b>
-
-                        <br/><br/><br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
-                    <td style="width: 33vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="stop_trading_form">
-                        <input type="checkbox" name="stop_trading" value="enable_stop" {% if stop_trading == 1 %} checked {% endif %}> <b>Stop Trading</b>
-                        <br/><br/><br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
-                  </tr>
-                                      
-                  </table>
-            </div>
-              
-          </div>
-
-          </div>
-          
-          <b>Run Log:</b><br/>
-          <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea><br/><br/>
-
-          <div class="row">
-            <div class="col-lg-12 mb-4">
-              <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                  <h6 class="m-0 font-weight-bold text-primary">Parameters and Details</h6>
-                </div>
-                
-                <div class="col-md-12">
-                  <div class="text-center">
-                  <div class="table-responsive">
-                  <table>
-                    <form method="post" name="parameters" style="display:inline; margin:0; padding:0;">
-                      {% csrf_token %}
-                      
-                        <tr>
-                          <td style="width: 45vw">
-                          
-                              <table style="margin-left:5vw; margin-top: 5vh; margin-bottom: 5vh;">
-                                  <tr>
-                              {% for key, value in parameters.items %}
-                          
-                                  
-                                  <td>{{ key }}</td> <td style="padding-right: 4vw;"><input type="text" name="{{ key }}" id="{{ key }}" value="{{ value }}" size="7"></td>
-                                  {% if forloop.counter|divisibleby:2 %}
-                                  </tr><tr>
-                                  {% endif %}
-                          
-                              {% endfor %}
-                                  </tr>
-                              </table>
-                            
-                          </td>
-                          <td style="padding-left: 15vw; padding-right: 15vw;">
-                            Current Parameters: 
-                            <select id="current_parms">
-                              {% for par in all_parameters.keys %}
-                                {% if par == parameters.name %}
-                                  <option value="{{par}}" selected>{{par}}</option>
-                                {% else %}
-                                  <option value="{{par}}">{{par}}</option>
-                                {% endif %}
-                              {% endfor %}
-                            </select>
-
+                        <div class="col-lg-3">
+                        <div class="card mb-3">
+                            <div class="card-body">
+                            <b>Upper</b>
                             <br/><br/>
-                              Name:
-                              <input type="text" name="pars_name" id="pars_name" value="{{parameters.name}}">
-                              <br/><br/>
-                              <input type="submit" name="submit" value="Update">
+                            Average Entry
+                        
+                            </div>
+                        </div>
+                        </div>
 
-                              <br/><br/>
 
-                              <select id="delete_par" style="background: red; color: white">
-                                <option value="" selected></option>
-                                {% for par in all_parameters.keys %}
-                                    <option value="{{par}}">{{par}}</option>
-                                {% endfor %}
-                              </select>
-
-                              <button type="button" name="submit" style="background: red; color: white" onclick="deletePar()">Delete</button>
-                              
-                          </td>
-                        </tr>
-                     </form>
-                  </table>
-                  </div>
-                  </div>
+                    </div>
+                    <!-- Row -->
                 </div>
-              </div>
+                <!-- Page Content -->
             </div>
-          </div>
-
-          
-
-
-          <!-- Content Row -->
-          <div class="row">
-
-            <div class="col-lg-12 mb-4">
-
-              <!-- Illustrations -->
-              <div class="card shadow mb-4">
-                <div class="card-header py-3" style="display: flex;">
-                  <div style="flex-grow: 1;"><h6 class="m-0 font-weight-bold text-primary">Exchanges</h6></div>
-                </div>
-
-
-                <div class="card-body">
-                  <form method="POST" name="exchanges">
-                    {% csrf_token %}
-                  <div class="table-responsive">
-                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" style="table-layout:auto;">
-                      <thead>
-                        <tr>
-                          <th>Exchange</th>
-                          <th>Symbol</th>
-                          <th>CCXT</th>
-                          <th>CryptoFeed</th>
-                          <th>To Trade</th>
-                          <th>Trade Threshold</th>
-                          <th>Buy Method</th>
-                          <th>Sell Method</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-
-                        {% for key, value in exchanges.items %}
-                            <tr>
-                                <td>{{key}}</td>
-                                {% for inside_key, inside_value in value.items %}
-
-                                    {% if inside_key == "trade" %}
-                                        <td>
-
-                                            <select name="{{ key }}[{{ inside_key }}]" id="{{ key }}__{{ inside_key }}">
-                                                <option value="0">0</option>
-                                                <option value="1">1</option>
-                                            </select>
-
-                                            <script>
-                                                document.getElementById("{{ key }}__{{ inside_key }}").value = "{{inside_value}}"; 
-                                           </script>
-                               
-                                        </td>
-                                    {% elif "method" in inside_key%}
-                                        <td>
-                                            <select name="{{ key }}[{{ inside_key }}]" id="{{ key }}__{{ inside_key }}">
-                                                {% for trade_method in trade_methods %}
-                                                    <option value="{{trade_method}}">{{trade_method}}</option>
-                                                {% endfor %}
-                                            </select>
-
-                                            <script>
-                                                document.getElementById("{{ key }}__{{ inside_key }}").value = "{{inside_value}}"; 
-                                           </script>
-                                           
-                                        </td>
-
-                                    {% elif "max_trade" in inside_key %}
-                                    <td>
-                                      <input type="number" name="{{ key }}[{{ inside_key }}" value="{{inside_value}}" style="width:100px;" step="0.1">
-                                    </td>
-
-                                    {% else %}
-                                        <td>{{inside_value}}</td>
-                                    
-                                    {% endif %}
-
-                                {% endfor %}
-                            </tr>
-
-
-                        {% endfor %}
-
-                      </tbody>
-                    </table>
-                  </div>
-
-                  <center><input type="submit" value="Update"></center>
-                </form>
-
-                <b>CSV:</b><br/>
-                <form method="POST">
-                    {% csrf_token %}
-                <textarea rows="8" style="width:100%;" id="csv_file" name="csv_file">{{csv_file}}</textarea><br/><br/>
-                <center><input type="submit" value="Update CSV"></center>
-                </form>
-
-                  
-                </div>
-              </div>
-            </div>
+            <!-- Main Content -->
         </div>
-
-        
-
-
-          
-
-
-
-        </div>
-        <!-- /.container-fluid -->
-
-      </div>
-      <!-- End of Main Content -->
+        <!-- Content Wrapper -->
     </div>
-    <!-- End of Content Wrapper -->
+    <!-- Wrapper -->
 
-  </div>
-  <!-- End of Page Wrapper -->
 
-  <!-- Scroll to Top Button-->
-  <a class="scroll-to-top rounded" href="#page-top">
-    <i class="fas fa-angle-up"></i>
-  </a>
-  
-  <script>
-      // Edit row on edit button click
-      $(document).on("click", ".edit", function(){		
-            $(this).parents("tr").find("td:not(:last-child)").each(function(){
-          $(this).html('<input type="text" class="form-control" value="' + $(this).text() + '">');
-        });		
-        $(this).parents("tr").find(".add, .edit").toggle();
-        $(".add-new").attr("disabled", "disabled");
-        });
-      
-        var textarea = document.getElementById('logs');
-        textarea.scrollTop = textarea.scrollHeight;
 
-        //For the parameters
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
 
-        var parameters = JSON.parse('{{ all_parameters_json|safe }}');
+    <!-- Core plugin JavaScript-->
+    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
 
-        $("#current_parms").change(function () {            
-          
-          for (var key in parameters[this.value])
-          {
-            $("#" + key).val(parameters[this.value][key]);
-          }
-
-          $("#pars_name").val(this.value);
-
-          
-        });
-
-       function deletePar()
-       {
-         var url = "/delete?name=" + $("#delete_par").val()
-         window.location.href = url;
-       }
-
-        // alert(parameters['best_tested']['mult']);
-        
-  </script>
-
-  <!-- Bootstrap core JavaScript-->
-  
-  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-  <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-
-  <!-- Core plugin JavaScript-->
-  <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
-
-  <!-- Custom scripts for all pages-->
-  <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
+    <!-- Custom scripts for all pages-->
+    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
 
 
 </body>

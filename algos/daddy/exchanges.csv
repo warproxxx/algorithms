@@ -1,0 +1,7 @@
+exchange,ccxt_symbol,symbol,cryptofeed_symbol,trade,collateral,max_trade,buy_method,sell_method,html_color
+bitmex,BTC/USD,XBTUSD,XBTUSD,1,BTC,0.5,10sec_average,10sec_average,danger
+binance_futures,BTC/USDT,BTCUSDT,BTC-USDT,1,USDT,0.0,10sec_average,10sec_average,warning
+bybit,BTC/USD,BTCUSD,BTC-USD,1,BTC,0.0,now,now,dark
+ftx,BTC-PERP,BTCUSDT,BTC-PERP,1,USD,0.0,now,now,info
+huobi_swap,BTC-USD,BTCUSD,BTC-USD,1,BTC,0.0,now,now,primary
+okex,BTC-USD-SWAP,BTCUSD,BTC-USD-SWAP,1,BTC,0.0,now,now,secondary
