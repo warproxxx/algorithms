@@ -1,7 +1,8 @@
-exchange,crytofeed_name,ccxt_symbol
-bitmex,Bitmex,BTC/USD
-binance_futures,BinanceFutures,BTC/USDT
-bybit,Bybit,BTC/USD
-ftx,FTX,BTC-PERP
-huobi_swap,HuobiSwap,BTC-USD
-okex,OKEx,BTC-USD-SWAP
+exchange,cryptofeed_name,ccxt_symbol,cryptofeed_symbol
+bitmex,Bitmex,BTC/USD,XBTUSD
+binance_futures,BinanceFutures,BTC/USDT,BTC-USDT
+bybit,Bybit,BTC/USD,BTC-USD
+ftx,FTX,BTC-PERP,BTC-PERP
+huobi_swap,HuobiSwap,BTC-USD,BTC-USD
+okex,OKEx,BTC-USD-SWAP,BTC-USD-SWAP
+ftx,FTX,BTC-MOVE,BTC-MOVE

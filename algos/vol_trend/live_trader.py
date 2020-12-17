@@ -13,18 +13,23 @@ from algos.vol_trend.defines import trade_methods
 import sys
 from utils import print
 
+def round_down(value, decimals):
+    with decimal.localcontext() as ctx:
+        d = decimal.Decimal(value)
+        ctx.rounding = decimal.ROUND_DOWN
+        return float(round(d, decimals))
+
 class liveTrading():
     def __init__(self, symbol='BTC-PERP', testnet=True):
         self.symbol = symbol
         self.parameters = json.load(open('algos/vol_trend/parameters.json'))
-        #set leverage acc to pair name
 
         self.lev = self.parameters['{}_mult'.format(symbol)]
         self.threshold_tiggered = False
         self.attempts = 5
 
-        apiKey = os.getenv('FTX_{}_ID'.format(symbol))
-        apiSecret = os.getenv('FTX_{}_SECRET'.format(symbol))
+        apiKey = os.getenv('FTX_vol_ID')
+        apiSecret = os.getenv('FTX_vol_SECRET')
 
     
         self.exchange = ccxt.ftx({
@@ -33,7 +38,16 @@ class liveTrading():
                         'enableRateLimit': True,
                         'options': {'defaultMarket': 'futures'}
                     })
-            
+
+        if symbol == "BTC-PERP":
+            self.exchange.headers = {
+                                        'FTX-SUBACCOUNT': 'PERP',
+                                    }
+        else:
+            self.exchange.headers = {
+                                        'FTX-SUBACCOUNT': 'MOVE',
+                                    }
+
         self.increment = 0.5
         self.r = redis.Redis(host='localhost', port=6379, db=0)            
         self.update_parameters()
@@ -68,13 +82,10 @@ class liveTrading():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
     
-    def close_stop_order(self):
-        self.close_open_orders(close_stop=True)
-    
     def get_orderbook(self):
         orderbook = {}
-        orderbook['best_ask'] = float(self.r.get('FTX_best_ask').decode())
-        orderbook['best_bid'] = float(self.r.get('FTX_best_bid').decode())
+        orderbook['best_ask'] = float(self.r.get('FTX_{}_best_ask'.format(self.symbol)).decode())
+        orderbook['best_bid'] = float(self.r.get('FTX_{}_best_bid'.format(self.symbol)).decode())
 
         return orderbook
 
@@ -131,7 +142,7 @@ class liveTrading():
     def get_balance(self):
         return float(self.exchange.fetch_balance()['USD']['free'])
 
-    def limit_trade(self, order_type, amount, price)
+    def limit_trade(self, order_type, amount, price):
         if amount > 0:
             print("Sending limit {} order for {} of size {} @ {} on {} in {}".format(order_type, self.symbol, amount, price, self.exchange_name, datetime.datetime.now()))
 
@@ -146,18 +157,35 @@ class liveTrading():
 
         return order
 
-    def send_limit_order(self, order_type):
+    def get_max_amount(self, order_type):
+        '''
+        Get the max buyable/sellable amount
+        '''
+        orderbook = self.get_orderbook()
+
+        if order_type == 'open':
+            price = orderbook['best_ask'] - self.increment
+            balance = self.get_balance()
+            amount = round_down(((balance * self.lev)/price) * 0.99, 3)
+            return amount, price
+
+        elif order_type == 'close':
+            price = orderbook['best_bid'] + self.increment
+            current_pos, avgEntryPrice, amount = self.get_position()
+            return float(abs(amount)), float(price)
+
+    def send_limit_order(self, type, direction):
         '''
         Detects amount and sends limit order for that amount
         '''
         for lp in range(self.attempts):
             try:
-                amount, price = self.get_max_amount(order_type)
+                amount, price = self.get_max_amount(type)
 
                 if amount == 0:
                     return [], 0
 
-                order = self.limit_trade(order_type, amount, price)
+                order = self.limit_trade(direction, amount, price)
 
                 return order, price
             except ccxt.BaseError as e:
@@ -189,14 +217,13 @@ class liveTrading():
                 pass
 
     
-    def second_average(self, intervals, sleep_time, order_type):
+    def second_average(self, intervals, sleep_time, type, direction):
         self.close_open_orders()
         self.threshold_tiggered = False
 
-        amount, price = self.get_max_amount(order_type)
+        amount, price = self.get_max_amount(type)
 
         trading_array = []
-
 
         if amount != 0:
             amount = abs(amount)
@@ -204,23 +231,24 @@ class liveTrading():
             final_amount = round_down(amount - (single_size * (intervals - 1)), 3)
 
         for amount in trading_array:
-            order = self.market_trade(order_type, amount) 
+            order = self.market_trade(direction, amount) 
             time.sleep(sleep_time)
 
-        current_pos, avgEntryPrice, amount = self.get_position()
+        if self.threshold_tiggered == False:
+            amount, price = self.get_max_amount(type)
+            order = self.market_trade(direction, amount)
 
-        if current_pos == 'LONG':
-            if self.threshold_tiggered == False:
-                amount, price = self.get_max_amount(order_type)
-                order = self.market_trade(order_type, amount)
 
-     def fill_order(self, order_type, method='attempt_limit'):
+    def fill_order(self, type, direction, method='attempt_limit'):
         '''
         Parameters:
         ___________
 
-        order_type (string):
-        buy or sell
+        type (string):
+        open or close
+
+        direction (string):
+        long or short
 
         method (string):
         What to of strategy to use for selling. Strategies:
@@ -238,18 +266,19 @@ class liveTrading():
 
         print("Time at filling order is: {}".format(datetime.datetime.now()))
 
+
         for lp in range(self.attempts):         
             
-            curr_pos = self.r.get('{}_current_pos'.format(self.exchange_name)).decode()
+            curr_pos = self.r.get('FTX_{}_current_pos'.format(self.symbol)).decode()
 
-            if curr_pos == "NONE" and order_type=='sell': #to fix issue caused by backtrader verification idk why tho.
-                print("Had to manually prevent sell order")
+            if curr_pos == "NONE" and type=='close': #to fix issue caused by backtrader verification idk why tho.
+                print("Had to manually prevent close order")
                 break
                 
-                
+            
             if method == "attempt_limit":
                 try:
-                    order, limit_price = self.send_limit_order(order_type)
+                    order, limit_price = self.send_limit_order(type, direction)
 
                     if len(order) == 0:
                         print("Wants to close a zero position lol")
@@ -266,54 +295,46 @@ class liveTrading():
                         orderbook = self.get_orderbook()
                         print("Best Bid is {} and Best Ask is {}".format(orderbook['best_ask'], orderbook['best_bid']))
 
-                        if order_type == 'buy':
+                        if type == 'long':
                             current_full_time = str(datetime.datetime.now().minute)
                             current_time_check = current_full_time[1:]
-
-                            if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.now().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
-                                print("Time at sending market order is: {}".format(datetime.datetime.now()))
-                                order = self.send_market_order(order_type)
-                                break
 
                             current_match = orderbook['best_bid']
 
                             if current_match >= (limit_price + self.increment):
                                 print("Current price is much better, closing to open new one")
                                 self.close_open_orders()
-                                order, limit_price = self.send_limit_order(order_type)
+                                order, limit_price = self.send_limit_order(type, direction)
 
-                        elif order_type == 'sell':
+                        elif type == 'short':
                             current_full_time = str(datetime.datetime.now().minute)
                             current_time_check = current_full_time[1:]
-
-                            if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.now().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
-                                print("Time at sending market order is: {}".format(datetime.datetime.now()))
-                                order = self.send_market_order(order_type)
-                                break
 
                             current_match = orderbook['best_ask']
 
                             if current_match <= (limit_price - self.increment):
                                 print("Current price is much better, closing to open new one")
                                 self.close_open_orders()
-                                order, limit_price = self.send_limit_order(order_type)
+                                order, limit_price = self.send_limit_order(type, direction)
 
 
                     else:
                         print("Order has been filled. Exiting out of loop")
                         self.close_open_orders()
                         break
-                return
-            except ccxt.BaseError as e:
-                print(e)
-                pass
+                    
+                    return
+
+                except ccxt.BaseError as e:
+                    print(e)
+                    pass
             elif method == "5sec_average":
-                self.second_average(12, 4.8, order_type)
+                self.second_average(12, 4.8, type, direction)
                 break
             elif method == "10sec_average":
-                self.second_average(12, 9.8, order_type)
+                self.second_average(12, 9.8, type, direction)
                 break
             elif method == "now":
-                amount, price = self.get_max_amount(order_type)
-                order = self.market_trade(order_type, amount)
+                amount, price = self.get_max_amount(type)
+                order = self.market_trade(direction, amount)
                 break

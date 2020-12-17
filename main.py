@@ -1,10 +1,12 @@
 from cryptofeed.feedhandler import FeedHandler
 from cryptofeed import exchanges
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
+import requests
 
 import pandas as pd
 import redis
 import json
+import re
 
 import time
 
@@ -17,7 +19,7 @@ import threading
 
 from utils import flush_redis
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book
-from algos.vol_trend.bot import vol_bot
+from algos.vol_trend.bot import vol_bot, vol_trend_book
 
 from utils import print
 
@@ -52,13 +54,29 @@ async def book(feed, pair, book, timestamp, receipt_timestamp):
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
 
-for exchange, details in EXCHANGES.groupby('cryptofeed_name'):
+    if int(r.get('vol_trend_enabled').decode()) == 1 and 'MOVE' in pair:
+        await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
+
+PAIRS = pd.read_csv('pairs.csv')
+
+for exchange, details in PAIRS.groupby('cryptofeed_name'):
     channels=[TRADES, L2_BOOK]
     callbacks={TRADES: trade, L2_BOOK: book}
 
     b = getattr(exchanges, exchange)
-    print(details)
-    f.add_feed(getattr(exchanges, exchange)(pairs=details['cryptofeed_symbol'].values, channels=channels, callbacks=callbacks), timeout=-1)
+    
+    pairs_list = details['cryptofeed_symbol'].values
+    new_pairs_list = []
+
+    for pair in pairs_list:
+        if "MOVE" in pair:
+            pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
+            new_pairs_list = new_pairs_list + [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
+        else:
+            new_pairs_list.append(pair)
+
+    print("{} {}".format(exchange, new_pairs_list))
+    f.add_feed(getattr(exchanges, exchange)(pairs=new_pairs_list, channels=channels, callbacks=callbacks), timeout=-1)
 
 
 f.run()
