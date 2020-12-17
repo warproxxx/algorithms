@@ -51,6 +51,15 @@ def reverse_status(request):
     else:
         return HttpResponseRedirect('/login')
 
+def vol_trend_interface(request):
+    if 'Adminlogin' in request.session:
+        move_prediction = pd.read_csv('data/trades_move.csv').iloc[-1][['Date', 'Type', 'Data']].to_dict()
+        perp_prediction = pd.read_csv('data/trades_perp.csv').iloc[-1][['Date', 'Type', 'Data']].to_dict()
+
+        return render(request, "frontend_interface/vol_index.html", {'move_prediction': move_prediction, 'perp_prediction': perp_prediction})
+    else:
+        return HttpResponseRedirect('/login')
+
 def daddy_interface(request):
 
     r = redis.Redis(host='localhost', port=6379, db=0)

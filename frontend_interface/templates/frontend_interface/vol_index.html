@@ -9,7 +9,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Algos Interface</title>
+  <title>Vol Trend Bot</title>
   {% load staticfiles %}
 
 
@@ -114,74 +114,21 @@
 </head>
 
 <body id="page-top">
-    <!-- Wrapper -->
+    <!-- Page Wrapper -->
     <div id="wrapper">
-    
+
+        <!-- Sidebar -->
+        <!-- End of Sidebar -->
+
         <!-- Content Wrapper -->
         <div id="content-wrapper" class="d-flex flex-column">
-    
-            <!-- Main Content -->
-            <div id="content">
-                <!-- Page Content -->
-                <div class="container-fluid">
-                    <!-- Row -->
-                    <div class="row">
 
-                    <h4></h4>
-                    <div class="col-lg-12">
-                    </div>
-                        {% for algo in algos %}
-                        <div class="col-lg-4">
-                            <div class="card mb-4">
-                                <div class="card-body">
-                                <b>
-                                    <a href="/{{algo.code_name}}" style="text-align:left;">{{algo.name}}</a>
+        <!-- Main Content -->
+        <div id="content">
+            <!-- Begin Page Content -->
+            <div class="container-fluid">
 
-
-                                    
-                                        <a href="/reverse_status?code_name={{algo.code_name}}" style="float:right; text-decoration: none;"> 
-                                            {% if algo.enabled == 1 %} 
-                                                ▍▍
-                                            {% else %}
-                                                ▶
-                                            {% endif %}
-                                        </a>
-                                    
-                                </b>
-                                
-                                
-
-                                <br/><br/>
-                                {{algo.about}}
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-
-
-                    </div>
-                    <!-- Row -->
-                </div>
-                <!-- Page Content -->
+            <!-- Page Heading -->
+            <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 class="h3 mb-0 text-gray-800">Vol Trend Bot</h1> <h1><a href="/">←</a></h1>
             </div>
-            <!-- Main Content -->
-        </div>
-        <!-- Content Wrapper -->
-    </div>
-    <!-- Wrapper -->
-
-
-
-    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
-    <script src="{% static 'vendor/bootstrap/js/bootstrap.bundle.min.js' %}"></script>
-
-    <!-- Core plugin JavaScript-->
-    <script src="{% static 'vendor/jquery-easing/jquery.easing.min.js' %}"></script>
-
-    <!-- Custom scripts for all pages-->
-    <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
-
-
-</body>
-
-</html>
