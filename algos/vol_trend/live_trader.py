@@ -22,15 +22,13 @@ def round_down(value, decimals):
 class liveTrading():
     def __init__(self, symbol='BTC-PERP', testnet=True):
         self.symbol = symbol
-        self.parameters = json.load(open('algos/vol_trend/parameters.json'))
-
-        self.lev = self.parameters['{}_mult'.format(symbol)]
+        
         self.threshold_tiggered = False
         self.attempts = 5
 
         apiKey = os.getenv('FTX_vol_ID')
         apiSecret = os.getenv('FTX_vol_SECRET')
-
+        self.r = redis.Redis(host='localhost', port=6379, db=0)   
     
         self.exchange = ccxt.ftx({
                         'apiKey': apiKey,
@@ -43,26 +41,22 @@ class liveTrading():
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'PERP',
                                     }
+            self.lev = float(self.r.get('PERP_mult').decode())
         else:
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'MOVE',
                                     }
+            self.lev = float(self.r.get('MOVE_mult').decode())
 
         self.increment = 0.5
-        self.r = redis.Redis(host='localhost', port=6379, db=0)            
+                 
         self.update_parameters()
 
     def update_parameters(self):
-        self.parameters = json.load(open('algos/vol_trend/parameters.json'))
-        self.lev = self.parameters['{}_mult'.format(self.symbol)]
-        count = 0
-        
-        while count < 5:
-            try:
-                stats = self.exchange.private_post_account_leverage({"leverage": 5})
-                break
-            except Exception as e:
-                break
+        if self.symbol == "BTC-PERP":
+            self.lev = float(self.r.get('PERP_mult').decode())
+        else:
+            self.lev = float(self.r.get('MOVE_mult').decode())
 
     def close_open_orders(self, close_stop=False):
         self.update_parameters()
@@ -127,7 +121,12 @@ class liveTrading():
                 self.r.set('FTX_{}_pos_size'.format(self.symbol), amount)
 
                 balance = self.get_balance()
-                self.r.set('FTX_{}_balance'.format(self.symbol), balance)
+
+                if self.symbol == "BTC-PERP":
+                    self.r.set('FTX_PERP_balance', balance)
+                else:
+                    self.r.set('FTX_MOVE_balance', balance)
+
                 break
 
             except ccxt.BaseError as e:
@@ -200,6 +199,9 @@ class liveTrading():
         if amount > 0:
             print("Sending market {} order for {} of size {} on {} in {}".format(order_type, self.symbol, amount, self.exchange_name, datetime.datetime.now()))
             order = self.exchange.create_order(self.symbol, 'market', order_type.lower(), amount, None)
+            return order
+        else:
+            return []
 
 
     def send_market_order(self, order_type):

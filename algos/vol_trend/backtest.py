@@ -438,3 +438,12 @@ def perform_backtests():
     run = cerebro.run()
     portfolio, trades, operations = run[0].get_logs()
     trades.to_csv("data/trades_move.csv", index=None)
+
+    pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
+    pairs_list =  [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
+
+    with open('algos/vol_trend/pairs.json', 'w') as f:
+        json.dump(pairs_list, f)
+
+if __name__ == "__main__":
+    perform_backtests()

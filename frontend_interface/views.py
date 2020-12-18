@@ -1,15 +1,20 @@
 from django.shortcuts import render
-import bcrypt
-from shutil import copy
-import pandas as pd
-from .forms import adminLoginForm
 from django.http import HttpResponseRedirect, HttpResponse 
-from algos.daddy.defines import trade_methods
-import json
-import redis
-from glob import glob
+from .forms import adminLoginForm
+
+import bcrypt
+
 import os
 from shutil import copy
+from glob import glob
+
+import pandas as pd
+import json
+
+import redis
+
+from algos.daddy.defines import trade_methods
+from algos.vol_trend.bot import get_position_balance
 
 #create login then interface is done
 def index(request):
@@ -53,10 +58,77 @@ def reverse_status(request):
 
 def vol_trend_interface(request):
     if 'Adminlogin' in request.session:
-        move_prediction = pd.read_csv('data/trades_move.csv').iloc[-1][['Date', 'Type', 'Data']].to_dict()
-        perp_prediction = pd.read_csv('data/trades_perp.csv').iloc[-1][['Date', 'Type', 'Data']].to_dict()
+        r = redis.Redis(host='localhost', port=6379, db=0)
 
-        return render(request, "frontend_interface/vol_index.html", {'move_prediction': move_prediction, 'perp_prediction': perp_prediction})
+        if request.POST:
+            dic = request.POST.dict()
+            print(dic)
+            if 'MOVE_mult' in dic:
+                r.set('MOVE_mult', dic['MOVE_mult'])
+                r.set('PERP_mult', dic['PERP_mult'])
+            elif 'buy_missed_form' in dic:
+                if 'buy_missed_perp' in dic:
+                    r.set('buy_missed_perp', 1)
+                    r.set('perp_long_or_short', dic['perp_long_or_short'])
+                    r.set('price_perp', dic['price_perp'])
+                else:
+                    r.set('buy_missed_perp', 0)
+                    r.set('perp_long_or_short', 0)
+                    r.set('price_perp', 0)
+
+                if 'buy_missed_move' in dic:
+                    r.set('buy_missed_move', 1)
+                    r.set('move_long_or_short', dic['move_long_or_short'])
+                    r.set('price_move', dic['price_move'])
+                else:
+                    r.set('buy_missed_move', 0)
+                    r.set('move_long_or_short', 0)
+                    r.set('price_move', 0)
+
+            elif 'override_form' in dic:
+                if 'override_perp' in dic:
+                    r.set('override_perp', 1)
+                    r.set('perp_override_direction', dic['perp_override_direction'])
+                else:
+                    r.set('override_perp', 0)
+                    r.set('perp_override_direction', 0)
+
+                if 'override_move' in dic:
+                    r.set('override_move', 1)
+                    r.set('move_override_direction', dic['move_override_direction'])
+                else:
+                    r.set('override_move', 0)
+                    r.set('move_override_direction', 0)
+                
+            elif 'enable_close_and_stop_form' in dic:
+                if 'enable_per_close_and_stop' in dic:
+                    r.set('enable_per_close_and_stop', 1)
+                else:
+                    r.set('enable_per_close_and_stop', 0)
+
+                if 'enable_move_close_and_stop' in dic:
+                    r.set('enable_move_close_and_stop', 1)
+                else:
+                    r.set('enable_move_close_and_stop', 0)
+
+        
+        details_df, balances = get_position_balance()
+
+        pars = {}
+
+        for var in ['MOVE_mult', 'PERP_mult', 'buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop']:
+            try:
+                pars[var] = float(r.get(var).decode())
+            except:
+                pars[var] = 0
+
+        
+        try:
+            run_log = open("logs/vol_trend_bot.log").read()
+        except:
+            run_log = ""
+
+        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log})
     else:
         return HttpResponseRedirect('/login')
 

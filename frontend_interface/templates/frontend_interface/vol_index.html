@@ -131,4 +131,143 @@
             <!-- Page Heading -->
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Vol Trend Bot</h1> <h1><a href="/">←</a></h1>
-            </div>
+            </div> 
+
+            <div class="row">
+
+                <!-- Page Heading -->                  
+                  {% for key, value in details_df.items %}
+                  <div class="col-lg-4">
+                    <div class="card mb-4">
+                      <div class="card-body">
+                        <b>{{value.name|upper}}</b>
+                        <br/><br/>
+                        <div style="float:left">
+                            <b>Live</b><br/>
+                            Position: {{value.position}}<br/>
+                            Position Size: {{value.pos_size}}<br/>
+                            Entry Price: {{value.entry}}<br/>
+                        </div>
+                        
+                        <div style="float:right">
+                            <b>Backtest</b><br/>
+                            Position: {{value.backtest_position}}<br/>
+
+                            {% if value.backtest_date != "" %}
+                                Since: {{value.backtest_date}}<br/>
+                                Entry Price: {{value.entry_price}}<br/>
+                            {% endif %}
+                        </div>
+                            
+
+                    
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+    
+    
+              </div>
+
+              <div class="row">
+
+                <!-- Page Heading -->
+                <h4>Settings</h4>
+                <div class="col-lg-12 mb-4">
+                    <div class="card-body">
+                        <table>
+                          <tr>
+                            <td style="width: 25vw; text-align:center;">
+                                <form method="POST">
+                                    {% csrf_token %}            
+                                    Perp Leverage:  <input type="number" name="PERP_mult" style="width: 100px" value="{{pars.PERP_mult}}">
+                                    <br/><br/>         
+                                    Move Leverage:  <input type="number" name="MOVE_mult" style="width: 100px" value="{{pars.MOVE_mult}}">
+                                    <br/><br/>
+                                    
+                                    <input type="submit" value="Update">
+                                    
+                                </form>
+                            </td>
+
+                            <td style="width: 25vw; text-align:center;">
+                              <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="buy_missed_form">
+                                <input type="checkbox" name="buy_missed_perp" value="buy_missed_perp" {% if pars.buy_missed_perp == 1 %} checked {% endif %}> <b>Open missed PERP</b>                           
+                                <br/><br/>
+                                Type:  
+                                <select name="perp_long_or_short" id="cars">
+                                    <option value="1" {% if pars.perp_long_or_short == 1 %} selected {% endif %}>LONG</option>
+                                    <option value="-1" {% if pars.perp_long_or_short == -1 %} selected {% endif %}>SHORT</option>
+                                </select>
+
+                                
+                                Price:  <input type="number" name="price_perp" style="width: 100px" value="{{pars.price_perp}}">
+                                <br/><br/><br/>
+
+                                <input type="checkbox" name="buy_missed_move" value="buy_missed_move" {% if pars.buy_missed_move == 1 %} checked {% endif %}> <b>Open missed MOVE</b>                           
+                                <br/><br/>
+                                Type:  
+                                <select name="move_long_or_short" id="cars">
+                                    <option value="1" {% if pars.move_long_or_short == 1 %} selected {% endif %}>LONG</option>
+                                    <option value="-1" {% if pars.move_long_or_short == -1 %} selected {% endif %}>SHORT</option>
+                                </select>
+
+                                
+                                Price:  <input type="number" name="price_move" style="width: 100px" value="{{pars.price_move}}">
+                                <br/><br/>
+
+                                <input type="submit" value="Update">
+                                
+                              </form>
+                            </td>
+
+                            <td style="width: 25vw; text-align:center;">
+                                <form method="POST">
+                                  {% csrf_token %}
+                                  <input type="hidden" name="override_form">
+                                  <input type="checkbox" name="override_perp" value="override_perp" {% if pars.override_perp == 1 %} checked {% endif %}> <b>Override PERP</b>                           
+                                  <br/><br/>
+                                  Type:  
+                                  <select name="perp_override_direction" id="cars">
+                                      <option value="1" {% if pars.perp_override_direction == 1 %} selected {% endif %}>LONG</option>
+                                      <option value="-1" {% if pars.perp_override_direction == -1 %} selected {% endif %}>SHORT</option>
+                                      <option value="0" {% if pars.perp_override_direction == 0 %} selected {% endif %}>NONE</option>
+                                  </select>
+
+                                  <br/><br/>
+  
+                                  <input type="checkbox" name="override_move" value="override_move" {% if pars.override_move == 1 %} checked {% endif %}> <b>Override MOVE</b>                           
+                                  <br/><br/>
+                                  Type:  
+                                  <select name="move_override_direction" id="cars">
+                                      <option value="1" {% if pars.move_override_direction == 1 %} selected {% endif %}>LONG</option>
+                                      <option value="-1" {% if pars.move_override_direction == -1 %} selected {% endif %}>SHORT</option>
+                                      <option value="0" {% if pars.move_override_direction == 0 %} selected {% endif %}>NONE</option>
+                                  </select>
+  
+                                  <br/><br/>
+                                  <input type="submit" value="Update">
+                                  
+                                </form>
+                            </td>
+
+                            <td style="width: 25vw; text-align:center;">
+                              <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="enable_close_and_stop_form">
+                                <input type="checkbox" name="enable_per_close_and_stop" value="enable_per_close_and_stop" {% if pars.enable_per_close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions PERP</b>
+                                <br/><br/>
+                                <input type="checkbox" name="enable_move_close_and_stop" value="enable_move_close_and_stop" {% if pars.enable_move_close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions MOVE</b>
+                                <br/><br/><br/><br/>
+                                  <input type="submit" value="Update">
+                              </form>
+                            </td>
+                          </tr>
+                                              
+                          </table>
+                    </div>
+
+                    <b>Run Log:</b><br/>
+                    <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea><br/><br/>

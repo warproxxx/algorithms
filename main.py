@@ -54,8 +54,9 @@ async def book(feed, pair, book, timestamp, receipt_timestamp):
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
 
-    if int(r.get('vol_trend_enabled').decode()) == 1 and 'MOVE' in pair:
-        await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
+    if int(r.get('vol_trend_enabled').decode()) == 1:
+        if 'MOVE' in pair or 'BTC-PERP' in pair:
+            await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
 
 PAIRS = pd.read_csv('pairs.csv')
 
