@@ -41,12 +41,10 @@ class liveTrading():
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'PERP',
                                     }
-            self.lev = float(self.r.get('PERP_mult').decode())
         else:
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'MOVE',
                                     }
-            self.lev = float(self.r.get('MOVE_mult').decode())
 
         self.increment = 0.5
                  
@@ -54,9 +52,16 @@ class liveTrading():
 
     def update_parameters(self):
         if self.symbol == "BTC-PERP":
-            self.lev = float(self.r.get('PERP_mult').decode())
+            try:
+                self.lev = float(self.r.get('PERP_mult').decode())
+            except:
+                self.lev = 4
+
         else:
-            self.lev = float(self.r.get('MOVE_mult').decode())
+            try:
+                self.lev = float(self.r.get('MOVE_mult').decode())
+            except:
+                self.lev = 2
 
     def close_open_orders(self, close_stop=False):
         self.update_parameters()

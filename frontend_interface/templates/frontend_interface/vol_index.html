@@ -132,6 +132,7 @@
             <div class="d-sm-flex align-items-center justify-content-between mb-4">
                 <h1 class="h3 mb-0 text-gray-800">Vol Trend Bot</h1> <h1><a href="/">←</a></h1>
             </div> 
+            
 
             <div class="row">
 
@@ -169,8 +170,13 @@
     
               </div>
 
-              <div class="row">
+              <center>
+                MOVE Balance: {{balances.MOVE_BALANCE}}<br/>
+                PERP Balance: {{balances.PERP_BALANCE}}<br/>
+            </center><br/>
 
+              <div class="row">
+                
                 <!-- Page Heading -->
                 <h4>Settings</h4>
                 <div class="col-lg-12 mb-4">
@@ -183,8 +189,7 @@
                                     Perp Leverage:  <input type="number" name="PERP_mult" style="width: 100px" value="{{pars.PERP_mult}}">
                                     <br/><br/>         
                                     Move Leverage:  <input type="number" name="MOVE_mult" style="width: 100px" value="{{pars.MOVE_mult}}">
-                                    <br/><br/>
-                                    
+                                    <br/><br/>                                    
                                     <input type="submit" value="Update">
                                     
                                 </form>
@@ -268,6 +273,6 @@
                                               
                           </table>
                     </div>
-
+                    
                     <b>Run Log:</b><br/>
                     <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea><br/><br/>

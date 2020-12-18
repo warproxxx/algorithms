@@ -10,12 +10,9 @@ import schedule
 import redis
 
 from algos.vol_trend.backtest import perform_backtests
+from algos.vol_trend.live_trader import liveTrading
 
 r = redis.Redis(host='localhost', port=6379, db=0)
-
-def perform():
-    perform_backtests()
-    #then perform others
 
 async def vol_trend_book(feed, pair, book, timestamp, receipt_timestamp):
     bid = float(list(book[BID].keys())[-1])
@@ -25,7 +22,6 @@ async def vol_trend_book(feed, pair, book, timestamp, receipt_timestamp):
     r.set('FTX_{}_best_ask'.format(pair), ask)
 
 def get_position_balance():
-    r = redis.Redis(host='localhost', port=6379, db=0)
     move_backtest = pd.read_csv('data/trades_move.csv')
     perp_backtest = pd.read_csv('data/trades_perp.csv')
 
@@ -56,7 +52,7 @@ def get_position_balance():
         if asset == "BTC-PERP":
             curr_detail['backtest_position'] = 'SHORT' if perp_backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
             curr_detail['backtest_date'] = perp_backtest.iloc[-1]['Date']
-            curr_detail['entry_price'] = perp_backtest.iloc[-1]['Price']
+            curr_detail['entry_price'] = round(perp_backtest.iloc[-1]['Price'], 2)
         else:
             curr_df = move_backtest[move_backtest['Data'] == asset]
 
@@ -85,11 +81,88 @@ def get_position_balance():
 
     return details_df, balances
 
+def get_overriden(details_df):
+    replace_perp = ""
+    replace_move = ""
+
+    try:
+        if int(r.get('override_perp').decode()) == 1:
+            perp = int(r.get('perp_override_direction').decode())
+
+        if perp == 1:
+            replace_perp = 'LONG'
+        elif perp == -1:
+            replace_perp = 'SHORT'
+        else:
+            replace_perp = 'NONE'
+    except:
+        pass
+
+    try:
+        if int(r.get('override_move').decode()) == 1:
+            move = int(r.get('move_override_direction').decode())
+
+        if move == 1:
+            replace_move = 'LONG'
+        elif move == -1:
+            replace_move = 'SHORT'
+        else:
+            replace_move = 'NONE'
+    except:
+        pass
+
+    new_details = pd.DataFrame()
+    for idx, row in details_df.iterrows():
+        if row['name'] == 'BTC-PERP':
+            if replace_perp != "":
+                row['backtest_position'] = replace_perp
+        else:
+            if replace_move != "":
+                if row['backtest_position'] != "NONE":
+                    row['backtest_position'] = replace_move
+                    
+        new_details = new_details.append(row, ignore_index=True)
+
+    return new_details
+
+def daily_tasks():
+    perform_backtests()
+    details_df, balances = get_position_balance()
+    details_df = get_overriden(details_df)
+    
+    details_df['target_pos'] = details_df['backtest_position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
+    details_df['curr_pos'] = details_df['position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
+
+    to_close = details_df[details_df['target_pos'] == 0]
+
+    for idx, row in to_close.iterrows():
+        if row['curr_pos'] != 0:
+            lt = liveTrading(symbol=row['name'])
+            lt.fill_order('close', row['position'].lower())
+    
+    to_open = details_df[details_df['target_pos'] != 0]
+
+    for idx, row in to_open.iterrows():
+        if row['target_pos'] == row['curr_pos']:
+            pass
+        elif row['target_pos'] * row['curr_pos'] == -1:
+            lt = liveTrading(symbol=row['name'])
+            lt.fill_order('close', row['position'].lower())
+            lt.fill_order('open', row['backtest_position'].lower())
+        else:
+            lt = liveTrading(symbol=row['name'])
+            lt.fill_order('open', row['backtest_position'].lower())
+
 def start_schedlued():
     while True:
         schedule.run_pending()
         time.sleep(1)
 
+        #add close all positions and open missed
+        buy_missed_perp = float(r.get('buy_missed_perp').decode())
+
 def vol_bot():
+    schedule.every().day.at("00:00").do(daily_tasks)
+
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
