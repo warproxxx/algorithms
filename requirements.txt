@@ -1,0 +1,12 @@
+git+git://github.com/bmoscon/cryptofeed.git
+ta
+requests
+websockets
+ccxt
+backtrader
+redis
+scipy
+plotly
+Django==2.2.4
+bcrypt
+schedule

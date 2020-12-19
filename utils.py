@@ -38,7 +38,6 @@ def flush_redis(r, EXCHANGES):
                 backups[var.format(details['exchange'])] = r.get(var.format(details['exchange'])).decode()
             except:
                 pass
-    print(backups)
     r.flushdb()
 
     for idx, row in backups.items():
