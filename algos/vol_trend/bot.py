@@ -169,8 +169,8 @@ def get_overriden(details_df):
     replace_move = ""
 
     try:
-        if int(r.get('override_perp').decode()) == 1:
-            perp = int(r.get('perp_override_direction').decode())
+        if float(r.get('override_perp').decode()) == 1:
+            perp = float(r.get('perp_override_direction').decode())
 
         if perp == 1:
             replace_perp = 'LONG'
@@ -182,8 +182,8 @@ def get_overriden(details_df):
         pass
 
     try:
-        if int(r.get('override_move').decode()) == 1:
-            move = int(r.get('move_override_direction').decode())
+        if float(r.get('override_move').decode()) == 1:
+            move = float(r.get('move_override_direction').decode())
 
         if move == 1:
             replace_move = 'LONG'
@@ -215,17 +215,17 @@ def daily_tasks():
     stop_move = 0
 
     try:
-        enabled = int(r.get('vol_trend_enabled').decode())
+        enabled = float(r.get('vol_trend_enabled').decode())
     except:
         pass
 
     try:
-        stop_perp = int(r.get('vol_trend_enabled').decode())
+        stop_perp = float(r.get('vol_trend_enabled').decode())
     except:
         pass
 
     try:
-        stop_move = int(r.get('vol_trend_enabled').decode())
+        stop_move = float(r.get('vol_trend_enabled').decode())
     except:
         pass
 
@@ -244,7 +244,7 @@ def daily_tasks():
             else:
                 curr_stop = stop_move
 
-            if curr_stop = 0:
+            if curr_stop == 0:
                 if row['curr_pos'] != 0:
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('close', row['position'].lower())
@@ -257,7 +257,7 @@ def daily_tasks():
             else:
                 curr_stop = stop_move
 
-            if curr_stop = 0:
+            if curr_stop == 0:
                 if row['target_pos'] == row['curr_pos']:
                     pass
                 elif row['target_pos'] * row['curr_pos'] == -1:

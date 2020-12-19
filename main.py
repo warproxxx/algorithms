@@ -38,7 +38,7 @@ def bot():
     daddy_thread.start()
 
     while True:
-        if int(r.get('daddy_enabled').decode()) != 1:
+        if float(r.get('daddy_enabled').decode()) != 1:
             daddy_thread.terminate()
 
         time.sleep(1)  
@@ -47,17 +47,17 @@ bot_thread = threading.Thread(target=bot)
 bot_thread.start()
 
 async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):  
-    if int(r.get('daddy_enabled').decode()) == 1:
+    if float(r.get('daddy_enabled').decode()) == 1:
         await daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
     
     if feed == 'FTX':
         await vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
 
 async def book(feed, pair, book, timestamp, receipt_timestamp):    
-    if int(r.get('daddy_enabled').decode()) == 1:
+    if float(r.get('daddy_enabled').decode()) == 1:
         await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
 
-    if int(r.get('vol_trend_enabled').decode()) == 1:
+    if float(r.get('vol_trend_enabled').decode()) == 1:
         if feed == 'FTX':
             await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
 

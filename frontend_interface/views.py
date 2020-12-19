@@ -29,13 +29,12 @@ def index(request):
             config['code_name'] = file.split('/')[-1]
 
             try:
-                config['enabled'] = int(r.get('{}_enabled'.format(config['code_name'])).decode())
+                config['enabled'] = float(r.get('{}_enabled'.format(config['code_name'])).decode())
             except:
                 config['enabled'] = 0
 
             algo_details.append(config)
 
-        print(algo_details)
         return render(request, "frontend_interface/index.html", {'algos': algo_details})
     else:
         return HttpResponseRedirect('/login')
@@ -45,7 +44,7 @@ def reverse_status(request):
         r = redis.Redis(host='localhost', port=6379, db=0)
         var_name = request.GET['code_name'] + "_enabled"
         try:
-            old_status = int(r.get(var_name).decode())
+            old_status = float(r.get(var_name).decode())
         except:
             old_status = 0
 
@@ -62,7 +61,6 @@ def vol_trend_interface(request):
 
         if request.POST:
             dic = request.POST.dict()
-            print(dic)
             if 'MOVE_mult' in dic:
                 r.set('MOVE_mult', dic['MOVE_mult'])
                 r.set('PERP_mult', dic['PERP_mult'])
@@ -156,18 +154,18 @@ def daddy_interface(request):
                 parameters = json.load(open('algos/daddy/parameters.json'))
                 new_pars = pd.Series(dic)[parameters.keys()].to_dict()
 
-                new_pars['mult'] = int(new_pars['mult'])
+                new_pars['mult'] = float(new_pars['mult'])
                 new_pars['percentage_large'] = float(new_pars['percentage_large'])
                 new_pars['buy_percentage_large'] = float(new_pars['buy_percentage_large'])
-                new_pars['macd'] = int(new_pars['macd'])
+                new_pars['macd'] = float(new_pars['macd'])
                 new_pars['rsi'] = float(new_pars['rsi'])
-                new_pars['previous_days'] = int(new_pars['previous_days'])
-                new_pars['position_since'] = int(new_pars['position_since'])
-                new_pars['position_since_diff'] = int(new_pars['position_since_diff'])
+                new_pars['previous_days'] = float(new_pars['previous_days'])
+                new_pars['position_since'] = float(new_pars['position_since'])
+                new_pars['position_since_diff'] = float(new_pars['position_since_diff'])
                 new_pars['change'] = float(new_pars['change'])
                 new_pars['pnl_percentage'] = float(new_pars['pnl_percentage'])
-                new_pars['close_percentage'] = int(new_pars['close_percentage'])
-                new_pars['profit_macd'] = int(new_pars['profit_macd'])
+                new_pars['close_percentage'] = float(new_pars['close_percentage'])
+                new_pars['profit_macd'] = float(new_pars['profit_macd'])
                 new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
                 new_pars['name'] = dic['pars_name']
 
@@ -292,22 +290,22 @@ def daddy_interface(request):
         copy(plotly_file, new_plotly_file)
 
         try:
-            buy_missed = int(r.get('buy_missed').decode())
+            buy_missed = float(r.get('buy_missed').decode())
         except:
             buy_missed = 0
 
         try:
-            buy_at = int(r.get('buy_at').decode())
+            buy_at = float(r.get('buy_at').decode())
         except:
             buy_at = 0
         
         try:
-            close_and_stop = int(r.get('close_and_stop').decode())
+            close_and_stop = float(r.get('close_and_stop').decode())
         except:
             close_and_stop = 0
 
         try:
-            stop_trading = int(r.get('stop_trading').decode())
+            stop_trading = float(r.get('stop_trading').decode())
         except:
             stop_trading = 0
             
@@ -336,9 +334,9 @@ def addParms(request):
             new_pars['buy_percentage_large'] = float(req['bp_lar'])
             new_pars['macd'] = float(req['macd'])
             new_pars['rsi'] = float(req['rsi'])
-            new_pars['previous_days'] = int(float(req['prev_d']))
-            new_pars['position_since'] = int(float(req['pos_s']))
-            new_pars['position_since_diff'] = int(float(req['pos_diff']))
+            new_pars['previous_days'] = float(float(req['prev_d']))
+            new_pars['position_since'] = float(float(req['pos_s']))
+            new_pars['position_since_diff'] = float(float(req['pos_diff']))
             new_pars['change'] = float(req['change'])
             new_pars['pnl_percentage'] = float(req['pnl_per'])
             new_pars['close_percentage'] = float(req['close_p'])
