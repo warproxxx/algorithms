@@ -19,7 +19,7 @@ import threading
 
 from utils import flush_redis
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book
-from algos.vol_trend.bot import vol_bot, vol_trend_book
+from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book
 
 from utils import print
 
@@ -49,13 +49,16 @@ bot_thread.start()
 async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):  
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
+    
+    if feed == 'FTX':
+        await vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
 
 async def book(feed, pair, book, timestamp, receipt_timestamp):    
     if int(r.get('daddy_enabled').decode()) == 1:
         await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
 
     if int(r.get('vol_trend_enabled').decode()) == 1:
-        if 'MOVE' in pair or 'BTC-PERP' in pair:
+        if feed == 'FTX':
             await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
 
 PAIRS = pd.read_csv('pairs.csv')

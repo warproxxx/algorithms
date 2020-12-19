@@ -25,7 +25,7 @@ def print(to_print):
 def flush_redis(r, EXCHANGES):
     backups = {}
 
-    for var in ['daddy_enabled', 'vol_trend_enabled', 'buy_missed', 'buy_at', 'close_and_stop', 'stop_trading', 'MOVE_mult', 'PERP_mult', 'buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop']:
+    for var in ['daddy_enabled', 'vol_trend_enabled', 'buy_missed', 'buy_at', 'close_and_stop', 'stop_trading', 'MOVE_mult', 'PERP_mult', 'buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop', 'stop_perp', 'stop_move']:
         try:
             backups[var] = float(r.get(var).decode())
         except:

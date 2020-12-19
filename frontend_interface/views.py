@@ -111,12 +111,22 @@ def vol_trend_interface(request):
                 else:
                     r.set('enable_move_close_and_stop', 0)
 
+                if 'stop_perp' in dic:
+                    r.set('stop_perp', 1)
+                else:
+                    r.set('stop_perp', 0)
+                
+                if 'stop_move' in dic:
+                    r.set('stop_move', 1)
+                else:
+                    r.set('stop_move', 0)
+
         
         details_df, balances = get_position_balance()
 
         pars = {}
 
-        for var in ['MOVE_mult', 'PERP_mult', 'buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop']:
+        for var in ['MOVE_mult', 'PERP_mult', 'buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop', 'stop_perp', 'stop_move']:
             try:
                 pars[var] = float(r.get(var).decode())
             except:

@@ -262,9 +262,14 @@
                               <form method="POST">
                                 {% csrf_token %}
                                 <input type="hidden" name="enable_close_and_stop_form">
-                                <input type="checkbox" name="enable_per_close_and_stop" value="enable_per_close_and_stop" {% if pars.enable_per_close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions PERP</b>
+                                <input type="checkbox" name="enable_per_close_and_stop" value="enable_per_close_and_stop" {% if pars.enable_per_close_and_stop == 1 %} checked {% endif %}> <b>Close and Stop PERP</b>
                                 <br/><br/>
-                                <input type="checkbox" name="enable_move_close_and_stop" value="enable_move_close_and_stop" {% if pars.enable_move_close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions MOVE</b>
+                                <input type="checkbox" name="stop_perp" value="stop_perp" {% if pars.stop_perp == 1 %} checked {% endif %}> <b>Stop PERP</b>
+                                <br/><br/><br/><br/>
+
+                                <input type="checkbox" name="enable_move_close_and_stop" value="enable_move_close_and_stop" {% if pars.enable_move_close_and_stop == 1 %} checked {% endif %}> <b>Close and Stop MOVE</b>
+                                <br/><br/>
+                                <input type="checkbox" name="stop_move" value="stop_move" {% if pars.stop_move == 1 %} checked {% endif %}> <b>Stop MOVE</b>
                                 <br/><br/><br/><br/>
                                   <input type="submit" value="Update">
                               </form>

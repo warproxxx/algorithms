@@ -99,8 +99,6 @@ def custom_buy():
                 r.set('{}_position_since'.format(exchange_name), 1)
                 lt.add_stop_loss()
 
-    r.set('buy_missed', 0)
-
 def custom_sell():
     print("Making a custom sell")
     EXCHANGES = pd.read_csv('exchanges.csv')
@@ -115,10 +113,6 @@ def custom_sell():
                 lt.close_stop_order()
                 lt.fill_order('sell', method=curr_exchange['sell_method'])
                 r.set('{}_position_since'.format(exchange_name), 0)
-                
-
-    r.set('close_and_stop', 0)
-    r.set('stop_trading', 1)
 
 def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call):
     position_since = 0
@@ -394,10 +388,13 @@ async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, 
 
             if buy_missed == 1:
                 if price < buy_at:
+                    r.set('buy_missed', 0)
                     custom_buy_thread = threading.Thread(target=custom_buy)
                     custom_buy_thread.start()
 
             if close_and_stop == 1:
+                r.set('close_and_stop', 0)
+                r.set('stop_trading', 1)
                 custom_sell_thread = threading.Thread(target=custom_sell)
                 custom_sell_thread.start()   
 

@@ -21,6 +21,89 @@ async def vol_trend_book(feed, pair, book, timestamp, receipt_timestamp):
     r.set('FTX_{}_best_bid'.format(pair), bid)
     r.set('FTX_{}_best_ask'.format(pair), ask)
 
+async def vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
+
+    buy_missed_perp = 0
+    buy_missed_move = 0
+    enable_per_close_and_stop = 0
+    enable_move_close_and_stop = 0
+
+    try:
+        buy_missed_perp = float(r.get('buy_missed_perp').decode())
+        perp_long_or_short = float(r.get('perp_long_or_short').decode())
+        price_perp = float(r.get('price_perp').decode())
+    except:
+        pass
+
+    try:
+        buy_missed_move = float(r.get('buy_missed_move').decode())
+        move_long_or_short = float(r.get('move_long_or_short').decode())
+        price_move = float(r.get('price_move').decode())
+    except:
+        pass
+
+    try:
+        enable_per_close_and_stop = float(r.get('enable_per_close_and_stop').decode())
+    except:
+        pass
+
+    try:
+        enable_move_close_and_stop = float(r.get('enable_move_close_and_stop').decode())
+    except:
+        pass
+    
+    if feed == 'BTC-PERP':
+        if buy_missed_perp == 1:
+            r.set('buy_missed_perp', 0)
+            lt = liveTrading(symbol='BTC-PERP')
+            pos, _, _ = lt.get_position()
+
+            type = "open" if pos == "NONE" else "close"
+
+            if perp_long_or_short == 1:
+                if price < price_perp:
+                    lt.fill_order(type, 'buy')
+            else:
+                if price > price_perp:
+                    lt.fill_order(type, 'sell')
+        
+        if enable_per_close_and_stop == 1:
+            r.set('enable_per_close_and_stop', 0)
+            r.set('stop_perp', 1)
+            lt = liveTrading(symbol='BTC-PERP')
+            pos, _, _ = lt.get_position()
+            lt.fill_order('close', pos.lower())
+
+            
+    elif 'MOVE' in feed:
+        if buy_missed_move == 1:
+            r.set('buy_missed_move', 0)
+            pair = get_curr_move_pair()
+            lt = liveTrading(symbol=pair)
+            pos, _, _ = lt.get_position()
+
+            type = "open" if pos == "NONE" else "close"
+
+            if move_long_or_short == 1:
+                if price < price_move:
+                    lt.fill_order(type, 'buy')
+            else:
+                if price > price_move:
+                    lt.fill_order(type, 'sell')
+
+        if enable_move_close_and_stop == 1:
+            r.set('enable_move_close_and_stop', 0)
+            r.set('stop_move', 1)
+            pair = get_curr_move_pair()
+            lt = liveTrading(symbol=pair)
+            pos, _, _ = lt.get_position()
+            lt.fill_order('close', pos.lower())
+
+def get_curr_move_pair():
+    details_df, balances = get_position_balance()
+    moves = details_df[details_df['name'].str.contains('MOVE')]
+    return moves[moves['backtest_position'] != "NONE"].iloc[0]['name']
+
 def get_position_balance():
     move_backtest = pd.read_csv('data/trades_move.csv')
     perp_backtest = pd.read_csv('data/trades_perp.csv')
@@ -127,39 +210,68 @@ def get_overriden(details_df):
 
 def daily_tasks():
     perform_backtests()
-    details_df, balances = get_position_balance()
-    details_df = get_overriden(details_df)
-    
-    details_df['target_pos'] = details_df['backtest_position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
-    details_df['curr_pos'] = details_df['position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
+    enabled = 1
+    stop_perp = 0
+    stop_move = 0
 
-    to_close = details_df[details_df['target_pos'] == 0]
+    try:
+        enabled = int(r.get('vol_trend_enabled').decode())
+    except:
+        pass
 
-    for idx, row in to_close.iterrows():
-        if row['curr_pos'] != 0:
-            lt = liveTrading(symbol=row['name'])
-            lt.fill_order('close', row['position'].lower())
-    
-    to_open = details_df[details_df['target_pos'] != 0]
+    try:
+        stop_perp = int(r.get('vol_trend_enabled').decode())
+    except:
+        pass
 
-    for idx, row in to_open.iterrows():
-        if row['target_pos'] == row['curr_pos']:
-            pass
-        elif row['target_pos'] * row['curr_pos'] == -1:
-            lt = liveTrading(symbol=row['name'])
-            lt.fill_order('close', row['position'].lower())
-            lt.fill_order('open', row['backtest_position'].lower())
-        else:
-            lt = liveTrading(symbol=row['name'])
-            lt.fill_order('open', row['backtest_position'].lower())
+    try:
+        stop_move = int(r.get('vol_trend_enabled').decode())
+    except:
+        pass
+
+    if enabled == 1:
+        details_df, balances = get_position_balance()
+        details_df = get_overriden(details_df)
+        
+        details_df['target_pos'] = details_df['backtest_position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
+        details_df['curr_pos'] = details_df['position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
+
+        to_close = details_df[details_df['target_pos'] == 0]
+
+        for idx, row in to_close.iterrows():
+            if row['name'] == 'BTC-PERP':
+                curr_stop = stop_perp
+            else:
+                curr_stop = stop_move
+
+            if curr_stop = 0:
+                if row['curr_pos'] != 0:
+                    lt = liveTrading(symbol=row['name'])
+                    lt.fill_order('close', row['position'].lower())
+        
+        to_open = details_df[details_df['target_pos'] != 0]
+
+        for idx, row in to_open.iterrows():
+            if row['name'] == 'BTC-PERP':
+                curr_stop = stop_perp
+            else:
+                curr_stop = stop_move
+
+            if curr_stop = 0:
+                if row['target_pos'] == row['curr_pos']:
+                    pass
+                elif row['target_pos'] * row['curr_pos'] == -1:
+                    lt = liveTrading(symbol=row['name'])
+                    lt.fill_order('close', row['position'].lower())
+                    lt.fill_order('open', row['backtest_position'].lower())
+                else:
+                    lt = liveTrading(symbol=row['name'])
+                    lt.fill_order('open', row['backtest_position'].lower())
 
 def start_schedlued():
     while True:
         schedule.run_pending()
         time.sleep(1)
-
-        #add close all positions and open missed
-        buy_missed_perp = float(r.get('buy_missed_perp').decode())
 
 def vol_bot():
     schedule.every().day.at("00:00").do(daily_tasks)
