@@ -281,13 +281,19 @@ def daddy_interface(request):
 
         all_parameters_json = json.dumps(all_parameters)
 
-        plotly_file = 'data/plot.html'
-        new_plotly_file = 'frontend_interface/static/plotly.html'
-        copy(plotly_file, new_plotly_file)
+        try:
+            plotly_file = 'data/plot.html'
+            new_plotly_file = 'frontend_interface/static/plotly.html'
+            copy(plotly_file, new_plotly_file)
+        except:
+            pass
 
-        plotly_file = 'data/plot_unbiased.html'
-        new_plotly_file = 'frontend_interface/static/plot_unbiased.html'
-        copy(plotly_file, new_plotly_file)
+        try:
+            plotly_file = 'data/plot_unbiased.html'
+            new_plotly_file = 'frontend_interface/static/plot_unbiased.html'
+            copy(plotly_file, new_plotly_file)
+        except:
+            pass
 
         try:
             buy_missed = float(r.get('buy_missed').decode())
@@ -339,7 +345,7 @@ def addParms(request):
             new_pars['position_since_diff'] = float(float(req['pos_diff']))
             new_pars['change'] = float(req['change'])
             new_pars['pnl_percentage'] = float(req['pnl_per'])
-            new_pars['close_percentage'] = float(req['close_p'])
+            ew_pars['close_percentage'] = float(req['close_p'])
             new_pars['profit_macd'] = float(req['p_macd'])
             new_pars['stop_percentage'] = float(req['stop'])
             new_pars['name'] = req['name']
