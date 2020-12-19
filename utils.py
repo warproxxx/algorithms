@@ -2,6 +2,9 @@ import sys
 import inspect
 import os
 
+if not os.path.isdir("logs/"):
+    os.makedirs("logs/")
+
 def print(to_print):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
