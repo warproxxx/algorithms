@@ -37,22 +37,22 @@ for idx, details in EXCHANGES.iterrows():
 
 def get_interferance_vars():
     try:
-        buy_missed = int(r.get('buy_missed').decode())
+        buy_missed = float(r.get('buy_missed').decode())
     except:
         buy_missed = 0
 
     try:
-        buy_at = int(r.get('buy_at').decode())
+        buy_at = float(r.get('buy_at').decode())
     except:
         buy_at = 0
     
     try:
-        close_and_stop = int(r.get('close_and_stop').decode())
+        close_and_stop = float(r.get('close_and_stop').decode())
     except:
         close_and_stop = 0
 
     try:
-        stop_trading = int(r.get('stop_trading').decode())
+        stop_trading = float(r.get('stop_trading').decode())
     except:
         stop_trading = 0
 
@@ -126,7 +126,7 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
 
     if stop_trading == 0:
         if current_pos == "LONG":
-            position_since = int(r.get('{}_position_since'.format(exchange_name)).decode())
+            position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
             position_since = position_since + 1
             r.set('{}_position_since'.format(exchange_name), position_since)
 
@@ -134,7 +134,7 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
             if manual_call == False:
                 btc_price = float(r.get('bitmex_best_ask').decode())
             else:
-                if int(r.get('got_this_turn').decode()) == 0:
+                if float(r.get('got_this_turn').decode()) == 0:
 
                     prices = {}
                     try:
@@ -184,7 +184,7 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
                     r.set('{}_position_since'.format(exchange_name), 1)
                     lt.add_stop_loss()
 
-    position_since = int(r.get('{}_position_since'.format(exchange_name)).decode())
+    position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
     avgEntryPrice = float(r.get('{}_avgEntryPrice'.format(exchange_name)).decode())
     print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(exchange_name, avgEntryPrice, round(pnl_percentage,2), position_since))
 
@@ -351,7 +351,7 @@ def check_calling():
     while True:
         time.sleep(1)
 
-        if int(r.get('first_execution').decode()) == 0:
+        if float(r.get('first_execution').decode()) == 0:
             curr_time = datetime.datetime.utcnow()
 
             df = pd.DataFrame(pd.Series({'Time': curr_time})).T
@@ -373,7 +373,7 @@ async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, 
         current_full_time = str(timestamp.minute)
         current_time_check = current_full_time[1:]
 
-        if int(r.get('first_execution').decode()) == 0:
+        if float(r.get('first_execution').decode()) == 0:
             if feed == 'BITMEX':
                 foreignNotional = amount
                 homeNotional = round(amount/price, 5)
@@ -399,7 +399,7 @@ async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, 
                 custom_sell_thread.start()   
 
             if current_full_time == '8' or current_time_check == '8' or current_full_time == '9' or current_time_check == '9':
-                if int(r.get('first_nine').decode()) == 1:
+                if float(r.get('first_nine').decode()) == 1:
 
                     if r.get(save_file) == None:
                         r.set('first_nine', 0)
