@@ -3,5 +3,6 @@ __pycache__/
 *$py.class
 *.log
 logs/
+old_logs/
 data/
 frontend_interface/static/*.html
