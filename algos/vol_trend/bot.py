@@ -270,7 +270,6 @@ def daily_tasks():
 
 def start_schedlued():
     while True:
-        print('running vol bot')
         schedule.run_pending()
         time.sleep(1)
 
