@@ -345,7 +345,7 @@ def addParms(request):
             new_pars['position_since_diff'] = float(float(req['pos_diff']))
             new_pars['change'] = float(req['change'])
             new_pars['pnl_percentage'] = float(req['pnl_per'])
-            ew_pars['close_percentage'] = float(req['close_p'])
+            new_pars['close_percentage'] = float(req['close_p'])
             new_pars['profit_macd'] = float(req['p_macd'])
             new_pars['stop_percentage'] = float(req['stop'])
             new_pars['name'] = req['name']
