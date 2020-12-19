@@ -307,7 +307,7 @@ def single_process(manual_call=False):
 
         changes =  []
         
-        for i in range(0, -1 * parameters['previous_days'], -1):
+        for i in range(0, -1 * int(parameters['previous_days']), -1):
             prev_change = round(price_df.iloc[i-1]['change'], 3)
             changes.append(prev_change)
             
