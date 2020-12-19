@@ -26,6 +26,9 @@ from utils import print
 EXCHANGES = pd.read_csv('exchanges.csv')
 r = redis.Redis(host='localhost', port=6379, db=0)
 
+if os.path.isdir("logs/"):
+    shutil.rmtree("logs/")
+
 if not os.path.isdir("logs/"):
     os.makedirs("logs/")
 
