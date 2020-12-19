@@ -353,7 +353,7 @@ def addParms(request):
             with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
 
-            return HttpResponseRedirect('/')
+            return HttpResponseRedirect('/daddy')
         else:
             return HttpResponse("Fuck Off")
 
