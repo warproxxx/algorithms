@@ -37,9 +37,25 @@ def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
     daddy_thread.start()
 
+    vol_thread = multiprocessing.Process(target=vol_bot, args=())
+    vol_thread.start()
+
     while True:
         if float(r.get('daddy_enabled').decode()) != 1:
             daddy_thread.terminate()
+
+        if daddy_thread.is_alive() == False:
+            if float(r.get('daddy_enabled').decode()) == 1:
+                daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
+                daddy_thread.start()
+
+        if float(r.get('vol_trend_enabled').decode()) != 1:
+            vol_thread.terminate()
+
+        if vol_thread.is_alive() == False:
+            if float(r.get('vol_trend_enabled').decode()) == 1:
+                vol_thread = multiprocessing.Process(target=vol_bot, args=())
+                vol_thread.start()
 
         time.sleep(1)  
 
