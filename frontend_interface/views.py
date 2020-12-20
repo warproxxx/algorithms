@@ -328,6 +328,16 @@ def delete(request):
         os.remove(file)
     return HttpResponseRedirect('/daddy')
 
+def clearLog(request):
+    req = request.GET.dict()
+    try:
+        file = "logs/" + req['from'] + "_bot.log"
+        open(file, 'w').close()
+    except:
+        pass
+    
+    return HttpResponseRedirect('/' + req['from'])
+
 def addParms(request):
     req = request.GET.dict()
 
