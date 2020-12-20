@@ -626,14 +626,14 @@ class liveTrading():
                 if 'info' in order:
                     if 'text' in order['info']:
                         if "execInst of ParticipateDoNotInitiate" in order['info']['text']:
-                            return []
+                            return self.limit_trade(order_type, amount, price)
 
                 return order
             elif self.exchange_name == 'binance_futures':
                 order = self.exchange.fapiPrivatePostOrder({'symbol': self.symbol_here, 'type': 'LIMIT', 'side': order_type.upper(),'price': price, 'quantity': str(amount), 'timeInForce': 'GTX'})
 
                 if self.exchange.fapiPrivate_get_order(order)['status'] == 'EXPIRED':
-                    return []
+                    return self.limit_trade(order_type, amount, price)
 
                 return order
 
@@ -652,7 +652,7 @@ class liveTrading():
                 order = self.exchange.fetch_order(order_id, symbol=self.symbol)
 
                 if order['info']['order_status'] == 'Cancelled':
-                    return []
+                    return self.limit_trade(order_type, amount, price)
 
                 return order
             elif self.exchange_name == 'ftx':
@@ -664,7 +664,7 @@ class liveTrading():
                 order = self.exchange.fetch_order(order['info']['id'])
 
                 if order['status'] == 'canceled':
-                    return []
+                    return self.limit_trade(order_type, amount, price)
 
                 return order
             elif self.exchange_name == 'okex':
@@ -677,7 +677,7 @@ class liveTrading():
                 order = self.exchange.swap_get_orders_instrument_id_order_id({'instrument_id': self.symbol, 'order_id': order['order_id']})
 
                 if order['status'] == '-1':
-                    return []
+                    return self.limit_trade(order_type, amount, price)
                 
                 return order
             elif self.exchange_name == 'huobi_swap':
@@ -695,7 +695,7 @@ class liveTrading():
                 order = self.exchange.send_post_request('/swap-api/v1/swap_order_info', {'contract_code': self.symbol, 'order_id': order_id})
 
                 if order['data'][0]['status'] == 7:
-                    return []
+                    return self.limit_trade(order_type, amount, price)
 
                 return order
         else:
