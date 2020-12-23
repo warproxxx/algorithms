@@ -25,7 +25,7 @@ SECRET_KEY = 'u94vnfao%l&#if3!5awp+9y@z)1d6(wsl*5*g60l*s^-0k=lpl'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['algos.parsvirilis.com', '127.0.0.1']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
