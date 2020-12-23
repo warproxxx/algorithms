@@ -371,6 +371,9 @@ class priceStrategy(bt.Strategy):
                 order.addinfo(name=price_data._name)
 
 def perform_backtests():
+    if not os.path.isdir("data/"):
+        os.makedirs("data/")
+        
     price_df = get_df('BTC/USD')
     new_price_df = add_volatility(price_df)    
     new_price_df.to_csv('data/price_df.csv', index=None)
