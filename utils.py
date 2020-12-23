@@ -15,6 +15,9 @@ def print(to_print):
     else:
         filename = dirs[-1].split(".")[0]
 
+    if filename == "daddy_live_trader":
+        filename = "daddy_bot"
+
     if isinstance(to_print, str) == False:
         try:
             to_print = "{}".format(to_print)
