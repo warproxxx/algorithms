@@ -2,8 +2,6 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse 
 from .forms import adminLoginForm
 
-import bcrypt
-
 import os
 from shutil import copy
 from glob import glob
@@ -381,15 +379,12 @@ def adminLogin(request):
             form = adminLoginForm(request.POST)
             if form.is_valid():
                 uname  = form.cleaned_data.get("username")
-                pword  = form.cleaned_data.get('password').encode('UTF-8')
+                pword  = form.cleaned_data.get('password')
 
                 username = os.getenv('DJANGO_USERNAME')
-                actual_pword = os.getenv('DJANGO_PASSWORD').encode('utf-8')
+                actual_pword = os.getenv('DJANGO_PASSWORD')
 
-                print(username)
-                print(actual_pword)
-                
-                if uname ==username and bcrypt.checkpw(pword, actual_pword):
+                if uname == username and pword == actual_pword:
                         request.session["Adminlogin"] = "True"
                         return HttpResponseRedirect('/')
                 else:
