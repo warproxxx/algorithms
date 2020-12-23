@@ -383,9 +383,10 @@ def adminLogin(request):
                 uname  = form.cleaned_data.get("username")
                 pword  = form.cleaned_data.get('password').encode('UTF-8')
 
-                actual_pword = b'$2b$12$9xjZ6u3l6vRbzit5SNFUd.C0lBAlJzZeZqjclbe6.IntdUZXqO8TW'
+                username = os.getenv('DJANGO_USERNAME')
+                actual_pword = os.getenv('DJANGO_PASSWORD').encode('utf-8')
                 
-                if uname =="daniel" and bcrypt.checkpw(pword, actual_pword):
+                if uname ==username and bcrypt.checkpw(pword, actual_pword):
                         request.session["Adminlogin"] = "True"
                         return HttpResponseRedirect('/')
                 else:
