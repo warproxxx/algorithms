@@ -385,6 +385,9 @@ def adminLogin(request):
 
                 username = os.getenv('DJANGO_USERNAME')
                 actual_pword = os.getenv('DJANGO_PASSWORD').encode('utf-8')
+
+                print(username)
+                print(actual_pword)
                 
                 if uname ==username and bcrypt.checkpw(pword, actual_pword):
                         request.session["Adminlogin"] = "True"
