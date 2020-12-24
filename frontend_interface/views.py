@@ -60,8 +60,12 @@ def vol_trend_interface(request):
         if request.POST:
             dic = request.POST.dict()
             if 'MOVE_mult' in dic:
+                print(dic)
                 r.set('MOVE_mult', dic['MOVE_mult'])
+                r.set('MOVE_method', dic['MOVE_method'])
+
                 r.set('PERP_mult', dic['PERP_mult'])
+                r.set('PERP_method', dic['PERP_method'])
             elif 'buy_missed_form' in dic:
                 if 'buy_missed_perp' in dic:
                     r.set('buy_missed_perp', 1)
@@ -128,13 +132,19 @@ def vol_trend_interface(request):
             except:
                 pars[var] = 0
 
+        for var in ['MOVE_method', 'PERP_method']:
+            try:
+                pars[var] = r.get(var).decode()
+            except:
+                pars[var] = "now"
         
         try:
             run_log = open("logs/vol_trend_bot.log").read()
         except:
             run_log = ""
 
-        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log})
+        trade_methods = ['attempt_limit', '5sec_average', '10sec_average', '1min_average', '10min_average', 'now']
+        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods})
     else:
         return HttpResponseRedirect('/login')
 

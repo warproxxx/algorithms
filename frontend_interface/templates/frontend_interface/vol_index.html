@@ -194,10 +194,37 @@
                           <tr>
                             <td style="width: 25vw; text-align:center;">
                                 <form method="POST">
-                                    {% csrf_token %}            
-                                    Perp Leverage:  <input type="number" name="PERP_mult" style="width: 100px" value="{{pars.PERP_mult}}">
-                                    <br/><br/>         
-                                    Move Leverage:  <input type="number" name="MOVE_mult" style="width: 100px" value="{{pars.MOVE_mult}}">
+                                    {% csrf_token %}
+                                    <b>PERP</b><br/>            
+                                    Leverage:  <input type="number" name="PERP_mult" style="width: 60px" value="{{pars.PERP_mult}}">
+                                         
+                                    Method: <select name="PERP_method" id="PERP_method">
+                                        {% for trade_method in trade_methods %}
+                                            <option value="{{trade_method}}">{{trade_method}}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                    <script>
+                                        document.getElementById("PERP_method").value = "{{pars.PERP_method}}"; 
+                                    </script>
+
+                                    <br/><br/>
+                                    <b>MOVE</b><br/>
+
+                                    Leverage:  <input type="number" name="MOVE_mult" style="width: 60px" value="{{pars.MOVE_mult}}">
+
+                                    Method: <select name="MOVE_method" id="MOVE_method">
+                                        {% for trade_method in trade_methods %}
+                                            <option value="{{trade_method}}">{{trade_method}}</option>
+                                        {% endfor %}
+                                    </select>
+
+                                    <script>
+                                        document.getElementById("MOVE_method").value = "{{pars.MOVE_method}}"; 
+                                    </script>
+
+                                    
+
                                     <br/><br/>                                    
                                     <input type="submit" value="Update">
                                     

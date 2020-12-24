@@ -1,3 +1,1 @@
-Update on interface after opening position. Maybe just calling perform_backtests() after buying is enough for that
-
-MAybe round the balances
+Maybe add the buy sell mechanism on the interface too Yeah that will be easy when inside live_trader itself

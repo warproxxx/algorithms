@@ -37,18 +37,29 @@ class liveTrading():
                         'options': {'defaultMarket': 'futures'}
                     })
 
+        self.method = "now"
+
         if symbol == "BTC-PERP":
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'PERP',
                                     }
+            try:
+                self.method = self.r.get('PERP_method').decode()
+            except:
+                pass
         else:
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': 'MOVE',
                                     }
+            try:
+                self.method = self.r.get('MOVE_method').decode()
+            except:
+                pass
 
         self.increment = 0.5
                  
         self.update_parameters()
+        
 
     def update_parameters(self):
         if self.symbol == "BTC-PERP":
@@ -101,7 +112,7 @@ class liveTrading():
                     pos = pos[pos['future'] == self.symbol].iloc[0]
                 except:
                     return 'NONE', 0, 0
-                    
+
                 if float(pos['openSize']) == 0:
                     return 'NONE', 0, 0
 
@@ -249,7 +260,7 @@ class liveTrading():
             order = self.market_trade(trade_direction, amount)
 
 
-    def fill_order(self, type, direction, method='now'):
+    def fill_order(self, type, direction):
         '''
         Parameters:
         ___________
@@ -260,21 +271,15 @@ class liveTrading():
         direction (string):
         long or short
 
-        method (string):
-        What to of strategy to use for selling. Strategies:
-
         attempt_limit: Tries selling limit with best price for 2 mins. Sells at market price if not sold
         5sec_average: Divides into 24 parts and makes market order of that every 5 second
         now: Market buy instantly
         take_biggest: Takes the biggest. If not filled, waits 30 second and takes it again. If not filled by end, takes at market.
 
         '''
+        method = self.method
+
         self.set_position()
-
-        if method not in trade_methods:
-            print("Method not implemented yet")
-            return
-
         print("Time at filling order is: {}".format(datetime.datetime.now()))
 
         if direction == 'long' and type == 'close':
