@@ -1,1 +1,3 @@
-Spot Alysis ran into issues. No data for required time. SHIT. Need to do sth
+Update on interface after opening position. Maybe just calling perform_backtests() after buying is enough for that
+
+MAybe round the balances

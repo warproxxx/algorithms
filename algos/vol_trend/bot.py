@@ -157,12 +157,12 @@ def get_position_balance():
 
     balances = {}
     try:
-        balances['MOVE_BALANCE'] = float(r.get('FTX_MOVE_balance').decode())
+        balances['MOVE_BALANCE'] = round(float(r.get('FTX_MOVE_balance').decode()), 2)
     except:
         balances['MOVE_BALANCE'] = 0
 
     try:
-        balances['PERP_BALANCE'] = float(r.get('FTX_PERP_balance').decode())
+        balances['PERP_BALANCE'] = round(float(r.get('FTX_PERP_balance').decode()), 2)
     except:
         balances['PERP_BALANCE'] = 0
 
