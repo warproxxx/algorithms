@@ -97,9 +97,11 @@ class liveTrading():
                 pos = pd.DataFrame(self.exchange.private_get_positions(params={'showAvgPrice': True})['result'])
                 if len(pos) == 0:
                     return 'NONE', 0, 0
-
-                pos = pos[pos['future'] == self.symbol].iloc[0]
-
+                try:
+                    pos = pos[pos['future'] == self.symbol].iloc[0]
+                except:
+                    return 'NONE', 0, 0
+                    
                 if float(pos['openSize']) == 0:
                     return 'NONE', 0, 0
 

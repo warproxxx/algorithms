@@ -232,9 +232,13 @@ def daily_tasks():
         stop_move = float(r.get('vol_trend_enabled').decode())
     except:
         pass
-
+    
     if enabled == 1:
         details_df, balances = get_position_balance()
+        for idx, row in details_df.iterrows():
+            lt = liveTrading(row['name'])
+            lt.set_position()
+
         details_df = get_overriden(details_df)
         
         details_df['target_pos'] = details_df['backtest_position'].replace("LONG", 1).replace("SHORT", -1).replace("NONE", 0)
@@ -277,8 +281,15 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
+def hourly_tasks():
+    details_df, balances = get_position_balance()
+    for idx, row in details_df.iterrows():
+        lt = liveTrading(row['name'])
+        lt.set_position()
+
 def vol_bot():
     schedule.every().day.at("00:00").do(daily_tasks)
+    schedule.every().hour.do(hourly_tasks)
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
