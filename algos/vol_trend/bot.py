@@ -11,6 +11,8 @@ import redis
 
 from algos.vol_trend.backtest import perform_backtests
 from algos.vol_trend.live_trader import liveTrading
+from utils import print
+
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
@@ -22,7 +24,6 @@ async def vol_trend_book(feed, pair, book, timestamp, receipt_timestamp):
     r.set('FTX_{}_best_ask'.format(pair), ask)
 
 async def vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
-
     buy_missed_perp = 0
     buy_missed_move = 0
     enable_per_close_and_stop = 0
@@ -52,20 +53,21 @@ async def vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, si
     except:
         pass
     
-    if feed == 'BTC-PERP':
+
+    if pair == 'BTC-PERP':
         if buy_missed_perp == 1:
-            r.set('buy_missed_perp', 0)
             lt = liveTrading(symbol='BTC-PERP')
             pos, _, _ = lt.get_position()
 
             type = "open" if pos == "NONE" else "close"
-
             if perp_long_or_short == 1:
                 if price < price_perp:
-                    lt.fill_order(type, 'buy')
+                    r.set('buy_missed_perp', 0)
+                    lt.fill_order(type, 'long')
             else:
                 if price > price_perp:
-                    lt.fill_order(type, 'sell')
+                    r.set('buy_missed_perp', 0)
+                    lt.fill_order(type, 'short')
         
         if enable_per_close_and_stop == 1:
             r.set('enable_per_close_and_stop', 0)
@@ -75,9 +77,9 @@ async def vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, si
             lt.fill_order('close', pos.lower())
 
             
-    elif 'MOVE' in feed:
+    elif 'MOVE' in pair:
         if buy_missed_move == 1:
-            r.set('buy_missed_move', 0)
+            
             pair = get_curr_move_pair()
             lt = liveTrading(symbol=pair)
             pos, _, _ = lt.get_position()
@@ -86,10 +88,12 @@ async def vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, si
 
             if move_long_or_short == 1:
                 if price < price_move:
-                    lt.fill_order(type, 'buy')
+                    r.set('buy_missed_move', 0)
+                    lt.fill_order(type, 'long')
             else:
                 if price > price_move:
-                    lt.fill_order(type, 'sell')
+                    r.set('buy_missed_move', 0)
+                    lt.fill_order(type, 'short')
 
         if enable_move_close_and_stop == 1:
             r.set('enable_move_close_and_stop', 0)

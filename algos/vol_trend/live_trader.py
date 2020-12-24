@@ -286,7 +286,6 @@ class liveTrading():
 
 
         for lp in range(self.attempts):         
-            print('FTX_{}_current_pos'.format(self.symbol))
             curr_pos = self.r.get('FTX_{}_current_pos'.format(self.symbol)).decode()
 
             if curr_pos == "NONE" and type=='close': #to fix issue caused by backtrader verification idk why tho.

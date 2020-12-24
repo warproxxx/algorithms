@@ -17,6 +17,8 @@ def print(to_print):
 
     if filename == "daddy_live_trader":
         filename = "daddy_bot"
+    elif filename == "vol_trend_live_trader":
+        filename = "vol_trend_bot"
 
     if isinstance(to_print, str) == False:
         try:
