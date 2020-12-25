@@ -129,7 +129,7 @@ def get_position_balance():
             curr_detail['position'] = "NONE"
 
         try:
-            curr_detail['entry'] = float(r.get('FTX_{}_avgEntryPrice'.format(asset)).decode())
+            curr_detail['entry'] = round(float(r.get('FTX_{}_avgEntryPrice'.format(asset)).decode()),2)
         except:
             curr_detail['entry'] = 0
         
@@ -217,6 +217,7 @@ def get_overriden(details_df):
 def daily_tasks():
     print("Time: {}".format(datetime.datetime.utcnow()))
     perform_backtests()
+    print("\n")
 
     pairs = json.load(open('algos/vol_trend/pairs.json'))
     pairs.append('BTC-PERP')
@@ -276,15 +277,15 @@ def daily_tasks():
 
             if curr_stop == 0:
                 if row['target_pos'] == row['curr_pos']:
-                    print("\nAs required for {}".format(row['name']))
+                    print("As required for {}".format(row['name']))
                     pass
                 elif row['target_pos'] * row['curr_pos'] == -1:
-                    print("\nClosing and opening for {}".format(row['name']))
+                    print("Closing and opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('close', row['position'].lower())
                     lt.fill_order('open', row['backtest_position'].lower())
                 else:
-                    print("\nOpening for {}".format(row['name']))
+                    print("Opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('open', row['backtest_position'].lower())
 
@@ -302,7 +303,14 @@ def hourly_tasks():
         lt.set_position()
 
 def vol_bot():
-    schedule.every().day.at("03:00").do(daily_tasks)
+    pairs = json.load(open('algos/vol_trend/pairs.json'))
+    pairs.append('BTC-PERP')
+
+    for pair in pairs:
+        lt = liveTrading(pair)
+        lt.set_position()
+
+    schedule.every().day.at("00:00").do(daily_tasks)
     schedule.every().hour.do(hourly_tasks)
 
     schedule_thread = threading.Thread(target=start_schedlued)
