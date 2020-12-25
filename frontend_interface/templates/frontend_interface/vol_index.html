@@ -170,20 +170,6 @@
     
               </div>
 
-              <div style="float: left;">
-                <iframe frameborder='0' scrolling='no' src='/static/plotly.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
-            </div>
-            <div style="float: right;">
-                <iframe frameborder='0' scrolling='no' src='/static/plot_unbiased.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
-            </div>
-            
-              <center>
-                MOVE Balance: {{balances.MOVE_BALANCE}}<br/>
-                PERP Balance: {{balances.PERP_BALANCE}}<br/>
-            </center>
-            
-            <br/>
-
               <div class="row">
                 
                 <!-- Page Heading -->
@@ -314,8 +300,22 @@
                                               
                           </table>
                     </div>
-                    
-                    <b>Run Log:</b><br/>
+                </div>
+            </div>
+
+              <b>Run Log:</b><br/>
                     <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea>
                     <a href="/clear_log?from=daddy">Clear</a>
                     <br/><br/>
+
+              
+            
+
+              
+                    
+            <div style="float: left;">
+                <iframe frameborder='0' scrolling='no' src='/static/plotly.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
+            </div>
+            <div style="float: right;">
+                <iframe frameborder='0' scrolling='no' src='/static/plot_unbiased.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
+            </div>
