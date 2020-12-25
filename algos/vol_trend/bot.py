@@ -110,6 +110,7 @@ def get_curr_move_pair():
     return moves[moves['backtest_position'] != "NONE"].iloc[0]['name']
 
 def get_position_balance():
+    r = redis.Redis(host='localhost', port=6379, db=0)
     move_backtest = pd.read_csv('data/trades_move.csv')
     perp_backtest = pd.read_csv('data/trades_perp.csv')
 
@@ -216,6 +217,15 @@ def get_overriden(details_df):
 def daily_tasks():
     print("Time: {}".format(datetime.datetime.utcnow()))
     perform_backtests()
+
+    pairs = json.load(open('algos/vol_trend/pairs.json'))
+    pairs.append('BTC-PERP')
+
+    for pair in pairs:
+        lt = liveTrading(pair)
+        lt.set_position()
+
+
     enabled = 1
     stop_perp = 0
     stop_move = 0
@@ -235,13 +245,8 @@ def daily_tasks():
     except:
         pass
     
-    print("Enabled: {} Stop PERP: {} Stop MOVE: {}".format(datetime.datetime.utcnow(), stop_perp, stop_move))
-
     if enabled == 1:
         details_df, balances = get_position_balance()
-        for idx, row in details_df.iterrows():
-            lt = liveTrading(row['name'])
-            lt.set_position()
 
         details_df = get_overriden(details_df)
         
@@ -271,15 +276,15 @@ def daily_tasks():
 
             if curr_stop == 0:
                 if row['target_pos'] == row['curr_pos']:
-                    print("As required for {}".format(row['name']))
+                    print("\nAs required for {}".format(row['name']))
                     pass
                 elif row['target_pos'] * row['curr_pos'] == -1:
-                    print("Closing and opening for {}".format(row['name']))
+                    print("\nClosing and opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('close', row['position'].lower())
                     lt.fill_order('open', row['backtest_position'].lower())
                 else:
-                    print("Opening for {}".format(row['name']))
+                    print("\nOpening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('open', row['backtest_position'].lower())
 
@@ -297,7 +302,7 @@ def hourly_tasks():
         lt.set_position()
 
 def vol_bot():
-    schedule.every().day.at("02:40").do(daily_tasks)
+    schedule.every().day.at("03:00").do(daily_tasks)
     schedule.every().hour.do(hourly_tasks)
 
     schedule_thread = threading.Thread(target=start_schedlued)
