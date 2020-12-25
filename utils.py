@@ -15,9 +15,9 @@ def print(to_print):
     else:
         filename = dirs[-1].split(".")[0]
 
-    if filename == "daddy_live_trader":
+    if "daddy_" in filename:
         filename = "daddy_bot"
-    elif filename == "vol_trend_live_trader":
+    if "vol_trend_" in filename:
         filename = "vol_trend_bot"
 
     if isinstance(to_print, str) == False:

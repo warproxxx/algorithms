@@ -18,6 +18,8 @@ import time
 
 import backtrader as bt
 
+from utils import print
+
 def get_df(symbol):
     res = requests.get('https://ftx.com/api/markets/{}/candles?resolution=86400&limit=5000'.format(symbol))
     df = pd.DataFrame(json.loads(res.text)['result'])

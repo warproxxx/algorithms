@@ -4,6 +4,7 @@ import pandas as pd
 import json
 
 import time
+import datetime
 
 import threading
 import schedule
@@ -213,6 +214,7 @@ def get_overriden(details_df):
     return new_details
 
 def daily_tasks():
+    print("Time: {}".format(datetime.datetime.utcnow()))
     perform_backtests()
     enabled = 1
     stop_perp = 0
@@ -224,15 +226,17 @@ def daily_tasks():
         pass
 
     try:
-        stop_perp = float(r.get('vol_trend_enabled').decode())
+        stop_perp = float(r.get('stop_perp').decode())
     except:
         pass
 
     try:
-        stop_move = float(r.get('vol_trend_enabled').decode())
+        stop_move = float(r.get('stop_move').decode())
     except:
         pass
     
+    print("Enabled: {} Stop PERP: {} Stop MOVE: {}".format(datetime.datetime.utcnow(), stop_perp, stop_move))
+
     if enabled == 1:
         details_df, balances = get_position_balance()
         for idx, row in details_df.iterrows():
@@ -267,14 +271,19 @@ def daily_tasks():
 
             if curr_stop == 0:
                 if row['target_pos'] == row['curr_pos']:
+                    print("As required for {}".format(row['name']))
                     pass
                 elif row['target_pos'] * row['curr_pos'] == -1:
+                    print("Closing and opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('close', row['position'].lower())
                     lt.fill_order('open', row['backtest_position'].lower())
                 else:
+                    print("Opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('open', row['backtest_position'].lower())
+
+        print("\n")
 
 def start_schedlued():
     while True:
@@ -288,7 +297,7 @@ def hourly_tasks():
         lt.set_position()
 
 def vol_bot():
-    schedule.every().day.at("00:00").do(daily_tasks)
+    schedule.every().day.at("02:40").do(daily_tasks)
     schedule.every().hour.do(hourly_tasks)
 
     schedule_thread = threading.Thread(target=start_schedlued)
