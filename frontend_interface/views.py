@@ -13,6 +13,9 @@ import redis
 
 from algos.daddy.defines import trade_methods
 from algos.vol_trend.bot import get_position_balance
+from algos.altcoin.bot import get_positions
+
+from algos.altcoin.defines import trade_methods as altcoin_methods
 
 #create login then interface is done
 def index(request):
@@ -50,6 +53,60 @@ def reverse_status(request):
         r.set(var_name, new_status)
 
         return HttpResponseRedirect('/')
+    else:
+        return HttpResponseRedirect('/login')
+
+def altcoin_interface(request):
+    if 'Adminlogin' in request.session:
+        config_file = 'algos/altcoin/config.csv'
+        r = redis.Redis(host='localhost', port=6379, db=0)
+
+        if request.POST:
+            dic = request.POST.dict()
+            if 'BTC-PERP[allocation]' in dic:
+                dic.pop('csrfmiddlewaretoken', None)
+                curr_df = pd.DataFrame()
+
+                for idx, value in dic.items():
+                    splitted = idx.split("[")
+                    exchange = splitted[0]
+                    column = splitted[1].replace("]", "")
+                    
+                    curr_df = curr_df.append(pd.Series({'name': exchange, 'column': column, 'value': value}), ignore_index=True)
+
+                new_exchanges = {}
+
+                for exchange, exchange_values in curr_df.groupby('name'):
+                    new_exchanges[exchange] = {}
+                    
+                    for idx, row in exchange_values.iterrows():
+                        new_exchanges[exchange][row['column']] = row['value']
+
+                new_exchanges = pd.DataFrame(new_exchanges)
+                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
+                old_exchanges = pd.read_csv(config_file)
+                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
+                final_exchanges = final_exchanges[old_exchanges.columns]
+                final_exchanges.to_csv(config_file, index=None)
+
+            elif 'csv_file' in dic:
+                open(config_file, 'w').write(dic['csv_file'])
+        
+        config_df = pd.read_csv(config_file)
+        config_df = config_df.round(4)
+
+        config = config_df.set_index('name').T.to_dict()
+
+        csv_file = open(config_file, 'r').read()
+
+        details_df = get_positions()
+
+        try:
+            run_log = open("logs/altcoin_bot.log").read()
+        except:
+            run_log = ""
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log})
     else:
         return HttpResponseRedirect('/login')
 
