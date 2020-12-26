@@ -310,7 +310,7 @@ def vol_bot():
         lt = liveTrading(pair)
         lt.set_position()
 
-    schedule.every().day.at("00:00").do(daily_tasks)
+    schedule.every().day.at("00:01").do(daily_tasks)
     schedule.every().hour.do(hourly_tasks)
 
     schedule_thread = threading.Thread(target=start_schedlued)
