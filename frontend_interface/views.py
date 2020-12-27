@@ -107,6 +107,11 @@ def altcoin_interface(request):
                     r.set('enter_now', 1)
                 else:
                     r.set('enter_now', 0)
+            elif 'sub_account_form' in dic:
+                if 'sub_account' in dic:
+                    r.set('sub_account', 1)
+                else:
+                    r.set('sub_account', 0)
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
@@ -137,7 +142,12 @@ def altcoin_interface(request):
         except:
             enter_now = 0
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'enter_now': enter_now})
+        try:
+            sub_account = float(r.get('sub_account').decode())
+        except:
+            sub_account = 0
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'enter_now': enter_now, 'sub_account': sub_account})
     else:
         return HttpResponseRedirect('/login')
 

@@ -160,8 +160,8 @@ class liveTrading():
     def get_balance(self):
         return float(self.exchange.fetch_balance()['USD']['free'])
 
-    def get_subaccount_balance(self):
-        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': 'PERP'})['result'])
+    def get_subaccount_balance(self, name):
+        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])
 
         try:
             return balance[balance['coin'] == 'USD'].iloc[0]['free']
