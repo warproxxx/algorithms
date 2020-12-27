@@ -1,4 +1,4 @@
-name,gaussian,mult,prev_day,vol_day,allocation,to_trade,buy_method
+name,gaussian,mult,prev_day,vol_day,allocation,to_trade,method
 ADA-PERP,3.0,2.0,3,40,0.2,1,now
 BAL-PERP,5.0,3.0,5,20,0.034,1,now
 BSV-PERP,6.0,3.0,6,50,0.005,1,now

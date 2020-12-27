@@ -18,11 +18,12 @@ from utils import print
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 async def altcoin_book(feed, pair, book, timestamp, receipt_timestamp):
-    bid = float(list(book[BID].keys())[-1])
-    ask = float(list(book[ASK].keys())[0])
+    if float(r.get('altcoin_enabled').decode()) == 1:
+        bid = float(list(book[BID].keys())[-1])
+        ask = float(list(book[ASK].keys())[0])
 
-    r.set('{}_best_bid'.format(pair), bid)
-    r.set('{}_best_ask'.format(pair), ask)
+        r.set('{}_best_bid'.format(pair), bid)
+        r.set('{}_best_ask'.format(pair), ask)
 
 async def altcoin_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass
@@ -142,6 +143,7 @@ def hourly_tasks():
         lt.set_position()
 
 def alt_bot():
+    perform_backtests()
     pairs = json.load(open('algos/vol_trend/pairs.json'))
 
     for pair in pairs:

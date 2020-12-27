@@ -20,6 +20,7 @@ import threading
 from utils import flush_redis
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book
 from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book
+from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book
 
 from utils import print
 
@@ -46,7 +47,11 @@ def bot():
     vol_thread = multiprocessing.Process(target=vol_bot, args=())
     vol_thread.start()
 
+    altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
+    altcoin_thread.start()
+
     while True:
+        #daddy
         if float(r.get('daddy_enabled').decode()) != 1:
             daddy_thread.terminate()
 
@@ -54,7 +59,8 @@ def bot():
             if float(r.get('daddy_enabled').decode()) == 1:
                 daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
                 daddy_thread.start()
-
+        
+        #vol
         if float(r.get('vol_trend_enabled').decode()) != 1:
             vol_thread.terminate()
 
@@ -63,46 +69,47 @@ def bot():
                 vol_thread = multiprocessing.Process(target=vol_bot, args=())
                 vol_thread.start()
 
+        #altcoin
+        if float(r.get('altcoin_enabled').decode()) != 1:
+            altcoin_thread.terminate()
+
+        if vol_thread.is_alive() == False:
+            if float(r.get('altcoin_enabled').decode()) == 1:
+                altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
+                altcoin_thread.start()
+
         time.sleep(1)  
 
 bot_thread = threading.Thread(target=bot)
 bot_thread.start()
 
-async def trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):  
-    if float(r.get('daddy_enabled').decode()) == 1:
-        await daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
-    
-    if feed == 'FTX':
-        await vol_trend_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price)
-
-async def book(feed, pair, book, timestamp, receipt_timestamp):    
-    if float(r.get('daddy_enabled').decode()) == 1:
-        await daddy_book(feed, pair, book, timestamp, receipt_timestamp)
-
-    if float(r.get('vol_trend_enabled').decode()) == 1:
-        if feed == 'FTX':
-            await vol_trend_book(feed, pair, book, timestamp, receipt_timestamp)
-
 PAIRS = pd.read_csv('pairs.csv')
 
-for exchange, details in PAIRS.groupby('cryptofeed_name'):
-    channels=[TRADES, L2_BOOK]
-    callbacks={TRADES: trade, L2_BOOK: book}
-
+for idx, row in PAIRS.iterrows():
+    exchange = row['cryptofeed_name']
     b = getattr(exchanges, exchange)
-    
-    pairs_list = details['cryptofeed_symbol'].values
-    new_pairs_list = []
 
-    for pair in pairs_list:
-        if "MOVE" in pair:
-            pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
-            new_pairs_list = new_pairs_list + [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
-        else:
-            new_pairs_list.append(pair)
+    if "MOVE" in row['cryptofeed_symbol']:
+        pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
+        pairs = [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
+    else:
+        pairs = [row['cryptofeed_symbol']]
 
-    print("{} {}".format(exchange, new_pairs_list))
-    f.add_feed(getattr(exchanges, exchange)(pairs=new_pairs_list, channels=channels, callbacks=callbacks), timeout=-1)
+    trade_callbacks = []
+    obook_callbacks = []
+
+    for callback in row['feed'].split(","):
+        if callback == 'daddy':
+            trade_callbacks.append(daddy_trade)
+            obook_callbacks.append(daddy_book)
+        elif callback == 'vol_trend':
+            trade_callbacks.append(vol_trend_trade)
+            obook_callbacks.append(vol_trend_book)
+        elif callback == 'altcoin':
+            trade_callbacks.append(altcoin_trade)
+            obook_callbacks.append(altcoin_book)
+
+    f.add_feed(b(pairs=pairs, channels=[TRADES, L2_BOOK], callbacks={TRADES: trade_callbacks, L2_BOOK: obook_callbacks}), timeout=-1)
 
 
 f.run()

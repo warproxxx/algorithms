@@ -68,7 +68,7 @@ def save_move_data():
 
     for pair in pairs:
         curr_move_df = get_df(pair)
-        curr_move_df.to_csv('data/vol_data/{}.csv'.format(name), index=None)
+        curr_move_df.to_csv('data/vol_data/{}.csv'.format(pair), index=None)
 
 class CommInfoFractional(bt.CommissionInfo):
     
