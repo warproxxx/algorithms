@@ -1,6 +1,7 @@
 import sys 
 import inspect
 import os
+import redis
 
 if not os.path.isdir("logs/"):
     os.makedirs("logs/")
@@ -33,26 +34,10 @@ def print(to_print):
 
 
 def flush_redis(r, EXCHANGES):
-    backups = {}
-
-    for var in ['daddy_enabled', 'vol_trend_enabled', 'altcoin_enabled', 'buy_missed', 'buy_at', 'close_and_stop', 'stop_trading', 'MOVE_mult', 'PERP_mult', 'MOVE_method', 'PERP_method','buy_missed_perp', 'perp_long_or_short', 'price_perp', 'buy_missed_move', 'move_long_or_short', 'price_move', 'override_perp', 'perp_override_direction', 'override_move', 'move_override_direction', 'enable_per_close_and_stop', 'enable_move_close_and_stop', 'stop_perp', 'stop_move']:
-        try:
-            backups[var] = r.get(var).decode()
-        except:
-            backups[var] = 0
-
-
-    for idx, details in EXCHANGES.iterrows():
-        for var in ['{}_position_since', '{}_avgEntryPrice', '{}_current_pos', '{}_pos_size', '{}_best_ask', '{}_best_bid']:
-            try:
-                backups[var.format(details['exchange'])] = r.get(var.format(details['exchange'])).decode()
-            except:
-                pass
-    r.flushdb()
-
-    for idx, row in backups.items():
-        r.set(idx, row)
-
+    r = redis.StrictRedis(host='localhost', port=6379, db=0)
+    
+    for key in r.scan_iter("202*"):
+        r.delete(key)
 
     r.set('first_execution', 1)
     r.set('first_nine', 1)

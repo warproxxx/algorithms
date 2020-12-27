@@ -91,7 +91,7 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-    
+
     def get_orderbook(self):
         orderbook = {}
         orderbook['best_ask'] = float(self.r.get('FTX_{}_best_ask'.format(self.symbol)).decode())

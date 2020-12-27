@@ -170,6 +170,53 @@
     
               </div>
 
+              <div class="row">
+
+                <!-- Page Heading -->
+                <h4>Manual Interference</h4>
+                <div class="col-lg-12 mb-4">
+                
+    
+                
+                <div class="card-body">
+                    <table>
+                      <tr>
+                        <td style="width: 33vw; text-align:center;">
+                          <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="move_free_form">
+                            <input type="checkbox" name="move_free" value="move_free" {% if move_free == 1 %} checked {% endif %}> <b>Move Free Balance</b>                           
+                            <br/><br/>
+                          
+                            <input type="submit" value="Update">
+                            
+                          </form>
+                        </td>
+                        <td style="width: 33vw; text-align:center;">
+                          <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="enable_close_and_rebalance_form">
+                            <input type="checkbox" name="close_and_rebalance" value="enable_close_and_rebalance" {% if close_and_rebalance == 1 %} checked {% endif %}> <b>Close All Positions and rebalance</b>
+    
+                            <br/><br/>
+                              <input type="submit" value="Update">
+                          </form>
+                        </td>
+                        <td style="width: 33vw; text-align:center;">
+                          <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="enter_now_form">
+                            <input type="checkbox" name="enter_now" value="enter_now" {% if enter_now == 1 %} checked {% endif %}> <b>Enter Now</b>
+                            <br/><br/>
+                            <input type="submit" value="Update">
+                          </form>
+                        </td>
+                      </tr>
+                                          
+                      </table>
+                </div>
+                  
+              </div>
 
               <b>Run Log:</b><br/>
                     <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea>

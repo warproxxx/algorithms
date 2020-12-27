@@ -36,6 +36,14 @@ class liveTrading():
                         'options': {'defaultMarket': 'futures'}
                     })
 
+
+        self.neutral_exchange = ccxt.ftx({
+                        'apiKey': apiKey,
+                        'secret': apiSecret,
+                        'enableRateLimit': True,
+                        'options': {'defaultMarket': 'futures'}
+                    })
+
         self.method = "now"
 
         self.exchange.headers = {
@@ -49,6 +57,19 @@ class liveTrading():
         self.increment = 0.5
         self.update_parameters()
         
+    def create_subaccount(self, name):
+        try:
+            self.neutral_exchange.private_post_subaccounts({'nickname': name})
+            return 1
+        except:
+            if 'already exists' in str(e):
+                print("Subaccount {} exist".format(name))
+                return 1
+        
+        return 0
+
+    def transfer_to_subaccount(self, amount, destination, source='main', coin='USD'):
+        self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
 
     def update_parameters(self):
         config = pd.read_csv('algos/altcoin/config.csv')
@@ -138,6 +159,14 @@ class liveTrading():
     
     def get_balance(self):
         return float(self.exchange.fetch_balance()['USD']['free'])
+
+    def get_subaccount_balance(self):
+        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': 'PERP'})['result'])
+
+        try:
+            return balance[balance['coin'] == 'USD'].iloc[0]['free']
+        except:
+            return 0
 
     def limit_trade(self, order_type, amount, price):        
         print("Sending limit {} order for {} of size {} @ {} in {}".format(order_type, self.symbol, amount, price, datetime.datetime.now()))

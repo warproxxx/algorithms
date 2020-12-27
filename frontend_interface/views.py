@@ -91,6 +91,22 @@ def altcoin_interface(request):
 
             elif 'csv_file' in dic:
                 open(config_file, 'w').write(dic['csv_file'])
+            elif 'move_free_form' in dic:
+                if 'move_free' in dic:
+                    r.set('move_free', 1)
+                else:
+                    r.set('move_free', 0)
+
+            elif 'enable_close_and_rebalance_form' in dic:
+                if 'close_and_rebalance' in dic:
+                    r.set('close_and_rebalance', 1)
+                else:
+                    r.set('close_and_rebalance', 0)
+            elif 'enter_now_form' in dic:
+                if 'enter_now' in dic:
+                    r.set('enter_now', 1)
+                else:
+                    r.set('enter_now', 0)
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
@@ -106,7 +122,22 @@ def altcoin_interface(request):
         except:
             run_log = ""
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log})
+        try:
+            move_free = float(r.get('move_free').decode())
+        except:
+            move_free = 0
+        
+        try:
+            close_and_rebalance = float(r.get('close_and_rebalance').decode())
+        except:
+            close_and_rebalance = 0
+
+        try:
+            enter_now = float(r.get('enter_now').decode())
+        except:
+            enter_now = 0
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'enter_now': enter_now})
     else:
         return HttpResponseRedirect('/login')
 
@@ -201,6 +232,10 @@ def vol_trend_interface(request):
             run_log = ""
 
         trade_methods = ['attempt_limit', '5sec_average', '10sec_average', '1min_average', '10min_average', 'now']
+
+        
+
+
         return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods})
     else:
         return HttpResponseRedirect('/login')
@@ -274,6 +309,8 @@ def daddy_interface(request):
                     r.set('buy_at', dic['buy_at'])
                 else:
                     r.set('buy_missed', 0)
+                    r.set('buy_at', 0)
+
             elif 'enable_close_and_stop_form' in dic:
                 if 'close_and_stop' in dic:
                     r.set('close_and_stop', 1)
