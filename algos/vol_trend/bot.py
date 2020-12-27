@@ -138,11 +138,32 @@ def get_position_balance():
         except:
             curr_detail['pos_size'] = 0
 
+        try:
+            curr_detail['live_price'] = float(r.get('FTX_{}_best_ask'.format(asset)).decode())
+        except:
+            curr_detail['live_price'] = 0
+
+        
+
+
+
         if asset == "BTC-PERP":
+            try:
+                curr_detail['live_lev']= float(r.get('PERP_mult').decode())
+            except:
+                curr_detail['live_lev'] = 4
+
             curr_detail['backtest_position'] = 'SHORT' if perp_backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
             curr_detail['backtest_date'] = perp_backtest.iloc[-1]['Date']
             curr_detail['entry_price'] = round(perp_backtest.iloc[-1]['Price'], 2)
+
+            
         else:
+            try:
+                curr_detail['live_lev'] = float(r.get('MOVE_mult').decode())
+            except:
+                curr_detail['live_lev']= 2
+
             curr_df = move_backtest[move_backtest['Data'] == asset]
 
             curr_detail['backtest_position'] = 'NONE'
@@ -153,6 +174,11 @@ def get_position_balance():
                     curr_detail['backtest_position'] = 'SHORT' if curr_df.iloc[-1]['Type'] == 'SELL' else 'LONG'
                     curr_detail['backtest_date'] = curr_df.iloc[-1]['Date']
                     curr_detail['entry_price'] = round(curr_df.iloc[-1]['Price'], 2)
+
+        try:
+            curr_detail['live_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry'])/curr_detail['entry']) * 100 * curr_detail['live_lev'], 2)
+        except:
+            curr_detail['live_pnl'] = 0
 
         details_df = details_df.append(curr_detail, ignore_index=True)
 

@@ -54,10 +54,22 @@ def get_positions():
         except:
             curr_detail['pos_size'] = 0
 
+        try:
+            curr_detail['live_price'] = float(r.get('{}_best_ask'.format(asset)).decode())
+        except:
+            curr_detail['live_price'] = 0
+
+
         curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
         curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
         curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
         curr_detail['to_trade'] = row['to_trade']
+        curr_detail['live_lev'] = int(row['mult'])
+        
+        try:
+            curr_detail['live_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry'])/curr_detail['entry']) * 100 * curr_detail['live_lev'], 2)
+        except:
+            curr_detail['live_pnl'] = 0
 
         details_df = details_df.append(curr_detail, ignore_index=True)
 
@@ -115,6 +127,7 @@ def daily_tasks():
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('open', row['backtest_position'].lower())
 
+
         print("\n")
 
 def start_schedlued():
@@ -129,11 +142,7 @@ def hourly_tasks():
         lt.set_position()
 
 def alt_bot():
-    
-
-def vol_bot():
     pairs = json.load(open('algos/vol_trend/pairs.json'))
-    pairs.append('BTC-PERP')
 
     for pair in pairs:
         lt = liveTrading(pair)
