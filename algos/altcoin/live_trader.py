@@ -73,7 +73,7 @@ class liveTrading():
 
     def update_parameters(self):
         config = pd.read_csv('algos/altcoin/config.csv')
-        curr_config = config[config['name'] == self.symbol]
+        curr_config = config[config['name'] == self.symbol].iloc[0]
         self.lev = int(curr_config['mult'])
 
     def close_open_orders(self, close_stop=False):

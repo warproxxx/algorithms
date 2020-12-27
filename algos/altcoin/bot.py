@@ -216,7 +216,7 @@ def hourly_tasks():
 
 def alt_bot():
     perform_backtests()
-    pairs = json.load(open('algos/vol_trend/pairs.json'))
+    pairs = pd.read_csv('algos/altcoin/config.csv')['name']
 
     for pair in pairs:
         lt = liveTrading(pair)
