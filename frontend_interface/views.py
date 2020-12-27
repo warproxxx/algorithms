@@ -394,20 +394,6 @@ def daddy_interface(request):
         all_parameters_json = json.dumps(all_parameters)
 
         try:
-            plotly_file = 'data/plot.html'
-            new_plotly_file = 'frontend_interface/static/plotly.html'
-            copy(plotly_file, new_plotly_file)
-        except:
-            pass
-
-        try:
-            plotly_file = 'data/plot_unbiased.html'
-            new_plotly_file = 'frontend_interface/static/plot_unbiased.html'
-            copy(plotly_file, new_plotly_file)
-        except:
-            pass
-
-        try:
             buy_missed = float(r.get('buy_missed').decode())
         except:
             buy_missed = 0

@@ -98,16 +98,30 @@ for idx, row in PAIRS.iterrows():
     trade_callbacks = []
     obook_callbacks = []
 
+    try:
+        types = row['data'].split(",")
+    except:
+        types = []
+
     for callback in row['feed'].split(","):
         if callback == 'daddy':
-            trade_callbacks.append(daddy_trade)
-            obook_callbacks.append(daddy_book)
+            if 'stream' in types:
+                trade_callbacks.append(daddy_trade)
+
+            if 'book' in types:
+                obook_callbacks.append(daddy_book)
         elif callback == 'vol_trend':
-            trade_callbacks.append(vol_trend_trade)
-            obook_callbacks.append(vol_trend_book)
+            if 'stream' in types:
+                trade_callbacks.append(vol_trend_trade)
+
+            if 'book' in types:
+                obook_callbacks.append(vol_trend_book)
         elif callback == 'altcoin':
-            trade_callbacks.append(altcoin_trade)
-            obook_callbacks.append(altcoin_book)
+            if 'stream' in types:
+                trade_callbacks.append(altcoin_trade)
+
+            if 'book' in types:
+                obook_callbacks.append(altcoin_book)
 
     f.add_feed(b(pairs=pairs, channels=[TRADES, L2_BOOK], callbacks={TRADES: trade_callbacks, L2_BOOK: obook_callbacks}), timeout=-1)
 

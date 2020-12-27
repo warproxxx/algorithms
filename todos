@@ -27,3 +27,8 @@ Traceback (most recent call last):
   File "/home/warproxxx/.local/lib/python3.8/site-packages/ccxt/ftx.py", line 1508, in handle_errors
     raise ExchangeError(feedback)  # unknown message
 ccxt.base.errors.ExchangeError: ftx {"error":"No such subaccount","success":false}
+
+
+
+
+Manual calls are due to slow. I might remove obook for all those for now. Just trade now. Others are slow too. This is due to that. I need to remove obook for those all. Add another par for that.

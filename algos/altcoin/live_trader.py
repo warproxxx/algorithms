@@ -61,7 +61,7 @@ class liveTrading():
         try:
             self.neutral_exchange.private_post_subaccounts({'nickname': name})
             return 1
-        except:
+        except Exception as e:
             if 'already exists' in str(e):
                 print("Subaccount {} exist".format(name))
                 return 1
@@ -131,7 +131,8 @@ class liveTrading():
 
                 print(e)
                 time.sleep(1)
-                pass
+
+        return 'NONE', 0, 0
 
     def set_position(self):
         for lp in range(self.attempts):
@@ -158,7 +159,10 @@ class liveTrading():
                 pass
     
     def get_balance(self):
-        return float(self.exchange.fetch_balance()['USD']['free'])
+        try:
+            return float(self.exchange.fetch_balance()['USD']['free'])
+        except:
+            return 0
 
     def get_subaccount_balance(self, name):
         balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])

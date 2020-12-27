@@ -81,10 +81,10 @@ def create_plot(biased=True):
     html = fig.to_html()
 
     if biased == True:
-        with open('data/plot.html', 'w') as file:
+        with open('frontend_interface/static/plotly.html', 'w') as file:
             file.write(html)
     elif biased == False:
-        with open('data/plot_unbiased.html', 'w') as file:
+        with open('frontend_interface/static/plot_unbiased.html', 'w') as file:
             file.write(html)
 
     date_ranges = list(decrease_to_increase) + list(increase_to_decrease)
