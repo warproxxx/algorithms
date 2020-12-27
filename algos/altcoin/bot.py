@@ -57,6 +57,7 @@ def get_positions():
         curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
         curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
         curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
+        curr_detail['to_trade'] = row['to_trade']
 
         details_df = details_df.append(curr_detail, ignore_index=True)
 
@@ -68,23 +69,17 @@ def daily_tasks():
     perform_backtests()
     print("\n")
 
-    pairs = pd.read_csv('algos/altcoin/config.csv')['name']
+    config = pd.read_csv('algos/altcoin/config.csv')
 
-    for pair in pairs:
+    for pair in config['name']:
         lt = liveTrading(pair)
         lt.set_position()
 
 
     enabled = 1
-    curr_stop = 0
 
     try:
         enabled = float(r.get('altcoin_enabled').decode())
-    except:
-        pass
-
-    try:
-        curr_stop = float(r.get('stop_perp').decode())
     except:
         pass
 
@@ -98,7 +93,7 @@ def daily_tasks():
         to_close = details_df[details_df['target_pos'] == 0]
 
         for idx, row in to_close.iterrows():
-            if curr_stop == 0:
+            if row['to_trade'] == 1:
                 if row['curr_pos'] != 0:
                     lt = liveTrading(symbol=row['name'])
                     lt.fill_order('close', row['position'].lower())
@@ -106,7 +101,7 @@ def daily_tasks():
         to_open = details_df[details_df['target_pos'] != 0]
 
         for idx, row in to_open.iterrows():
-            if curr_stop == 0:
+            if row['to_trade'] == 1:
                 if row['target_pos'] == row['curr_pos']:
                     print("As required for {}".format(row['name']))
                     pass
@@ -128,10 +123,13 @@ def start_schedlued():
         time.sleep(1)
 
 def hourly_tasks():
-    details_df, balances = get_position_balance()
+    details_df = get_positions()
     for idx, row in details_df.iterrows():
         lt = liveTrading(row['name'])
         lt.set_position()
+
+def alt_bot():
+    
 
 def vol_bot():
     pairs = json.load(open('algos/vol_trend/pairs.json'))

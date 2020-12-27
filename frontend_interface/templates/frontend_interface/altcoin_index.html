@@ -198,6 +198,7 @@
                           <th>Prev Day</th>
                           <th>Vol Day</th>
                           <th>Allocation</th>
+                          <th>Enabled</th>
                           <th>Trade Method</th>
                         </tr>
                       </thead>
@@ -207,7 +208,21 @@
                             <tr>
                                 <td>{{key}}</td>
                                 {% for inside_key, inside_value in value.items %}
-                                    {% if "method" in inside_key%}
+                                    {% if inside_key == "to_trade" %}
+                                        <td>
+
+                                            <select name="{{ key }}[{{ inside_key }}]" id="{{ key }}__{{ inside_key }}">
+                                                <option value="0">0</option>
+                                                <option value="1">1</option>
+                                            </select>
+
+                                            <script>
+                                                document.getElementById("{{ key }}__{{ inside_key }}").value = "{{inside_value}}"; 
+                                           </script>
+                
+                                        </td>
+
+                                    {% elif "method" in inside_key%}
                                         <td>
                                             <select name="{{ key }}[{{ inside_key }}]" id="{{ key }}__{{ inside_key }}">
                                                 {% for trade_method in trade_methods %}

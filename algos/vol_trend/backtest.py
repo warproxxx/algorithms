@@ -64,19 +64,11 @@ def add_volatility(price_df):
     return new_price_df
 
 def save_move_data():
-    start = '2019-11-1'
-    if not os.path.isdir("data/vol_data/"):
-        os.makedirs("data/vol_data/")
-        
-        
-    for quat in pd.date_range(pd.to_datetime('2019-11-1'), datetime.utcnow()+pd.DateOffset(months=6), freq='3M').to_period("Q"):
-        name = "BTC-MOVE-" + str(quat)
-        print(name)
-        try:
-            curr_move_df = get_df(name)
-            curr_move_df.to_csv('data/vol_data/{}.csv'.format(name), index=None)
-        except Exception as e:
-            print(str(e))
+    pairs = json.load(open('algos/vol_trend/pairs.json'))
+
+    for pair in pairs:
+        curr_move_df = get_df(pair)
+        curr_move_df.to_csv('data/vol_data/{}.csv'.format(name), index=None)
 
 class CommInfoFractional(bt.CommissionInfo):
     
@@ -375,6 +367,12 @@ class priceStrategy(bt.Strategy):
 def perform_backtests():
     if not os.path.isdir("data/"):
         os.makedirs("data/")
+
+    pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
+    pairs_list =  [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
+
+    with open('algos/vol_trend/pairs.json', 'w') as f:
+        json.dump(pairs_list, f)
         
     price_df = get_df('BTC/USD')
     new_price_df = add_volatility(price_df)    
@@ -443,12 +441,6 @@ def perform_backtests():
     run = cerebro.run()
     portfolio, trades, operations = run[0].get_logs()
     trades.to_csv("data/trades_move.csv", index=None)
-
-    pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
-    pairs_list =  [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
-
-    with open('algos/vol_trend/pairs.json', 'w') as f:
-        json.dump(pairs_list, f)
 
 if __name__ == "__main__":
     perform_backtests()
