@@ -1,6 +1,6 @@
 from cryptofeed.feedhandler import FeedHandler
 from cryptofeed import exchanges
-from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
+from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 import requests
 
 import pandas as pd
@@ -18,9 +18,9 @@ import multiprocessing
 import threading
 
 from utils import flush_redis
-from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book
-from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book
-from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book
+from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
+from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book, vol_trend_ticker
+from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book, altcoin_ticker
 
 from utils import print
 
@@ -84,6 +84,7 @@ bot_thread = threading.Thread(target=bot)
 bot_thread.start()
 
 PAIRS = pd.read_csv('pairs.csv')
+PAIRS = PAIRS.fillna("")
 
 for idx, row in PAIRS.iterrows():
     exchange = row['cryptofeed_name']
@@ -97,33 +98,57 @@ for idx, row in PAIRS.iterrows():
 
     trade_callbacks = []
     obook_callbacks = []
+    ticker_callbacks = []
 
-    try:
-        types = row['data'].split(",")
-    except:
-        types = []
+    if row['types'] != "":
+        for callback in row['feed'].split(";"):
+            types = row['types']
+            
+            if callback == 'daddy':
+                if 'stream' in types:
+                    trade_callbacks.append(daddy_trade)
 
-    for callback in row['feed'].split(","):
-        if callback == 'daddy':
-            if 'stream' in types:
-                trade_callbacks.append(daddy_trade)
+                if 'book' in types:
+                    obook_callbacks.append(daddy_book)
 
-            if 'book' in types:
-                obook_callbacks.append(daddy_book)
-        elif callback == 'vol_trend':
-            if 'stream' in types:
-                trade_callbacks.append(vol_trend_trade)
+                if 'ticker' in types:
+                    ticker_callbacks.append(daddy_ticker)
 
-            if 'book' in types:
-                obook_callbacks.append(vol_trend_book)
-        elif callback == 'altcoin':
-            if 'stream' in types:
-                trade_callbacks.append(altcoin_trade)
+            elif callback == 'vol_trend':
+                if 'stream' in types:
+                    trade_callbacks.append(vol_trend_trade)
 
-            if 'book' in types:
-                obook_callbacks.append(altcoin_book)
+                if 'book' in types:
+                    obook_callbacks.append(vol_trend_book)
 
-    f.add_feed(b(pairs=pairs, channels=[TRADES, L2_BOOK], callbacks={TRADES: trade_callbacks, L2_BOOK: obook_callbacks}), timeout=-1)
+                if 'ticker' in types:
+                    ticker_callbacks.append(vol_trend_ticker)
+            elif callback == 'altcoin':
+                if 'stream' in types:
+                    trade_callbacks.append(altcoin_trade)
 
+                if 'book' in types:
+                    obook_callbacks.append(altcoin_book)
+
+                if 'ticker' in types:
+                    ticker_callbacks.append(altcoin_ticker)
+
+        channels = []
+        callbacks = {}
+
+        if len(trade_callbacks) > 0:
+            channels.append(TRADES)
+            callbacks[TRADES] = trade_callbacks
+
+        if len(obook_callbacks) > 0:
+            channels.append(L2_BOOK)
+            callbacks[L2_BOOK] = obook_callbacks
+
+        if len(ticker_callbacks) > 0:
+            channels.append(TICKER)
+            callbacks[TICKER] = ticker_callbacks
+
+        print("{} {} {}".format(pairs, callbacks, channels))
+        f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
 
 f.run()

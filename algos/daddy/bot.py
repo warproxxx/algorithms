@@ -114,6 +114,33 @@ def custom_sell():
                 lt.fill_order('sell', method=curr_exchange['sell_method'])
                 r.set('{}_position_since'.format(exchange_name), 0)
 
+def get_btc_price_manual():
+    prices = {}
+    try:
+        prices['coinbase'] = float(json.loads(requests.get('https://api.coinbase.com/v2/prices/spot?currency=USD').text)['data']['amount'])
+    except:
+        pass
+
+    try:
+        prices['bitstamp'] = float(json.loads(requests.get('https://www.bitstamp.net/api/transactions').text)[0]['price'])
+    except:
+        pass
+
+    try:                
+        prices['kraken'] = float(json.loads(requests.get('https://api.kraken.com/0/public/Trades?pair=XBTUSD').text)['result']['XXBTZUSD'][-1][0])
+    except:
+        pass
+    
+    try:
+        btc_price = sum(prices.values())/len(prices)
+        r.set('exchanges_price', btc_price)
+        r.set('got_this_turn', 1)
+        print("Manually got BTC prices using {} at {}".format(prices, btc_price))
+    except:
+        btc_price = float(r.get('bitmex_best_ask').decode())
+
+    return btc_price
+
 def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call):
     position_since = 0
     current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()
@@ -135,30 +162,7 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
                 btc_price = float(r.get('bitmex_best_ask').decode())
             else:
                 if float(r.get('got_this_turn').decode()) == 0:
-
-                    prices = {}
-                    try:
-                        prices['coinbase'] = float(json.loads(requests.get('https://api.coinbase.com/v2/prices/spot?currency=USD').text)['data']['amount'])
-                    except:
-                        pass
-
-                    try:
-                        prices['bitstamp'] = float(json.loads(requests.get('https://www.bitstamp.net/api/transactions').text)[0]['price'])
-                    except:
-                        pass
-
-                    try:                
-                        prices['kraken'] = float(json.loads(requests.get('https://api.kraken.com/0/public/Trades?pair=XBTUSD').text)['result']['XXBTZUSD'][-1][0])
-                    except:
-                        pass
-                    
-                    try:
-                        btc_price = sum(prices.values())/len(prices)
-                        r.set('exchanges_price', btc_price)
-                        r.set('got_this_turn', 1)
-                        print("Manually got BTC prices using {} at {}".format(prices, btc_price))
-                    except:
-                        btc_price = float(r.get('bitmex_best_ask').decode())
+                    btc_price = get_btc_price_manual()
                 else:
                     btc_price = float(r.get('exchanges_price').decode())
                     print("Getting {} from redis".format(btc_price))
@@ -275,6 +279,10 @@ def single_process(manual_call=False):
         price_df = df.groupby(pd.Grouper(key='Time', freq="5Min", label='left')).apply(ohlcv_from_trade)
         price_df = price_df.reset_index()
         price_df['Time'] = pd.to_datetime(price_df['Time'])
+        
+        if manual_call == True:
+            btc_price = get_btc_price_manual()
+            price_df['Close'] = btc_price
 
         price_df.to_csv(price_file, index=None, mode='a', header=None)
 
@@ -441,6 +449,9 @@ async def daddy_book(feed, pair, book, timestamp, receipt_timestamp):
 
         r.set('{}_best_bid'.format(feed.lower()), bid)
         r.set('{}_best_ask'.format(feed.lower()), ask)
+
+async def daddy_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
+    pass
 
 def delayed_price_from_rest():
     time.sleep(60) #because API gives data ~15 seconds late.
