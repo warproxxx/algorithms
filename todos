@@ -1,1 +1,3 @@
 For others, get orderbook every 5 secs and set in redis
+
+Upgrade ccxt

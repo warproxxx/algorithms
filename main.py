@@ -22,6 +22,9 @@ from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
 from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book, vol_trend_ticker
 from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book, altcoin_ticker
 
+import ccxt
+from algos.daddy.huobi.HuobiDMService import HuobiDM
+
 from utils import print
 
 EXCHANGES = pd.read_csv('exchanges.csv')
@@ -40,6 +43,62 @@ flush_redis(r, EXCHANGES)
 
 f = FeedHandler(retries=100000)
 
+def obook_process():
+    while True:
+        pairs_df = pd.read_csv('pairs.csv')
+        pairs_df = pairs_df[pairs_df['types'].isnull()]
+        exchange_list = set(pairs_df['exchange'].values)
+
+        exchanges = {}
+
+        for exchange in exchange_list:
+            if exchange == 'ftx':
+                exchanges[exchange] = ccxt.ftx({})
+            elif exchange == 'okex':
+                exchanges[exchange] = ccxt.okex({})
+            elif exchange == 'bybit':
+                exchanges[exchange] = ccxt.bybit({})
+            elif exchange == 'binance_futures':
+                exchanges[exchange] = ccxt.binance({})
+            elif exchange == 'huobi_swap':
+                exchanges[exchange] = HuobiDM("https://api.hbdm.com", "", "")
+
+        for idx, row in pairs_df.iterrows():
+            if "MOVE" in row['ccxt_symbol']:
+                pairs = json.load(open('algos/vol_trend/pairs.json'))
+            else:
+                pairs = [row['ccxt_symbol']]
+                
+            for pair in pairs:
+                if row['exchange'] in ['ftx', 'okex', 'bybit']:
+                    exchange = exchanges[row['exchange']]    
+                    book = exchange.fetch_order_book(pair)
+                    bid = book['bids'][0][0]
+                    ask = book['asks'][0][0]
+                elif row['exchange'] == 'binance_futures':
+                    exchange = exchanges[row['exchange']] 
+                    book = exchange.fapiPublicGetDepth({'symbol': 'BTCUSDT', 'limit': 5})
+                    bid = book['bids'][0][0]
+                    ask = book['asks'][0][0]
+                elif row['exchange'] == 'huobi_swap':
+                    book = exchanges['huobi_swap'].send_get_request('/swap-ex/market/depth', {'contract_code': row['ccxt_symbol'], 'type': 'step0'})['tick']
+                    bid = book['bids'][0][0]
+                    ask = book['asks'][0][0]
+                    
+                if 'daddy' in row['feed']:
+                    r.set('{}_best_bid'.format(row['exchange']), bid)
+                    r.set('{}_best_ask'.format(row['exchange']), ask)
+                
+                if 'vol_trend' in row['feed']:
+                    r.set('FTX_{}_best_bid'.format(pair), bid)
+                    r.set('FTX_{}_best_ask'.format(pair), ask)
+                
+                if 'altcoin' in row['feed']:
+                    r.set('{}_best_bid'.format(pair), bid)
+                    r.set('{}_best_ask'.format(pair), ask)
+
+        time.sleep(10)
+
 def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
     daddy_thread.start()
@@ -49,6 +108,9 @@ def bot():
 
     altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
     altcoin_thread.start()
+
+    obook_thread = multiprocessing.Process(target=obook_process, args=())
+    obook_thread.start()
 
     while True:
         #daddy
@@ -103,7 +165,7 @@ for idx, row in PAIRS.iterrows():
     if row['types'] != "":
         for callback in row['feed'].split(";"):
             types = row['types']
-            
+
             if callback == 'daddy':
                 if 'stream' in types:
                     trade_callbacks.append(daddy_trade)

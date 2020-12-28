@@ -42,3 +42,18 @@ def flush_redis(r, EXCHANGES):
     r.set('first_execution', 1)
     r.set('first_nine', 1)
     r.set('got_this_turn', 0)
+
+    try:
+        r.get('daddy_enabled').decode()
+    except:
+        r.set('daddy_enabled', 0)
+
+    try:
+        r.get('vol_trend_enabled').decode()
+    except:
+        r.set('vol_trend_enabled', 0)
+
+    try:
+        r.get('altcoin_enabled').decode()
+    except:
+        r.set('altcoin_enabled', 0)
