@@ -70,34 +70,37 @@ def obook_process():
                 pairs = [row['ccxt_symbol']]
                 
             for pair in pairs:
-                if row['exchange'] in ['ftx', 'okex', 'bybit']:
-                    exchange = exchanges[row['exchange']]    
-                    book = exchange.fetch_order_book(pair)
-                    bid = book['bids'][0][0]
-                    ask = book['asks'][0][0]
-                elif row['exchange'] == 'binance_futures':
-                    exchange = exchanges[row['exchange']] 
-                    book = exchange.fapiPublicGetDepth({'symbol': 'BTCUSDT', 'limit': 5})
-                    bid = book['bids'][0][0]
-                    ask = book['asks'][0][0]
-                elif row['exchange'] == 'huobi_swap':
-                    book = exchanges['huobi_swap'].send_get_request('/swap-ex/market/depth', {'contract_code': row['ccxt_symbol'], 'type': 'step0'})['tick']
-                    bid = book['bids'][0][0]
-                    ask = book['asks'][0][0]
+                try:
+                    if row['exchange'] in ['ftx', 'okex', 'bybit']:
+                        exchange = exchanges[row['exchange']]    
+                        book = exchange.fetch_order_book(pair)
+                        bid = book['bids'][0][0]
+                        ask = book['asks'][0][0]
+                    elif row['exchange'] == 'binance_futures':
+                        exchange = exchanges[row['exchange']] 
+                        book = exchange.fapiPublicGetDepth({'symbol': 'BTCUSDT', 'limit': 5})
+                        bid = book['bids'][0][0]
+                        ask = book['asks'][0][0]
+                    elif row['exchange'] == 'huobi_swap':
+                        book = exchanges['huobi_swap'].send_get_request('/swap-ex/market/depth', {'contract_code': row['ccxt_symbol'], 'type': 'step0'})['tick']
+                        bid = book['bids'][0][0]
+                        ask = book['asks'][0][0]
+                        
+                    if 'daddy' in row['feed']:
+                        r.set('{}_best_bid'.format(row['exchange']), bid)
+                        r.set('{}_best_ask'.format(row['exchange']), ask)
                     
-                if 'daddy' in row['feed']:
-                    r.set('{}_best_bid'.format(row['exchange']), bid)
-                    r.set('{}_best_ask'.format(row['exchange']), ask)
-                
-                if 'vol_trend' in row['feed']:
-                    r.set('FTX_{}_best_bid'.format(pair), bid)
-                    r.set('FTX_{}_best_ask'.format(pair), ask)
-                
-                if 'altcoin' in row['feed']:
-                    r.set('{}_best_bid'.format(pair), bid)
-                    r.set('{}_best_ask'.format(pair), ask)
+                    if 'vol_trend' in row['feed']:
+                        r.set('FTX_{}_best_bid'.format(pair), bid)
+                        r.set('FTX_{}_best_ask'.format(pair), ask)
+                    
+                    if 'altcoin' in row['feed']:
+                        r.set('{}_best_bid'.format(pair), bid)
+                        r.set('{}_best_ask'.format(pair), ask)
+                except:
+                    pass
 
-        time.sleep(10)
+        time.sleep(20)
 
 def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())

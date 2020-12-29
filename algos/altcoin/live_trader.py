@@ -51,7 +51,7 @@ class liveTrading():
                                 }
 
         config = pd.read_csv('algos/altcoin/config.csv')
-        curr_config = config[config['name'] == self.symbol]
+        curr_config = config[config['name'] == self.symbol].iloc[0]
         self.method = curr_config['method']
 
         self.increment = 0.5
@@ -69,7 +69,9 @@ class liveTrading():
         return 0
 
     def transfer_to_subaccount(self, amount, destination, source='main', coin='USD'):
-        self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
+        if amount > 0:
+            print("Moving {} {} from {} to {}".format(amount, coin, source, destination))
+            self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
 
     def update_parameters(self):
         config = pd.read_csv('algos/altcoin/config.csv')
@@ -196,7 +198,7 @@ class liveTrading():
             price = orderbook['best_ask'] - self.increment
             balance = self.get_balance()
             amount = round_down(((balance * self.lev)/price) * 0.99, 4)
-            return amount, price
+            return float(abs(amount)),float(abs(price))
 
         elif order_type == 'close':
             price = orderbook['best_bid'] + self.increment

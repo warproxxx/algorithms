@@ -28,7 +28,7 @@ async def altcoin_book(feed, pair, book, timestamp, receipt_timestamp):
 async def altcoin_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
     pass
 
-def move_free():
+def perform_move_free():
     config = pd.read_csv('algos/altcoin/config.csv')
 
     lt = liveTrading('BTC-PERP')
@@ -130,18 +130,21 @@ def daily_tasks():
 
         for idx, row in to_open.iterrows():
             if row['to_trade'] == 1:
-                if row['target_pos'] == row['curr_pos']:
-                    print("As required for {}".format(row['name']))
-                    pass
-                elif row['target_pos'] * row['curr_pos'] == -1:
-                    print("Closing and opening for {}".format(row['name']))
-                    lt = liveTrading(symbol=row['name'])
-                    lt.fill_order('close', row['position'].lower())
-                    lt.fill_order('open', row['backtest_position'].lower())
-                else:
-                    print("Opening for {}".format(row['name']))
-                    lt = liveTrading(symbol=row['name'])
-                    lt.fill_order('open', row['backtest_position'].lower())
+                try:
+                    if row['target_pos'] == row['curr_pos']:
+                        print("As required for {}".format(row['name']))
+                        pass
+                    elif row['target_pos'] * row['curr_pos'] == -1:
+                        print("Closing and opening for {}".format(row['name']))
+                        lt = liveTrading(symbol=row['name'])
+                        lt.fill_order('close', row['position'].lower())
+                        lt.fill_order('open', row['backtest_position'].lower())
+                    else:
+                        print("Opening for {}".format(row['name']))
+                        lt = liveTrading(symbol=row['name'])
+                        lt.fill_order('open', row['backtest_position'].lower())
+                except Exception as e:
+                    print(str(e))
 
 
         print("\n")
@@ -156,6 +159,21 @@ def hourly_tasks():
     for idx, row in details_df.iterrows():
         lt = liveTrading(row['name'])
         lt.set_position()
+
+def perform_close_and_main():
+    config = pd.read_csv('algos/altcoin/config.csv')
+
+    for idx, row in config.iterrows():
+        lt = liveTrading(row['name'])
+        pos, _, _ = lt.get_position()
+
+        if pos != "NONE":
+            lt.fill_order('close', pos.lower())
+
+        amount = lt.get_balance()
+
+        if amount > 0:
+            lt.transfer_to_subaccount(amount, 'main', source=row['name'])
 
 def alt_bot():
     perform_backtests()
@@ -179,6 +197,7 @@ def alt_bot():
             close_and_rebalance = 0
             enter_now = 0
             sub_account = 0
+            close_and_main = 0
 
             try:
                 sub_account = float(r.get('sub_account').decode())
@@ -192,6 +211,11 @@ def alt_bot():
 
             try:
                 close_and_rebalance = float(r.get('close_and_rebalance').decode())
+            except:
+                pass
+
+            try:
+                close_and_main = float(r.get('close_and_main').decode())
             except:
                 pass
 
@@ -211,26 +235,18 @@ def alt_bot():
 
             if move_free == 1:
                 r.set('move_free', 0)
-                move_free()
-                
+                perform_move_free()
+
+            if close_and_main == 1:
+                r.set('close_and_main', 0)
+                perform_close_and_main()
+
             if close_and_rebalance == 1:
                 r.set('close_and_rebalance', 0)
-                config = pd.read_csv('algos/altcoin/config.csv')
-
-                for idx, row in config.iterrows():
-                    lt = liveTrading(row['name'])
-                    pos, _, _ = lt.get_position()
-
-                    if pos != "NONE":
-                        lt.fill_order('close', pos.lower())
-
-                    amount = lt.get_balance()
-
-                    if amount > 0:
-                        lt.transfer_to_subaccount(amount, 'main', source=row['name'])
-
-                move_free()
+                perform_close_and_main()
+                perform_move_free()
                 daily_tasks()
+            
 
             if enter_now == 1:
                 r.set('enter_now', 0)

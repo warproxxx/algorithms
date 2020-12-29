@@ -185,7 +185,7 @@ class liveTrading():
             price = orderbook['best_ask'] - self.increment
             balance = self.get_balance()
             amount = round_down(((balance * self.lev)/price) * 0.99, 4)
-            return amount, price
+            return float(abs(amount)),float(abs(price))
 
         elif order_type == 'close':
             price = orderbook['best_bid'] + self.increment

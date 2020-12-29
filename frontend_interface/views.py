@@ -97,6 +97,12 @@ def altcoin_interface(request):
                 else:
                     r.set('move_free', 0)
 
+            elif 'enable_close_and_main_form' in dic:
+                if 'close_and_main' in dic:
+                    r.set('close_and_main', 1)
+                else:
+                    r.set('close_and_main', 0)
+
             elif 'enable_close_and_rebalance_form' in dic:
                 if 'close_and_rebalance' in dic:
                     r.set('close_and_rebalance', 1)
@@ -138,6 +144,11 @@ def altcoin_interface(request):
             close_and_rebalance = 0
 
         try:
+            close_and_main = float(r.get('close_and_main').decode())
+        except:
+            close_and_main = 0
+
+        try:
             enter_now = float(r.get('enter_now').decode())
         except:
             enter_now = 0
@@ -147,7 +158,7 @@ def altcoin_interface(request):
         except:
             sub_account = 0
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'enter_now': enter_now, 'sub_account': sub_account})
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account})
     else:
         return HttpResponseRedirect('/login')
 
