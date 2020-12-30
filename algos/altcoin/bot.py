@@ -223,7 +223,7 @@ def alt_bot():
                 enter_now = float(r.get('enter_now').decode())
             except:
                 pass
-            
+
             if sub_account == 1:
                 r.set('sub_account', 0)
                 lt = liveTrading('BTC-PERP')
@@ -246,7 +246,6 @@ def alt_bot():
                 perform_close_and_main()
                 perform_move_free()
                 daily_tasks()
-            
 
             if enter_now == 1:
                 r.set('enter_now', 0)

@@ -116,34 +116,42 @@ def bot():
     obook_thread.start()
 
     while True:
-        #daddy
-        if float(r.get('daddy_enabled').decode()) != 1:
-            daddy_thread.terminate()
+        try:
+            if float(r.get('daddy_enabled').decode()) != 1:
+                print("Daddy Bot terminated")
+                daddy_thread.terminate()
 
-        if daddy_thread.is_alive() == False:
-            if float(r.get('daddy_enabled').decode()) == 1:
-                daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
-                daddy_thread.start()
-        
-        #vol
-        if float(r.get('vol_trend_enabled').decode()) != 1:
-            vol_thread.terminate()
+            if daddy_thread.is_alive() == False:
+                if float(r.get('daddy_enabled').decode()) == 1:
+                    print("Daddy Bot started")
+                    daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
+                    daddy_thread.start()
+            
+            #vol
+            if float(r.get('vol_trend_enabled').decode()) != 1:
+                print("Volatility Bot terminated")
+                vol_thread.terminate()
 
-        if vol_thread.is_alive() == False:
-            if float(r.get('vol_trend_enabled').decode()) == 1:
-                vol_thread = multiprocessing.Process(target=vol_bot, args=())
-                vol_thread.start()
+            if vol_thread.is_alive() == False:
+                if float(r.get('vol_trend_enabled').decode()) == 1:
+                    print("Vol Bot started")
+                    vol_thread = multiprocessing.Process(target=vol_bot, args=())
+                    vol_thread.start()
 
-        #altcoin
-        if float(r.get('altcoin_enabled').decode()) != 1:
-            altcoin_thread.terminate()
+            #altcoin
+            if float(r.get('altcoin_enabled').decode()) != 1:
+                print("Altcoin bot terminated")
+                altcoin_thread.terminate()
 
-        if vol_thread.is_alive() == False:
-            if float(r.get('altcoin_enabled').decode()) == 1:
-                altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
-                altcoin_thread.start()
+            if vol_thread.is_alive() == False:
+                if float(r.get('altcoin_enabled').decode()) == 1:
+                    print("Alt Bot started")
+                    altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
+                    altcoin_thread.start()
 
-        time.sleep(1)  
+            time.sleep(1)  
+        except:
+            print("error in main")
 
 bot_thread = threading.Thread(target=bot)
 bot_thread.start()
