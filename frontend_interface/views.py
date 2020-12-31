@@ -158,7 +158,10 @@ def altcoin_interface(request):
         except:
             sub_account = 0
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(),'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account})
+        backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
+        live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account})
     else:
         return HttpResponseRedirect('/login')
 

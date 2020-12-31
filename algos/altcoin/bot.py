@@ -54,7 +54,7 @@ def get_positions():
         curr_detail = pd.Series()
         curr_detail['name'] = asset
         backtest = pd.read_csv("data/trades_{}.csv".format(asset))
-        
+
         try:
             curr_detail['position'] = r.get('{}_current_pos'.format(asset)).decode()
         except:
@@ -64,7 +64,7 @@ def get_positions():
             curr_detail['entry'] = round(float(r.get('{}_avgEntryPrice'.format(asset)).decode()),2)
         except:
             curr_detail['entry'] = 0
-        
+
         try:
             curr_detail['pos_size'] = float(r.get('{}_pos_size'.format(asset)).decode())
         except:
@@ -81,7 +81,7 @@ def get_positions():
         curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
         curr_detail['to_trade'] = row['to_trade']
         curr_detail['live_lev'] = int(row['mult'])
-        
+
         try:
             curr_detail['live_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry'])/curr_detail['entry']) * 100 * curr_detail['live_lev'], 2)
 
@@ -89,9 +89,19 @@ def get_positions():
                 curr_detail['live_pnl'] = curr_detail['live_pnl'] * -1
         except:
             curr_detail['live_pnl'] = 0
+            
+        try:
+            curr_detail['backtest_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry_price'])/curr_detail['entry_price']) * 100 * curr_detail['live_lev'], 2)
+
+            if curr_detail['backtest_position'] == 'SHORT':
+                curr_detail['backtest_pnl'] = curr_detail['backtest_pnl'] * -1
+        except:
+            curr_detail['live_pnl'] = 0
+            
+        curr_detail['allocation'] = row['allocation']
 
         details_df = details_df.append(curr_detail, ignore_index=True)
-
+    
     return details_df
 
 
