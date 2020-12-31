@@ -104,6 +104,9 @@ def get_position_balance():
 
         try:
             curr_detail['live_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry'])/curr_detail['entry']) * 100 * curr_detail['live_lev'], 2)
+
+            if curr_detail['backtest_position'] == 'SHORT':
+                curr_detail['live_pnl'] = curr_detail['live_pnl'] * -1
         except:
             curr_detail['live_pnl'] = 0
 
