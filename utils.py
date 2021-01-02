@@ -57,3 +57,8 @@ def flush_redis(r, EXCHANGES):
         r.get('altcoin_enabled').decode()
     except:
         r.set('altcoin_enabled', 0)
+
+    try:
+        r.get('ratio_enabled').decode()
+    except:
+        r.set('ratio_enabled', 0)

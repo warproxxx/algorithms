@@ -14,6 +14,7 @@ import redis
 from algos.daddy.defines import trade_methods
 from algos.vol_trend.bot import get_position_balance
 from algos.altcoin.bot import get_positions
+from algos.ratio.bot import get_positions as get_ratio_positions
 
 from algos.altcoin.defines import trade_methods as altcoin_methods
 
@@ -162,6 +163,115 @@ def altcoin_interface(request):
         live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
 
         return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account})
+    else:
+        return HttpResponseRedirect('/login')
+
+def ratio_interface(request):
+    if 'Adminlogin' in request.session:
+        config_file = 'algos/ratio/config.csv'
+        r = redis.Redis(host='localhost', port=6379, db=0)
+
+        if request.POST:
+            dic = request.POST.dict()
+            if 'ETHBTC[allocation]' in dic:
+                dic.pop('csrfmiddlewaretoken', None)
+                curr_df = pd.DataFrame()
+
+                for idx, value in dic.items():
+                    splitted = idx.split("[")
+                    exchange = splitted[0]
+                    column = splitted[1].replace("]", "")
+                    
+                    curr_df = curr_df.append(pd.Series({'name': exchange, 'column': column, 'value': value}), ignore_index=True)
+
+                new_exchanges = {}
+
+                for exchange, exchange_values in curr_df.groupby('name'):
+                    new_exchanges[exchange] = {}
+                    
+                    for idx, row in exchange_values.iterrows():
+                        new_exchanges[exchange][row['column']] = row['value']
+
+                new_exchanges = pd.DataFrame(new_exchanges)
+                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
+                old_exchanges = pd.read_csv(config_file)
+                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
+                final_exchanges = final_exchanges[old_exchanges.columns]
+                final_exchanges.to_csv(config_file, index=None)
+
+            elif 'csv_file' in dic:
+                open(config_file, 'w').write(dic['csv_file'])
+            elif 'move_free_form' in dic:
+                if 'move_free_ratio' in dic:
+                    r.set('move_free_ratio', 1)
+                else:
+                    r.set('move_free_ratio', 0)
+
+            elif 'enable_close_and_main_form' in dic:
+                if 'close_and_main_ratio' in dic:
+                    r.set('close_and_main_ratio', 1)
+                else:
+                    r.set('close_and_main_ratio', 0)
+
+            elif 'enable_close_and_rebalance_form' in dic:
+                if 'close_and_rebalance_ratio' in dic:
+                    r.set('close_and_rebalance_ratio', 1)
+                else:
+                    r.set('close_and_rebalance_ratio', 0)
+            elif 'enter_now_form' in dic:
+                if 'enter_now_ratio' in dic:
+                    r.set('enter_now_ratio', 1)
+                else:
+                    r.set('enter_now_ratio', 0)
+            elif 'sub_account_form' in dic:
+                if 'sub_account_ratio' in dic:
+                    r.set('sub_account_ratio', 1)
+                else:
+                    r.set('sub_account_ratio', 0)
+        
+        config_df = pd.read_csv(config_file)
+        config_df = config_df.round(4)
+
+        config = config_df.set_index('name').T.to_dict()
+
+        csv_file = open(config_file, 'r').read()
+
+        details_df = get_ratio_positions()
+
+        try:
+            run_log = open("logs/ratio_bot.log").read()
+        except:
+            run_log = ""
+
+        try:
+            move_free_ratio = float(r.get('move_free_ratio').decode())
+        except:
+            move_free_ratio = 0
+        
+        try:
+            close_and_rebalance_ratio = float(r.get('close_and_rebalance_ratio').decode())
+        except:
+            close_and_rebalance_ratio = 0
+
+        try:
+            close_and_main_ratio = float(r.get('close_and_main_ratio').decode())
+        except:
+            close_and_main_ratio = 0
+
+        try:
+            enter_now_ratio = float(r.get('enter_now_ratio').decode())
+        except:
+            enter_now_ratio = 0
+
+        try:
+            sub_account_ratio = float(r.get('sub_account_ratio').decode())
+        except:
+            sub_account_ratio = 0
+
+        backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
+        live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+
+        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio})
     else:
         return HttpResponseRedirect('/login')
 
@@ -384,10 +494,7 @@ def daddy_interface(request):
             row['pnl_percentage'] = pnl_percentage
             row['pos_size'] = pos_size
 
-            if free_balance != 0:
-                row['balance'] = free_balance + 0.003
-            else:
-                row['balance'] = free_balance
+            row['balance'] = free_balance
             
             new_df.append(row.to_dict())
 

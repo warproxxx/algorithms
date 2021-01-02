@@ -2,6 +2,7 @@ from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
 
 import pandas as pd
 import json
+import math
 
 import time
 import datetime
@@ -10,26 +11,26 @@ import threading
 import schedule
 import redis
 
-from algos.altcoin.backtest import perform_backtests
-from algos.altcoin.live_trader import liveTrading, round_down
+from algos.ratio.backtest import perform_backtests
+from algos.ratio.live_trader import liveTrading, round_down
 from utils import print
 
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-async def altcoin_book(feed, pair, book, timestamp, receipt_timestamp):
-    if float(r.get('altcoin_enabled').decode()) == 1:
+async def ratio_book(feed, pair, book, timestamp, receipt_timestamp):
+    if float(r.get('ratio_enabled').decode()) == 1:
         bid = float(list(book[BID].keys())[-1])
         ask = float(list(book[ASK].keys())[0])
 
         r.set('{}_best_bid'.format(pair), bid)
         r.set('{}_best_ask'.format(pair), ask)
 
-async def altcoin_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
+async def ratio_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
     pass
 
 def perform_move_free():
-    config = pd.read_csv('algos/altcoin/config.csv')
+    config = pd.read_csv('algos/ratio/config.csv')
 
     lt = liveTrading('BTC-PERP')
     initial_balance = lt.get_subaccount_balance('main')
@@ -40,12 +41,25 @@ def perform_move_free():
         print("Moving {} to {}".format(amount, row['name']))
         lt.transfer_to_subaccount(amount, row['name'])
 
-async def altcoin_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
+async def ratio_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass
+
+def my_round(num, upto=2):
+    if not num:
+        return num
+    current_num = abs(num) * 10
+    round_value = 1
+
+    while not (current_num//1):
+        current_num *= 10
+        round_value +=1
+
+    round_value = round_value + upto
+    return round(num, round_value)
 
 def get_positions():
     r = redis.Redis(host='localhost', port=6379, db=0)
-    config = pd.read_csv('algos/altcoin/config.csv')
+    config = pd.read_csv('algos/ratio/config.csv')
     details_df = pd.DataFrame()
 
     for idx, row in config.iterrows():
@@ -53,7 +67,7 @@ def get_positions():
 
         curr_detail = pd.Series()
         curr_detail['name'] = asset
-        backtest = pd.read_csv("data/trades_{}.csv".format(asset))
+        backtest = pd.read_csv("data/binance/trades_{}.csv".format(asset))
 
         try:
             curr_detail['position'] = r.get('{}_current_pos'.format(asset)).decode()
@@ -61,7 +75,7 @@ def get_positions():
             curr_detail['position'] = "NONE"
 
         try:
-            curr_detail['entry'] = round(float(r.get('{}_avgEntryPrice'.format(asset)).decode()),2)
+            curr_detail['entry'] = my_round(float(r.get('{}_avgEntryPrice'.format(asset)).decode()))
         except:
             curr_detail['entry'] = 0
 
@@ -71,14 +85,14 @@ def get_positions():
             curr_detail['pos_size'] = 0
 
         try:
-            curr_detail['live_price'] = round(float(r.get('{}_best_ask'.format(asset)).decode()), 3)
+            curr_detail['live_price'] = my_round(float(r.get('{}_best_ask'.format(asset)).decode()))
         except:
             curr_detail['live_price'] = 0
 
 
         curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
         curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
-        curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
+        curr_detail['entry_price'] = my_round(backtest.iloc[-1]['Price'])
         curr_detail['to_trade'] = row['to_trade']
         curr_detail['live_lev'] = int(row['mult'])
 
@@ -110,7 +124,7 @@ def daily_tasks():
     perform_backtests()
     print("\n")
 
-    config = pd.read_csv('algos/altcoin/config.csv')
+    config = pd.read_csv('algos/ratio/config.csv')
 
     for pair in config['name']:
         lt = liveTrading(pair)
@@ -120,7 +134,7 @@ def daily_tasks():
     enabled = 1
 
     try:
-        enabled = float(r.get('altcoin_enabled').decode())
+        enabled = float(r.get('ratio_enabled').decode())
     except:
         pass
 
@@ -174,7 +188,7 @@ def hourly_tasks():
         lt.set_position()
 
 def perform_close_and_main():
-    config = pd.read_csv('algos/altcoin/config.csv')
+    config = pd.read_csv('algos/ratio/config.csv')
 
     for idx, row in config.iterrows():
         lt = liveTrading(row['name'])
@@ -188,9 +202,9 @@ def perform_close_and_main():
         if amount > 0:
             lt.transfer_to_subaccount(amount, 'main', source=row['name'])
 
-def alt_bot():
+def ratio_bot():
     perform_backtests()
-    pairs = pd.read_csv('algos/altcoin/config.csv')['name']
+    pairs = pd.read_csv('algos/ratio/config.csv')['name']
 
     for pair in pairs:
         lt = liveTrading(pair)
@@ -205,46 +219,31 @@ def alt_bot():
     while True:
         time.sleep(1)
         
-        if float(r.get('altcoin_enabled').decode()) == 1:
+        if float(r.get('ratio_enabled').decode()) == 1:
             move_free = 0
             close_and_rebalance = 0
             enter_now = 0
-            sub_account = 0
             close_and_main = 0
 
             try:
-                sub_account = float(r.get('sub_account').decode())
+                move_free = float(r.get('move_free_ratio').decode())
             except:
                 pass
 
             try:
-                move_free = float(r.get('move_free').decode())
+                close_and_rebalance = float(r.get('close_and_rebalance_ratio').decode())
             except:
                 pass
 
             try:
-                close_and_rebalance = float(r.get('close_and_rebalance').decode())
+                close_and_main = float(r.get('close_and_main_ratio').decode())
             except:
                 pass
 
             try:
-                close_and_main = float(r.get('close_and_main').decode())
+                enter_now = float(r.get('enter_now_ratio').decode())
             except:
                 pass
-
-            try:
-                enter_now = float(r.get('enter_now').decode())
-            except:
-                pass
-
-            if sub_account == 1:
-                r.set('sub_account', 0)
-                lt = liveTrading('BTC-PERP')
-                
-                config = pd.read_csv('algos/altcoin/config.csv')
-
-                for idx, row in config.iterrows():
-                    lt.create_subaccount(row['name'])
 
             if move_free == 1:
                 r.set('move_free', 0)

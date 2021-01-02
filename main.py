@@ -21,6 +21,7 @@ from utils import flush_redis
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
 from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book, vol_trend_ticker
 from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book, altcoin_ticker
+from algos.ratio.bot import ratio_bot, ratio_trade, ratio_book, ratio_ticker
 
 import ccxt
 from algos.daddy.huobi.HuobiDMService import HuobiDM
@@ -58,7 +59,7 @@ def obook_process():
                 exchanges[exchange] = ccxt.okex({})
             elif exchange == 'bybit':
                 exchanges[exchange] = ccxt.bybit({})
-            elif exchange == 'binance_futures':
+            elif exchange == 'binance_futures' or exchange == 'binance':
                 exchanges[exchange] = ccxt.binance({})
             elif exchange == 'huobi_swap':
                 exchanges[exchange] = HuobiDM("https://api.hbdm.com", "", "")
@@ -71,7 +72,7 @@ def obook_process():
                 
             for pair in pairs:
                 try:
-                    if row['exchange'] in ['ftx', 'okex', 'bybit']:
+                    if row['exchange'] in ['ftx', 'okex', 'bybit', 'binance']:
                         exchange = exchanges[row['exchange']]    
                         book = exchange.fetch_order_book(pair)
                         bid = book['bids'][0][0]
@@ -97,8 +98,13 @@ def obook_process():
                     if 'altcoin' in row['feed']:
                         r.set('{}_best_bid'.format(pair), bid)
                         r.set('{}_best_ask'.format(pair), ask)
-                except:
-                    pass
+
+                    if 'ratio' in row['feed']:
+                        pair = pair.replace("/", "")
+                        r.set('{}_best_bid'.format(pair), bid)
+                        r.set('{}_best_ask'.format(pair), ask)
+                except Exception as e:
+                    print(str(e))
 
         time.sleep(20)
 
@@ -112,14 +118,18 @@ def bot():
     altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
     altcoin_thread.start()
 
+    ratio_thread = multiprocessing.Process(target=ratio_bot, args=())
+    ratio_thread.start()
+
     obook_thread = multiprocessing.Process(target=obook_process, args=())
     obook_thread.start()
 
     while True:
         try:
             if float(r.get('daddy_enabled').decode()) != 1:
-                print("Daddy Bot terminated")
-                daddy_thread.terminate()
+                if daddy_thread.is_alive():
+                    print("Daddy Bot terminated")
+                    daddy_thread.terminate()
 
             if daddy_thread.is_alive() == False:
                 if float(r.get('daddy_enabled').decode()) == 1:
@@ -129,8 +139,9 @@ def bot():
             
             #vol
             if float(r.get('vol_trend_enabled').decode()) != 1:
-                print("Volatility Bot terminated")
-                vol_thread.terminate()
+                if vol_thread.is_alive():
+                    print("Volatility Bot terminated")
+                    vol_thread.terminate()
 
             if vol_thread.is_alive() == False:
                 if float(r.get('vol_trend_enabled').decode()) == 1:
@@ -140,14 +151,27 @@ def bot():
 
             #altcoin
             if float(r.get('altcoin_enabled').decode()) != 1:
-                print("Altcoin bot terminated")
-                altcoin_thread.terminate()
+                if altcoin_thread.is_alive():
+                    print("Altcoin bot terminated")
+                    altcoin_thread.terminate()
 
-            if vol_thread.is_alive() == False:
+            if altcoin_thread.is_alive() == False:
                 if float(r.get('altcoin_enabled').decode()) == 1:
                     print("Alt Bot started")
                     altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
                     altcoin_thread.start()
+
+            #ratio
+            if float(r.get('ratio_enabled').decode()) != 1:
+                if ratio_thread.is_alive():
+                    print("Ratio bot terminated")
+                    ratio_thread.terminate()
+
+            if ratio_thread.is_alive() == False:
+                if float(r.get('ratio_enabled').decode()) == 1:
+                    print("Ratio Bot started")
+                    ratio_thread = multiprocessing.Process(target=ratio_bot, args=())
+                    ratio_thread.start()
 
             time.sleep(1)  
         except:
@@ -205,6 +229,16 @@ for idx, row in PAIRS.iterrows():
 
                 if 'ticker' in types:
                     ticker_callbacks.append(altcoin_ticker)
+
+            elif callback == 'ratio':
+                if 'stream' in types:
+                    trade_callbacks.append(ratio_trade)
+
+                if 'book' in types:
+                    obook_callbacks.append(ratio_book)
+
+                if 'ticker' in types:
+                    ticker_callbacks.append(ratio_ticker)
 
         channels = []
         callbacks = {}
