@@ -21,6 +21,7 @@ def round_down(value, decimals):
 class liveTrading():
     def __init__(self, symbol, testnet=True):
         self.symbol = symbol
+        self.symbol_here = symbol.replace("BTC", "") + "/BTC"
         
         self.threshold_tiggered = False
         self.attempts = 5
@@ -37,6 +38,13 @@ class liveTrading():
                     })
 
         self.exchange.load_markets()
+        self.min_notional_base = float(self.exchange.markets[self.symbol_here]['info']['filters'][2]['stepSize'])
+        self.min_notional_quote = 0.0001
+
+        self.round_step = len(str(self.min_notional_base).split('.')[1])
+
+        if self.round_step == 1:
+            self.round_step = 0
 
 
         self.method = "now"
@@ -45,12 +53,11 @@ class liveTrading():
         curr_config = config[config['name'] == self.symbol].iloc[0]
         self.method = curr_config['method']
 
-        self.increment = 0.5
         self.update_parameters()
 
     def transfer_to_subaccount(self, amount, symbol, destination='ISOLATED_MARGIN', source='SPOT', coin='BTC'):
         if amount > 0:
-            print("Moving {} {} from {} {} to {}".format(amount, coin, symbol, source, destination))
+            print("Moving {} {} {} from {} to {}".format(amount, coin, symbol, source, destination))
             self.exchange.sapi_post_margin_isolated_transfer({'asset': coin, 'symbol': symbol, 'transFrom': source, 'transTo': destination, 'amount': amount})
 
     def update_parameters(self):
@@ -78,8 +85,10 @@ class liveTrading():
     
     def get_orderbook(self):
         orderbook = {}
-        orderbook['best_ask'] = float(self.r.get('{}_best_ask'.format(self.symbol)).decode())
-        orderbook['best_bid'] = float(self.r.get('{}_best_bid'.format(self.symbol)).decode())
+        book = self.exchange.fetch_order_book(self.symbol_here)
+
+        orderbook['best_ask'] = book['asks'][0][0]
+        orderbook['best_bid'] = book['bids'][0][0]
 
         return orderbook
 
@@ -89,44 +98,44 @@ class liveTrading():
         '''
         for lp in range(self.attempts):
             try:
-                min_notional = float(self.exchange.markets['ETH/BTC']['info']['filters'][2]['stepSize'])
+                
+                threshold = self.min_notional_base * 3
+                quote_threshold = self.min_notional_quote * 3
+
+
                 details = self.exchange.sapi_get_margin_isolated_account({'symbols': self.symbol})['assets'][0]
                 current_pos = "NONE"
                 amount = 0
                 avgEntryPrice = 0
                 asset = ""
 
-                if float(details['baseAsset']['borrowed']) == 0 and float(details['quoteAsset']['borrowed']) != 0:
+                if float(details['baseAsset']['borrowed']) <= threshold and float(details['quoteAsset']['borrowed']) > quote_threshold:
                     current_pos = "LONG"
                     amount = float(details['baseAsset']['free'])
 
-                    if abs(amount) <= min_notional * 3:
+                    if abs(amount) <= threshold:
                         return "NONE", 0, 0
 
                     asset = details['baseAsset']['asset']
                     avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
 
-                elif float(details['baseAsset']['borrowed']) != 0 and float(details['quoteAsset']['borrowed']) == 0:
+                elif float(details['baseAsset']['borrowed']) > threshold and float(details['quoteAsset']['borrowed']) <= quote_threshold:
                     current_pos = "SHORT"
                     amount = float(details['baseAsset']['borrowed'])
 
-                    if abs(amount) <= min_notional * 3:
+                    if abs(amount) <= threshold:
                         return "NONE", 0, 0
 
                     asset = details['baseAsset']['asset']
                     avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
                     
-                step = str(min_notional)
-                amount = round_down(amount,len(step.split('.')[1]))
+                amount = round_down(amount,self.round_step)
                 
-                return current_pos, amount, avgEntryPrice
+                return current_pos, avgEntryPrice, amount
             except ccxt.BaseError as e:
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-
-                print(e)
-                time.sleep(1)
 
         return "NONE", 0, 0
 
@@ -161,6 +170,10 @@ class liveTrading():
         except:
             return 0
 
+    def get_main_balance(self, symbol='BTC'):
+        df = pd.DataFrame(self.exchange.fetch_balance()['info']['balances'])
+        return float(df[df['asset'] == symbol].iloc[0]['free'])
+
     def get_subaccount_balance(self):
         try:
             return float(self.exchange.sapi_get_margin_isolated_account({'symbols': self.symbol})['assets'][0]['quoteAsset']['totalAsset'])
@@ -172,16 +185,15 @@ class liveTrading():
         Get the max buyable/sellable amount
         '''
         orderbook = self.get_orderbook()
-        min_notional = len(str(float(self.exchange.markets['ETH/BTC']['info']['filters'][2]['stepSize'])).split('.')[1])
 
         if order_type == 'open':
-            price = orderbook['best_ask'] - self.increment
+            price = orderbook['best_ask']
             balance = self.get_subaccount_balance()
-            amount = round_down(((balance * self.lev)/price) * 0.99, min_notional)
+            amount = round_down(((balance * self.lev)/price) * 0.99, self.round_step)
             return float(abs(amount)),float(abs(price))
 
         elif order_type == 'close':
-            price = orderbook['best_bid'] + self.increment
+            price = orderbook['best_bid']
             current_pos, avgEntryPrice, amount = self.get_position()
             return float(abs(amount)), float(price)
 
@@ -219,6 +231,11 @@ class liveTrading():
             amount, price = self.get_max_amount(type)
             order = self.market_trade(trade_direction, amount, side_effect)
 
+    def trade_now(self, type, trade_direction, side_effect):
+        amount, price = self.get_max_amount(type)
+        order = self.market_trade(trade_direction, amount, side_effect)
+        self.set_position()
+
     def fill_order(self, type, direction):
         '''
         Parameters:
@@ -234,6 +251,8 @@ class liveTrading():
         now: Market buy instantly
 
         '''
+
+        #it seems for closing, i need run it twice just in case
         method = self.method
 
         self.set_position()
@@ -264,21 +283,23 @@ class liveTrading():
             if method == "5sec_average":
                 self.second_average(12, 4.8, type, direction, trade_direction, side_effect)
                 self.set_position()
-                return
             elif method == "10sec_average":
                 self.second_average(12, 9.8, type, direction, trade_direction, side_effect)
                 self.set_position()
-                return
             elif method == "1min_average":
                 self.second_average(12, 60, type, direction, trade_direction, side_effect)
                 self.set_position()
-                return
             elif method == "10min_average":
                 self.second_average(12, 600, type, direction, trade_direction, side_effect)
                 self.set_position()
-                return
             elif method == "now":
-                amount, price = self.get_max_amount(type)
-                order = self.market_trade(trade_direction, amount, side_effect)
-                self.set_position()
-                return
+                self.trade_now(type, trade_direction, side_effect)
+            
+
+            if type == "close":
+                try:
+                    self.trade_now(type, trade_direction, side_effect)
+                except Exception as e:
+                    print(str(e))
+
+            return

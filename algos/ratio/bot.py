@@ -32,12 +32,12 @@ async def ratio_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):
 def perform_move_free():
     config = pd.read_csv('algos/ratio/config.csv')
 
-    lt = liveTrading('BTC-PERP')
-    initial_balance = lt.get_subaccount_balance('main')
+    lt = liveTrading('ETHBTC')
+    initial_balance = lt.get_main_balance()
 
     for idx, row in config.iterrows():
         lt = liveTrading(row['name'])
-        amount = round_down(initial_balance * row['allocation'], 2)
+        amount = round_down(initial_balance * row['allocation'], 6)
         print("Moving {} to {}".format(amount, row['name']))
         lt.transfer_to_subaccount(amount, row['name'])
 
@@ -200,7 +200,7 @@ def perform_close_and_main():
         amount = lt.get_balance()
 
         if amount > 0:
-            lt.transfer_to_subaccount(amount, 'main', source=row['name'])
+            lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
 
 def ratio_bot():
     perform_backtests()
