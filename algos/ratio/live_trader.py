@@ -36,6 +36,8 @@ class liveTrading():
                         'options': {'defaultMarket': 'futures'}
                     })
 
+        self.exchange.load_markets()
+
 
         self.method = "now"
 
@@ -52,7 +54,7 @@ class liveTrading():
             self.exchange.sapi_post_margin_isolated_transfer({'asset': coin, 'symbol': symbol, 'transFrom': source, 'transTo': destination, 'amount': amount})
 
     def update_parameters(self):
-        config = pd.read_csv('algos/altcoin/config.csv')
+        config = pd.read_csv('algos/ratio/config.csv')
         curr_config = config[config['name'] == self.symbol].iloc[0]
         self.lev = int(curr_config['mult'])
 
@@ -87,23 +89,37 @@ class liveTrading():
         '''
         for lp in range(self.attempts):
             try:
-                pos = pd.DataFrame(self.exchange.private_get_positions(params={'showAvgPrice': True})['result'])
-                if len(pos) == 0:
-                    return 'NONE', 0, 0
-                try:
-                    pos = pos[pos['future'] == self.symbol].iloc[0]
-                except:
-                    return 'NONE', 0, 0
+                min_notional = float(self.exchange.markets['ETH/BTC']['info']['filters'][2]['stepSize'])
+                details = self.exchange.sapi_get_margin_isolated_account({'symbols': self.symbol})['assets'][0]
+                current_pos = "NONE"
+                amount = 0
+                avgEntryPrice = 0
+                asset = ""
 
-                if float(pos['openSize']) == 0:
-                    return 'NONE', 0, 0
-
-                if pos['side'] == 'buy':
+                if float(details['baseAsset']['borrowed']) == 0 and float(details['quoteAsset']['borrowed']) != 0:
                     current_pos = "LONG"
-                elif pos['side'] == 'sell':
-                    current_pos = "SHORT" 
+                    amount = float(details['baseAsset']['free'])
+
+                    if abs(amount) <= min_notional * 3:
+                        return "NONE", 0, 0
+
+                    asset = details['baseAsset']['asset']
+                    avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
+
+                elif float(details['baseAsset']['borrowed']) != 0 and float(details['quoteAsset']['borrowed']) == 0:
+                    current_pos = "SHORT"
+                    amount = float(details['baseAsset']['borrowed'])
+
+                    if abs(amount) <= min_notional * 3:
+                        return "NONE", 0, 0
+
+                    asset = details['baseAsset']['asset']
+                    avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
+                    
+                step = str(min_notional)
+                amount = round_down(amount,len(step.split('.')[1]))
                 
-                return current_pos, float(pos['recentAverageOpenPrice']), float(pos['openSize'])
+                return current_pos, amount, avgEntryPrice
             except ccxt.BaseError as e:
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
@@ -112,7 +128,7 @@ class liveTrading():
                 print(e)
                 time.sleep(1)
 
-        return 'NONE', 0, 0
+        return "NONE", 0, 0
 
     def set_position(self):
         for lp in range(self.attempts):
@@ -151,30 +167,17 @@ class liveTrading():
         except:
             return 0
 
-    def limit_trade(self, order_type, amount, price):        
-        print("Sending limit {} order for {} of size {} @ {} in {}".format(order_type, self.symbol, amount, price, datetime.datetime.now()))
-
-        params = {
-            'postOnly': True
-            }
-        order = self.exchange.create_order(self.symbol, type="limit", side=order_type.lower(), amount=amount, price=price, params=params)
-        order = self.exchange.fetch_order(order['info']['id'])
-
-        if order['status'] == 'canceled':
-            return []
-
-        return order
-
     def get_max_amount(self, order_type):
         '''
         Get the max buyable/sellable amount
         '''
         orderbook = self.get_orderbook()
+        min_notional = len(str(float(self.exchange.markets['ETH/BTC']['info']['filters'][2]['stepSize'])).split('.')[1])
 
         if order_type == 'open':
             price = orderbook['best_ask'] - self.increment
             balance = self.get_subaccount_balance()
-            amount = round_down(((balance * self.lev)/price) * 0.99, 4)
+            amount = round_down(((balance * self.lev)/price) * 0.99, min_notional)
             return float(abs(amount)),float(abs(price))
 
         elif order_type == 'close':
@@ -182,50 +185,17 @@ class liveTrading():
             current_pos, avgEntryPrice, amount = self.get_position()
             return float(abs(amount)), float(price)
 
-    def send_limit_order(self, type, direction):
-        '''
-        Detects amount and sends limit order for that amount
-        '''
-        for lp in range(self.attempts):
-            try:
-                amount, price = self.get_max_amount(type)
-                order = self.limit_trade(direction, amount, price)
-
-                return order, price
-            except ccxt.BaseError as e:
-                print(e)
-                pass
-
-        
-        return [], 0
-
-    def market_trade(self, order_type, amount):
+    def market_trade(self, trade_direction, amount, side_effect):
         '''
         Performs market trade detecting exchange for the given amount
         '''
 
-        print("Sending market {} order for {} of size {} in {}".format(order_type, self.symbol, amount, datetime.datetime.now()))
-        order = self.exchange.create_order(self.symbol, 'market', order_type.lower(), amount, None)
+        print("Sending market {} order for {} of size {} in {}".format(trade_direction, self.symbol, amount, datetime.datetime.now()))
+        order = self.exchange.sapi_post_margin_order({'symbol': self.symbol, 'isIsolated': 'TRUE', 'side': trade_direction.upper(), 'type': 'MARKET', 'quantity': amount, 'sideEffectType': side_effect})
         return order
 
-
-
-    def send_market_order(self, order_type):
-        '''
-        Detects amount and market buys/sells the amount
-        '''
-        for lp in range(self.attempts):
-            try:
-                self.close_open_orders()
-                amount, price = self.get_max_amount(order_type)
-                order = self.market_trade(order_type, amount)     
-                return order, price    
-            except ccxt.BaseError as e:
-                print(e)
-                pass
-
     
-    def second_average(self, intervals, sleep_time, type, direction, trade_direction):
+    def second_average(self, intervals, sleep_time, type, direction, trade_direction, side_effect):
         self.close_open_orders()
         self.threshold_tiggered = False
 
@@ -242,13 +212,12 @@ class liveTrading():
             trading_array.append(final_amount)
 
         for amount in trading_array:
-            order = self.market_trade(trade_direction, amount) 
+            order = self.market_trade(trade_direction, amount, side_effect)
             time.sleep(sleep_time)
 
         if self.threshold_tiggered == False:
             amount, price = self.get_max_amount(type)
-            order = self.market_trade(trade_direction, amount)
-
+            order = self.market_trade(trade_direction, amount, side_effect)
 
     def fill_order(self, type, direction):
         '''
@@ -261,10 +230,8 @@ class liveTrading():
         direction (string):
         long or short
 
-        attempt_limit: Tries selling limit with best price for 2 mins. Sells at market price if not sold
         5sec_average: Divides into 24 parts and makes market order of that every 5 second
         now: Market buy instantly
-        take_biggest: Takes the biggest. If not filled, waits 30 second and takes it again. If not filled by end, takes at market.
 
         '''
         method = self.method
@@ -274,12 +241,16 @@ class liveTrading():
 
         if direction == 'long' and type == 'close':
             trade_direction = 'sell'
+            side_effect = 'AUTO_REPAY'
         elif direction == 'long' and type == 'open':
             trade_direction = 'buy'
+            side_effect = 'MARGIN_BUY'
         elif direction == 'short' and type == 'open':
             trade_direction = 'sell'
+            side_effect = 'MARGIN_BUY'
         elif direction == 'short' and type == 'close':
             trade_direction = 'buy'
+            side_effect = 'AUTO_REPAY'
 
 
         for lp in range(self.attempts):         
@@ -290,74 +261,24 @@ class liveTrading():
                 break
                 
             
-            if method == "attempt_limit":
-                try:
-                    order, limit_price = self.send_limit_order(type, trade_direction)
-
-                    while len(order) == 0:
-                        order, limit_price = self.send_limit_order(type, trade_direction)
-
-                    while True:
-                        order = self.exchange.fetch_order(order['info']['id'])
-                        order_status = order['info']['size']
-                        filled_string = order['info']['filledSize']
-
-                        if order_status != filled_string:
-                            time.sleep(.5) 
-                            orderbook = self.get_orderbook()
-                            print("Best Bid is {} and Best Ask is {}".format(orderbook['best_ask'], orderbook['best_bid']))
-
-                            if trade_direction == 'buy':
-                                current_match = orderbook['best_bid']
-
-                                if current_match >= (limit_price + self.increment):
-                                    print("Current price is much better, closing to open new one")
-                                    self.close_open_orders()
-
-                                    order, limit_price = self.send_limit_order(type, trade_direction)
-
-                                    while len(order) == 0:
-                                        order, limit_price = self.send_limit_order(type, trade_direction)
-
-                            elif trade_direction == 'sell':
-                                current_match = orderbook['best_ask']
-
-                                if current_match <= (limit_price - self.increment):
-                                    print("Current price is much better, closing to open new one")
-                                    self.close_open_orders()
-                                    order, limit_price = self.send_limit_order(type, trade_direction)
-                                    
-                                    while len(order) == 0:
-                                        order, limit_price = self.send_limit_order(type, trade_direction)
-                        else:
-                            print("Order has been filled. Exiting out of loop")
-                            self.close_open_orders()
-                            self.set_position()
-                            return
-
-                    
-
-                except ccxt.BaseError as e:
-                    print(e)
-                    pass
-            elif method == "5sec_average":
-                self.second_average(12, 4.8, type, direction, trade_direction)
+            if method == "5sec_average":
+                self.second_average(12, 4.8, type, direction, trade_direction, side_effect)
                 self.set_position()
                 return
             elif method == "10sec_average":
-                self.second_average(12, 9.8, type, direction, trade_direction)
+                self.second_average(12, 9.8, type, direction, trade_direction, side_effect)
                 self.set_position()
                 return
             elif method == "1min_average":
-                self.second_average(12, 60, type, direction, trade_direction)
+                self.second_average(12, 60, type, direction, trade_direction, side_effect)
                 self.set_position()
                 return
             elif method == "10min_average":
-                self.second_average(12, 600, type, direction, trade_direction)
+                self.second_average(12, 600, type, direction, trade_direction, side_effect)
                 self.set_position()
                 return
             elif method == "now":
                 amount, price = self.get_max_amount(type)
-                order = self.market_trade(trade_direction, amount)
+                order = self.market_trade(trade_direction, amount, side_effect)
                 self.set_position()
                 return
