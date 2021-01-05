@@ -57,7 +57,7 @@ class liveTrading():
 
     def transfer_to_subaccount(self, amount, symbol, destination='ISOLATED_MARGIN', source='SPOT', coin='BTC'):
         if amount > 0:
-            print("Moving {} {} {} from {} to {}".format(amount, coin, symbol, source, destination))
+            print("Moving {} {} @ {} from {} to {}".format(amount, coin, symbol, source, destination))
             self.exchange.sapi_post_margin_isolated_transfer({'asset': coin, 'symbol': symbol, 'transFrom': source, 'transTo': destination, 'amount': amount})
 
     def update_parameters(self):
@@ -136,6 +136,8 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
+            except:
+                return "NONE", 0, 0
 
         return "NONE", 0, 0
 

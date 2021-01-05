@@ -37,7 +37,7 @@ def perform_move_free():
 
     for idx, row in config.iterrows():
         lt = liveTrading(row['name'])
-        amount = round_down(initial_balance * row['allocation'], 6)
+        amount = round_down(initial_balance * row['allocation'], 8)
         print("Moving {} to {}".format(amount, row['name']))
         lt.transfer_to_subaccount(amount, row['name'])
 
@@ -191,17 +191,19 @@ def perform_close_and_main():
     config = pd.read_csv('algos/ratio/config.csv')
 
     for idx, row in config.iterrows():
-        lt = liveTrading(row['name'])
-        pos, _, _ = lt.get_position()
+        try:
+            lt = liveTrading(row['name'])
+            pos, _, _ = lt.get_position()
 
-        if pos != "NONE":
-            lt.fill_order('close', pos.lower())
+            if pos != "NONE":
+                lt.fill_order('close', pos.lower())
 
-        amount = lt.get_balance()
+            amount = lt.get_balance()
 
-        if amount > 0:
-            lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
-
+            if amount > 0:
+                lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
+        except Exception as e:
+            print(str(e))
 def ratio_bot():
     perform_backtests()
     pairs = pd.read_csv('algos/ratio/config.csv')['name']
@@ -246,19 +248,19 @@ def ratio_bot():
                 pass
 
             if move_free == 1:
-                r.set('move_free', 0)
+                r.set('move_free_ratio', 0)
                 perform_move_free()
 
             if close_and_main == 1:
-                r.set('close_and_main', 0)
+                r.set('close_and_main_ratio', 0)
                 perform_close_and_main()
 
             if close_and_rebalance == 1:
-                r.set('close_and_rebalance', 0)
+                r.set('close_and_rebalance_ratio', 0)
                 perform_close_and_main()
                 perform_move_free()
                 daily_tasks()
 
             if enter_now == 1:
-                r.set('enter_now', 0)
+                r.set('enter_now_ratio', 0)
                 daily_tasks()

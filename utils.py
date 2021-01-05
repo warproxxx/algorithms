@@ -22,6 +22,8 @@ def print(to_print):
         filename = "vol_trend_bot"
     if "altcoin_" in filename:
         filename = "altcoin_bot"
+    if "ratio_" in filename:
+        filename = "ratio_bot"
 
     if isinstance(to_print, str) == False:
         try:
