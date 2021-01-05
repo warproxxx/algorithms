@@ -19,6 +19,7 @@ import shutil
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK
 
 from algos.daddy.live_trader import liveTrading
+from algos.daddy.trade_analysis import get_trades, process_data, get_details
 from algos.daddy.historic import single_price_from_rest
 from algos.daddy.plot import create_chart
 from utils import print
@@ -458,12 +459,21 @@ def delayed_price_from_rest():
     update_price_from_rest() 
 
 def update_price_from_rest():
-    single_price_from_rest('bitmex', 'BTC/USD')
+    single_price_from_rest('bitmex', 'BTC/USD')    
+
 
 def start_schedlued():
     while True:
         schedule.run_pending()
         time.sleep(1)
+
+def save_trades():
+    while True:
+        mex_trades, mex_funding = get_trades('bitmex')
+        mex_trades = process_data(mex_trades)
+        mex_trades = mex_trades[['transactTime', 'side', 'actualPrice', 'expectedPrice']]
+        mex_trades.to_csv("data/mex_trades.csv", index=None)
+        time.sleep(60 * 60)
 
 def daddy_bot():
     if os.path.isdir("data/stream"):
@@ -477,3 +487,6 @@ def daddy_bot():
 
     calling_check_thread = threading.Thread(target=check_calling)
     calling_check_thread.start()
+
+    trade_thread = threading.Thread(target=save_trades)
+    trade_thread.start()

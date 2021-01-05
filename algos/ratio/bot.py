@@ -172,8 +172,7 @@ def daily_tasks():
                         lt.fill_order('open', row['backtest_position'].lower())
                 except Exception as e:
                     print(str(e))
-
-
+                    
         print("\n")
 
 def start_schedlued():
@@ -204,6 +203,7 @@ def perform_close_and_main():
                 lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
         except Exception as e:
             print(str(e))
+
 def ratio_bot():
     perform_backtests()
     pairs = pd.read_csv('algos/ratio/config.csv')['name']

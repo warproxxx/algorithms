@@ -18,6 +18,21 @@ from algos.ratio.bot import get_positions as get_ratio_positions
 
 from algos.altcoin.defines import trade_methods as altcoin_methods
 
+def get_long_short_details(details_df):
+    longs = details_df[details_df['backtest_position'] == 'LONG']
+    shorts = details_df[details_df['backtest_position'] == 'SHORT']
+
+    long_allocation = (longs['allocation'] * longs['live_lev']).sum()
+    short_allocation = (shorts['allocation'] * shorts['live_lev']).sum()
+
+    details = {}
+    details['longs'] = len(longs)
+    details['shorts'] = len(shorts)
+    details['long_allocation_per'] = round((long_allocation/(long_allocation+short_allocation)) * 100, 2)
+    details['short_allocation_per'] = round((short_allocation/(long_allocation+short_allocation)) * 100, 2)
+
+    return details
+
 #create login then interface is done
 def index(request):
     if 'Adminlogin' in request.session:
@@ -162,7 +177,9 @@ def altcoin_interface(request):
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account})
+        details = get_long_short_details(details_df)
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details})
     else:
         return HttpResponseRedirect('/login')
 
@@ -271,7 +288,10 @@ def ratio_interface(request):
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
 
-        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio})
+        details = get_long_short_details(details_df)
+        
+
+        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details})
     else:
         return HttpResponseRedirect('/login')
 
@@ -494,7 +514,10 @@ def daddy_interface(request):
             row['pnl_percentage'] = pnl_percentage
             row['pos_size'] = pos_size
 
-            row['balance'] = free_balance
+            if row['balance'] != 0:
+                row['balance'] = free_balance + 0.003
+            else:
+                row['balance'] = free_balance
             
             new_df.append(row.to_dict())
 
@@ -537,8 +560,12 @@ def daddy_interface(request):
             stop_trading = float(r.get('stop_trading').decode())
         except:
             stop_trading = 0
-            
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
+
+        try:
+            mex_trades =  open("data/mex_trades.csv").read()
+        except:
+            mex_trades = ""
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'mex_trades': mex_trades, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
 
     else:
         return HttpResponseRedirect('/login')

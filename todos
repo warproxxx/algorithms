@@ -1,16 +1,1 @@
-So it seems the step is:
-
-1) Buy BTC
-2) Transfer BTC
-
-To Short:
-3) Borrow asset
-4) Sell it
-
-To long:
-3) Borrow BTC
-4) Buy it
-
-
-
-To hedge, i can short the total amount of btc somewhere.
+Show the list of trades somewhere.
