@@ -514,7 +514,7 @@ def daddy_interface(request):
             row['pnl_percentage'] = pnl_percentage
             row['pos_size'] = pos_size
 
-            if row['balance'] != 0:
+            if free_balance != 0:
                 row['balance'] = free_balance + 0.003
             else:
                 row['balance'] = free_balance
