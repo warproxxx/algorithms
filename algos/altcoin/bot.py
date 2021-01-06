@@ -105,7 +105,7 @@ def get_positions():
     return details_df
 
 
-def daily_tasks():
+def daily_tasks(force=0):
     print("Time: {}".format(datetime.datetime.utcnow()))
     perform_backtests()
     print("\n")
@@ -143,21 +143,29 @@ def daily_tasks():
 
         for idx, row in to_open.iterrows():
             if row['to_trade'] == 1:
-                try:
-                    if row['target_pos'] == row['curr_pos']:
-                        print("As required for {}".format(row['name']))
-                        pass
-                    elif row['target_pos'] * row['curr_pos'] == -1:
-                        print("Closing and opening for {}".format(row['name']))
-                        lt = liveTrading(symbol=row['name'])
-                        lt.fill_order('close', row['position'].lower())
-                        lt.fill_order('open', row['backtest_position'].lower())
-                    else:
+                if force == 0:
+                    try:
+                        if row['target_pos'] == row['curr_pos']:
+                            print("As required for {}".format(row['name']))
+                            pass
+                        elif row['target_pos'] * row['curr_pos'] == -1:
+                            print("Closing and opening for {}".format(row['name']))
+                            lt = liveTrading(symbol=row['name'])
+                            lt.fill_order('close', row['position'].lower())
+                            lt.fill_order('open', row['backtest_position'].lower())
+                        else:
+                            print("Opening for {}".format(row['name']))
+                            lt = liveTrading(symbol=row['name'])
+                            lt.fill_order('open', row['backtest_position'].lower())
+                    except Exception as e:
+                        print(str(e))
+                else:
+                    try:
                         print("Opening for {}".format(row['name']))
                         lt = liveTrading(symbol=row['name'])
                         lt.fill_order('open', row['backtest_position'].lower())
-                except Exception as e:
-                    print(str(e))
+                    except Exception as e:
+                        print(str(e))
 
 
         print("\n")
@@ -262,4 +270,4 @@ def alt_bot():
 
             if enter_now == 1:
                 r.set('enter_now', 0)
-                daily_tasks()
+                daily_tasks(force=1)
