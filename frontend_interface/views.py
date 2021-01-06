@@ -76,7 +76,7 @@ def nissan(request):
         if total_pnl < -0.04:
             total_pnl = total_pnl/3
 
-        amount = round(amount * (1 + total_pnl), 2)
+        amount = round(amount * (1 + total_pnl), 2) + 20
 
         return HttpResponse(amount)
     except:
