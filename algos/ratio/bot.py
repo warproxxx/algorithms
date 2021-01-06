@@ -130,7 +130,6 @@ def daily_tasks(force=0):
         lt = liveTrading(pair)
         lt.set_position()
 
-
     enabled = 1
 
     try:

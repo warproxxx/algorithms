@@ -12,12 +12,94 @@ from glob import glob
 
 import backtrader as bt
 
+import plotly.graph_objects as go
 from scipy.ndimage import gaussian_filter
 
 import requests
 
 from datetime import datetime
 from utils import print
+
+def create_multiple_plot(df, variable_names, time='Time', verbose=False):        
+    fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
+    colors = ['#727272', '#56b4e9', "#009E73", "#000000"]
+    last = len(variable_names) - 1
+    
+    var_one = variable_names[0]
+    var_two = variable_names[1]
+    
+    
+    for i in range(0, len(variable_names)):
+        var = variable_names[i]
+        
+        if i <= (len(colors)):
+            color = colors[i]
+        else:
+            color = ''
+        
+        if verbose == True:
+            print("i: {} var: {} color: {}".format(i, var, color))
+        
+        if i != last:
+            fig.add_trace(go.Scatter(x=df[time], y=df[var], name=var, marker={'color': color}, yaxis="y1"))
+        else:
+            fig.add_trace(go.Scatter(x=df[time], y=df[var], name=var, marker={'color': color}, yaxis="y2"))
+    
+
+
+    fig.update_layout(
+            yaxis=dict(
+                titlefont=dict(
+                    color="#000000"
+                ),
+                tickfont=dict(
+                    color="#000000"
+                )
+            ),
+            yaxis2=dict(
+                tickfont=dict(
+                    color=color
+                ),
+                anchor="free",
+                overlaying="y",
+                side="left",
+                position=1
+            ))
+            
+    fig.update_layout(
+        xaxis=go.layout.XAxis(
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1,
+                         label="1m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=6,
+                         label="6m",
+                         step="month",
+                         stepmode="backward"),
+                    dict(count=1,
+                         label="YTD",
+                         step="year",
+                         stepmode="todate"),
+                    dict(count=1,
+                         label="1y",
+                         step="year",
+                         stepmode="backward"),
+                    dict(step="all")
+                ])
+            ),
+            rangeslider=dict(
+                visible=True,
+            ),
+            type="date",
+        )
+    )
+    
+    fig = fig.update_xaxes(spikemode='across+marker')
+    fig = fig.update_layout(hovermode="x")
+
+    return fig
 
 def get_df(symbol, cache=False):
 
@@ -71,6 +153,64 @@ def add_volatility(price_df, days=30, gaussian=3.):
     new_price_df = new_price_df.sort_values('startTime')
     new_price_df = new_price_df[['startTime', 'open', 'high', 'low', 'close', 'volume', '30D_volatility', 'curr_group']]
     return new_price_df
+
+def get_figure(df):
+    decrease_to_increase = pd.to_datetime(df[(df['30D_volatility'] < df['30D_volatility'].shift(1)) & (df['30D_volatility'].shift(-1) > df['30D_volatility'])]['startTime'])
+    increase_to_decrease = pd.to_datetime(df[(df['30D_volatility'] > df['30D_volatility'].shift(1)) & (df['30D_volatility'].shift(-1) < df['30D_volatility'])]['startTime'])
+
+    hovertexts = list(("30D volatility : " + df['30D_volatility'].replace(np.nan, 0).round(2).astype(str)).values)
+    fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
+
+    fig.add_trace(go.Scatter(x=df['startTime'], y=df['close'], name='Close Price', yaxis="y1", hovertext = hovertexts, line={"color": "#636EFA"}, fillcolor="black"))
+    fig.add_trace(go.Scatter(x=df['startTime'], y=df['30D_volatility'], name='30D volatility', yaxis="y2", line={"color": "#EF553B"}))
+
+
+    fig.update_layout(
+                yaxis1=dict(
+                    titlefont=dict(
+                        color="#000000"
+                    ),
+                    tickfont=dict(
+                        color="#000000"
+                    ),
+                    anchor="free",
+                    domain=[0.25, 1], 
+                    position=0.0    
+                ),
+                yaxis2=dict(
+                    tickfont=dict(
+                        color="#727272"
+                    ),
+                    anchor="free",
+                    domain=[0, 0.18]
+                )
+    )
+                
+    fig.update_layout(hovermode="x unified")
+
+    max_y = df['close'].max() + 0.1 * df['close'].max() 
+    min_y = df['close'].min() - 0.3 * df['close'].min() 
+
+    min_y = max(0, min_y)
+
+    for increase_point in decrease_to_increase:
+        fig.add_shape(dict(type="line", x0=increase_point, y0=min_y, x1=increase_point, y1=max_y, line=dict(color="green", width=1)))
+
+    for decrease_point in increase_to_decrease:
+        fig.add_shape(dict(type="line", x0=decrease_point, y0=min_y, x1=decrease_point, y1=max_y, line=dict(color="red", width=1)))
+
+    fig.update_layout(
+            xaxis=go.layout.XAxis(
+                rangeslider=dict(
+                    visible=True,
+                    thickness=0.05
+                ),
+                type="date",
+            )
+        )
+
+    html = fig.to_html()
+    return html
 
 class CommInfoFractional(bt.CommissionInfo):
     
@@ -197,6 +337,18 @@ class priceStrategy(bt.Strategy):
                 order=self.order_target_percent(target=0.99*price_direction)
                 order.addinfo(name=price_data._name)
 
+def plot(df, portfolio, name):
+    fig_html = get_figure(df)
+
+    portfolio = portfolio.merge(df[['startTime', 'close']], left_on='Date', right_on='startTime')[['Date', 'Value', 'close']]
+    fig = create_multiple_plot(portfolio, ['Value', 'close'], 'Date')
+    price_html = fig.to_html()
+
+    with open('frontend_interface/static/{}_vol.html'.format(name), 'w') as file:
+        file.write(fig_html)
+
+    with open('frontend_interface/static/{}_price.html'.format(name), 'w') as file:
+        file.write(price_html)
 
 def perform_backtests():
     if not os.path.isdir("data/"):
@@ -241,6 +393,7 @@ def perform_backtests():
         run = cerebro.run()
         portfolio, trades, operations = run[0].get_logs()
         trades.to_csv("data/trades_{}.csv".format(pair), index=None)
+        plot(price_df, portfolio, pair)
 
 if __name__ == "__main__":
     perform_backtests()

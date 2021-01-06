@@ -146,7 +146,7 @@
                   <div class="col-lg-2">
                     <div class="card mb-2">
                       <div class="card-body">
-                        <b>{{value.name|upper}}</b>
+                        <b><a href="/static/{{value.name}}_vol.html" target="_blank">{{value.name|upper}}</a></b>
                         <br/><br/>
                             <b>Live</b><br/>
                             Current Price: {{value.live_price}} BTC<br/>
@@ -157,7 +157,7 @@
                             
                             <br/>
                         
-                            <b>Backtest</b><br/>
+                            <b><a href="/static/{{value.name}}_price.html" target="_blank">Backtest</a></b><br/>
                             Position: {{value.backtest_position}}<br/>
 
                             {% if value.backtest_date != "" %}

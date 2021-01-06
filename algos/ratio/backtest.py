@@ -6,7 +6,7 @@ import requests
 
 import backtrader as bt
 
-from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy
+from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy, plot
 from utils import print
 
 
@@ -36,7 +36,6 @@ def get_binance_df(symbol, cache=False):
     df['startTime'] = pd.to_datetime(df['startTime'])
 
     return df
-
 
 def perform_backtests():
     if not os.path.isdir("data/binance/"):
@@ -81,6 +80,8 @@ def perform_backtests():
         run = cerebro.run()
         portfolio, trades, operations = run[0].get_logs()
         trades.to_csv("data/binance/trades_{}.csv".format(pair), index=None)
+
+        plot(price_df, portfolio, pair)
 
 if __name__ == "__main__":
     perform_backtests()
