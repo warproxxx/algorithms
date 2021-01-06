@@ -76,6 +76,7 @@ def nissan(request):
         total_pnl = total_pnl/3
 
     amount = round(amount * (1 + total_pnl), 2)
+    amount = amount+30
 
 
     return HttpResponse(amount)
