@@ -168,7 +168,10 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
                     btc_price = float(r.get('exchanges_price').decode())
                     print("Getting {} from redis".format(btc_price))
 
-            pnl_percentage = ((btc_price - avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+            try:
+                pnl_percentage = ((btc_price - avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+            except:
+                pnl_percentage = 0
 
             if position_since > parameters['position_since']:
                 if pnl_percentage > parameters['pnl_percentage']:
