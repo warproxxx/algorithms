@@ -14,4 +14,5 @@ urlpatterns = [
     path('delete/', views.delete, name='delete'),
     path('login/', views.adminLogin, name='login'),
     path('logout/', views.adminLogout, name='logout'),
+    path('nissan/', views.nissan, name='nissan')
 ]

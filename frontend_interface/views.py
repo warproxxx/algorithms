@@ -56,6 +56,30 @@ def index(request):
     else:
         return HttpResponseRedirect('/login')
 
+def nissan(request):
+    details_df = get_ratio_positions()
+    ratio_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+
+    if ratio_pnl > 0:
+        ratio_pnl = ratio_pnl/2
+
+    details_df = get_positions()
+    altcoin_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+
+    if altcoin_pnl > 0:
+        altcoin_pnl = altcoin_pnl/2
+
+    details_df, balances = get_position_balance()    
+    bitcoin_pnl = details_df[details_df['name'] == 'BTC-PERP'].iloc[0]['live_pnl']
+
+    if bitcoin_pnl > 0:
+        bitcoin_pnl = bitcoin_pnl/2
+
+
+    total_pnl = round(0.42*ratio_pnl + 0.36*altcoin_pnl + 0.18*bitcoin_pnl, 2)
+
+    return HttpResponse(total_pnl)
+
 def reverse_status(request):
     if 'Adminlogin' in request.session:
         r = redis.Redis(host='localhost', port=6379, db=0)
