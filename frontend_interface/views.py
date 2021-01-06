@@ -78,7 +78,7 @@ def nissan(request):
 
         amount = round(amount * (1 + total_pnl), 2)
         
-        if amount < 1910:
+        if amount < 1890:
             amount = amount + 20
 
         return HttpResponse(amount)
