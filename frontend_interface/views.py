@@ -538,10 +538,8 @@ def daddy_interface(request):
             row['pnl_percentage'] = pnl_percentage
             row['pos_size'] = pos_size
 
-            if free_balance != 0:
-                row['balance'] = free_balance + 0.003
-            else:
-                row['balance'] = free_balance
+            row['balance'] = free_balance
+                
             
             new_df.append(row.to_dict())
 
