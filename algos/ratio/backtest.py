@@ -7,6 +7,8 @@ import requests
 import backtrader as bt
 
 from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy
+from utils import print
+
 
 def get_binance_df(symbol, cache=False):
 
