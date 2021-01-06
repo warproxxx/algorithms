@@ -76,7 +76,7 @@ def nissan(request):
         bitcoin_pnl = bitcoin_pnl/2
 
 
-    total_pnl = round(0.42*ratio_pnl + 0.36*altcoin_pnl + 0.18*bitcoin_pnl, 2)
+    total_pnl = round(0.36*ratio_pnl + 0.42*altcoin_pnl + 0.18*bitcoin_pnl, 2)
 
     return HttpResponse(total_pnl)
 
