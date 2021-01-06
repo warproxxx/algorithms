@@ -77,6 +77,10 @@ def nissan(request):
 
     amount = 1910
     total_pnl = (0.36*ratio_pnl + 0.42*altcoin_pnl + 0.18*bitcoin_pnl, 2)/100
+
+    if total_pnl < 5:
+        total_pnl = total_pnl/3
+        
     amount = amount * (1 + total_pnl)
 
 
