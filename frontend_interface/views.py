@@ -67,7 +67,7 @@ def nissan(request):
     bitcoin_pnl = details_df[details_df['name'] == 'BTC-PERP'].iloc[0]['live_pnl']
 
     amount = 1910
-    total_pnl = (0.36*ratio_pnl + 0.42*altcoin_pnl + 0.18*bitcoin_pnl)/100
+    total_pnl = (0.42*-25 + 0.42*altcoin_pnl + 0.16*bitcoin_pnl)/100
 
     if total_pnl > 0:
         total_pnl = total_pnl/2
