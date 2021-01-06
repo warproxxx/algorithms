@@ -68,7 +68,7 @@ def nissan(request):
         bitcoin_pnl = details_df[details_df['name'] == 'BTC-PERP'].iloc[0]['live_pnl']
 
         amount = 1910
-        total_pnl = (0.42*-25 + 0.42*altcoin_pnl + 0.16*bitcoin_pnl)/100
+        total_pnl = (0.37*-25 + 0.44*altcoin_pnl + 0.19*bitcoin_pnl)/100
 
         if total_pnl > 0:
             total_pnl = total_pnl/2
@@ -76,7 +76,7 @@ def nissan(request):
         if total_pnl < -0.04:
             total_pnl = total_pnl/3
 
-        amount = round(amount * (1 + total_pnl), 2) + 30
+        amount = round(amount * (1 + total_pnl), 2)
 
         return HttpResponse(amount)
     except:
