@@ -201,7 +201,7 @@ def altcoin_interface(request):
 
         details = get_long_short_details(details_df)
 
-        total_balance = details_df['ftx_balance'].sum()
+        total_balance = round(details_df['ftx_balance'].sum(), 2)
 
         return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance})
     else:
