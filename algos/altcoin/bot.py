@@ -89,6 +89,12 @@ def get_positions():
                 curr_detail['live_pnl'] = curr_detail['live_pnl'] * -1
         except:
             curr_detail['live_pnl'] = 0
+
+
+        try:
+            curr_detail['ftx_balance'] = round(float(r.get('{}_net_worth'.format(asset)).decode()),2)
+        except:
+            curr_detail['ftx_balance'] = 0
             
         try:
             curr_detail['backtest_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry_price'])/curr_detail['entry_price']) * 100 * curr_detail['live_lev'], 2)
@@ -196,6 +202,20 @@ def perform_close_and_main():
         if amount > 0:
             lt.transfer_to_subaccount(amount, 'main', source=row['name'])
 
+def get_balances():
+    while True:
+        config = pd.read_csv('algos/altcoin/config.csv')
+        lt = liveTrading("ETH-PERP")
+
+        try:
+            for idx, row in config.iterrows():
+                balance = lt.get_subaccount_balance(row['name'], type='total')
+                r.set('{}_net_worth'.format(row['name']), balance)
+        except Exception as e:
+            print(str(e))
+
+        time.sleep(60)
+
 def alt_bot():
     perform_backtests()
     pairs = pd.read_csv('algos/altcoin/config.csv')['name']
@@ -209,6 +229,9 @@ def alt_bot():
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
+
+    balance_thread = threading.Thread(target=get_balances)
+    balance_thread.start()
 
     while True:
         time.sleep(1)

@@ -57,6 +57,12 @@ class liveTrading():
                 pass
 
         self.increment = 0.5
+        self.neutral_exchange = ccxt.ftx({
+                        'apiKey': apiKey,
+                        'secret': apiSecret,
+                        'enableRateLimit': True,
+                        'options': {'defaultMarket': 'futures'}
+                    })
                  
         self.update_parameters()
         
@@ -160,6 +166,14 @@ class liveTrading():
     
     def get_balance(self):
         return float(self.exchange.fetch_balance()['USD']['free'])
+
+    def get_subaccount_balance(self, name, type='free'):
+        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])
+
+        try:
+            return balance[balance['coin'] == 'USD'].iloc[0][type]
+        except:
+            return 0
 
     def limit_trade(self, order_type, amount, price):        
         print("Sending limit {} order for {} of size {} @ {} in {}".format(order_type, self.symbol, amount, price, datetime.datetime.now()))

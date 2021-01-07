@@ -166,11 +166,11 @@ class liveTrading():
         except:
             return 0
 
-    def get_subaccount_balance(self, name):
+    def get_subaccount_balance(self, name, type='free'):
         balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])
 
         try:
-            return balance[balance['coin'] == 'USD'].iloc[0]['free']
+            return balance[balance['coin'] == 'USD'].iloc[0][type]
         except:
             return 0
 

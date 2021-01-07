@@ -84,6 +84,11 @@ def get_position_balance():
             curr_detail['backtest_date'] = perp_backtest.iloc[-1]['Date']
             curr_detail['entry_price'] = round(perp_backtest.iloc[-1]['Price'], 2)
 
+            try:
+                curr_detail['ftx_balance'] = round(float(r.get('PERP_net_worth').decode()),2)
+            except:
+                curr_detail['ftx_balance'] = 0
+
             
         else:
             try:
@@ -102,6 +107,11 @@ def get_position_balance():
                     curr_detail['backtest_date'] = curr_df.iloc[-1]['Date']
                     curr_detail['entry_price'] = round(curr_df.iloc[-1]['Price'], 2)
 
+            try:
+                curr_detail['ftx_balance'] = round(float(r.get('MOVE_net_worth').decode()),2)
+            except:
+                curr_detail['ftx_balance'] = 0
+
         try:
             curr_detail['live_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry'])/curr_detail['entry']) * 100 * curr_detail['live_lev'], 2)
 
@@ -109,6 +119,9 @@ def get_position_balance():
                 curr_detail['live_pnl'] = curr_detail['live_pnl'] * -1
         except:
             curr_detail['live_pnl'] = 0
+
+        
+        
 
         details_df = details_df.append(curr_detail, ignore_index=True)
 
@@ -247,6 +260,22 @@ def daily_tasks():
 
         print("\n")
 
+
+def get_balances():
+    while True:
+        lt = liveTrading("MOVE")
+
+        try:
+            balance = lt.get_subaccount_balance('MOVE', type='total')
+            r.set('MOVE_net_worth', balance)
+
+            balance = lt.get_subaccount_balance('PERP', type='total')
+            r.set('PERP_net_worth', balance)
+        except Exception as e:
+            print(str(e))
+
+        time.sleep(60)
+
 def start_schedlued():
     while True:
         schedule.run_pending()
@@ -272,6 +301,9 @@ def vol_bot():
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
+
+    balance_thread = threading.Thread(target=get_balances)
+    balance_thread.start()
 
     while True:
         time.sleep(1)

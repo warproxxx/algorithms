@@ -58,26 +58,22 @@ def index(request):
 
 def nissan(request):
     try:
-        details_df = get_ratio_positions()
-        ratio_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
-
         details_df = get_positions()
-        altcoin_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+        altcoin_balance = details_df['ftx_balance'].sum()
 
         details_df, balances = get_position_balance()    
-        bitcoin_pnl = details_df[details_df['name'] == 'BTC-PERP'].iloc[0]['live_pnl']
+        bitcoin_balance = details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
 
-        amount = 1910 - 50
-        total_pnl = (0.37*-25 + 0.43*altcoin_pnl + 0.2*bitcoin_pnl)/100
+        amount = altcoin_balance + bitcoin_balance + 600
+        pnl = amount - 1910
 
-        if total_pnl > 0:
-            total_pnl = total_pnl/2
+        if amount > 0:
+            pnl = pnl / 2
 
-        if total_pnl < -0.04:
-            total_pnl = total_pnl/3
-
-        amount = round(amount * (1 + total_pnl), 2)
-
+        if amount < 50:
+            pnl = pnl / 3
+        
+        amount = 1910 + pnl
         return HttpResponse(amount)
     except:
         return HttpResponse("error")
@@ -205,7 +201,9 @@ def altcoin_interface(request):
 
         details = get_long_short_details(details_df)
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details})
+        total_balance = details_df['ftx_balance'].sum()
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance})
     else:
         return HttpResponseRedirect('/login')
 
@@ -414,9 +412,9 @@ def vol_trend_interface(request):
         trade_methods = ['attempt_limit', '5sec_average', '10sec_average', '1min_average', '10min_average', 'now']
 
         
+        total_balance = details_df[details_df['name'].str.contains('MOVE')].iloc[0]['ftx_balance'] + details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
 
-
-        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods})
+        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods, 'total_balance': total_balance})
     else:
         return HttpResponseRedirect('/login')
 

@@ -133,7 +133,9 @@
                 <h1 class="h3 mb-0 text-gray-800">Vol Trend Bot</h1> <h1><a href="/">←</a></h1>
             </div> 
             
-
+            <center>
+                <b>Balance:</b> {{total_balance}}$<br/>
+            </center>
             <div class="row">
 
                 <!-- Page Heading -->                  
@@ -147,6 +149,7 @@
                             <b>Live</b><br/>
                             Current Price: {{value.live_price}}$<br/>
                             PnL Percentage: {{value.live_pnl}}% <br/>
+                            Worth: {{value.ftx_balance}}$ <br/>
                             Average Entry: {{value.entry}}$<br/>                            
                             Position: {{value.position}}<br/>
                             Position Size: {{value.pos_size}}<br/>

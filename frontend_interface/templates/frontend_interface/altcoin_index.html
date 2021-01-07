@@ -134,6 +134,7 @@
             </div> 
            <center> 
             <b>{{details.longs}} ({{details.long_allocation_per}}%)</b> Long, <b>{{details.shorts}} ({{details.short_allocation_per}}%)</b> Short<br/><br/>
+            <b>Balance:</b> {{total_balance}}$<br/>
             <b>Backtest PnL:</b> {{backtest_pnl}}%<br/>
             <b>Live PnL:</b> {{live_pnl}}%
            </center><br/>
@@ -149,6 +150,7 @@
                             <b>Live</b><br/>
                             Current Price: {{value.live_price}}$<br/>
                             PnL Percentage: {{value.live_pnl}}% <br/>
+                            Worth: {{value.ftx_balance}}$ <br/>
                             Average Entry: {{value.entry}}$<br/>                            
                             Position: {{value.position}}<br/>
                             Position Size: {{value.pos_size}}<br/>
