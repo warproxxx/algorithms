@@ -74,7 +74,7 @@ def nissan(request):
             pnl = pnl / 3
         
         amount = 1910 + pnl
-        return HttpResponse("error")
+        return HttpResponse("error retriving value")
     except:
         return HttpResponse("error")
 
