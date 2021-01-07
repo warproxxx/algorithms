@@ -71,12 +71,12 @@ def nissan(request):
         total_pnl = (0.37*-25 + 0.43*altcoin_pnl + 0.2*bitcoin_pnl)/100
 
         if total_pnl > 0:
-            total_pnl = total_pnl/2 - 100
+            total_pnl = total_pnl/2
 
         if total_pnl < -0.04:
             total_pnl = total_pnl/3
 
-        amount = round(amount * (1 + total_pnl), 2)
+        amount = round(amount * (1 + total_pnl), 2) - 100
 
         return HttpResponse(amount)
     except:
