@@ -1,4 +1,5 @@
 import os
+import sys
 from glob import glob
 import requests
 
@@ -338,7 +339,8 @@ def single_process(manual_call=False):
 
 
     else:
-        print("There is no trade file on {}. Still performing".format(datetime.datetime.utcnow()))
+        print("There is no trade file on {}. Restarting program".format(datetime.datetime.utcnow()))
+        os.execl(sys.executable, sys.executable, *sys.argv)
 
         if exchange_name == 'bitmex':
             parameters = json.load(open('algos/daddy/parameters.json'))
