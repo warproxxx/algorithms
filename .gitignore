@@ -6,3 +6,4 @@ logs/
 old_logs/
 data/
 frontend_interface/static/*.html
+db.sqlite3
