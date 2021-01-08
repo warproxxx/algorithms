@@ -38,7 +38,7 @@ def get_bitmex_data():
     trades = trades[['transactTime', 'symbol', 'side', 'price','lastQty', 'execComm', 'execType', 'text']]
     funding = trades[trades['text'].str.contains('Funding')]
     trades = trades[trades['execType'] == 'Trade']
-    trades = trades[trades['text'].str.contains('API')]
+    # trades = trades[trades['text'].str.contains('API')]
     trades['exchange'] = 'BITMEX'
     trades['execComm'] = trades['execComm'] * 0.00000001
     trades['commissionAsset'] = 'XBT'
