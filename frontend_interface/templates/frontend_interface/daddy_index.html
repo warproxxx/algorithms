@@ -148,7 +148,7 @@
               <div class="col-lg-4">
                 <div class="card mb-4 border-left-{{value.html_color}}">
                   <div class="card-body">
-                    <b>{{key|upper}}</b>
+                    <b><a href="/trades?exchange={{key|upper}}" target="_blank" style="color:#404E67;">{{key|upper}}</a></b>
                     <br/><br/>
                     Average Entry: {{value.avgEntryPrice }}$<br/>
                     PnL Percentage: {{ value.pnl_percentage }}%<br/>
@@ -392,39 +392,13 @@
                 <textarea rows="8" style="width:100%;" id="csv_file" name="csv_file">{{csv_file}}</textarea><br/><br/>
                 <center><input type="submit" value="Update CSV"></center>
                 </form>
-                
-                <b>Trades:</b><br/><br/>
-
-                <div class="table-responsive">
-                  
-                    <table class="table-bordered" id="dataTable" width="40%" cellspacing="0" style="table-layout:auto;">
-                      <thead>
-                        <tr>
-                          {% for title in mex_trades.0.keys %}
-                            <th>{{title}}</th>
-                          {% endfor %}
-                        </tr>
-                      </thead>
-                      <tbody>
-
-                        {% for n, values in mex_trades.items %}
-                            <tr>
-                              {% for key, value in values.items %}
-                                <td>{{value}}</td>
-                              {%endfor%}
-                            </tr>
-                        {% endfor %}
-                      </tbody>
-                    </table>
-                </div>
-
-
-          <br/><br/>
                   
                 </div>
               </div>
             </div>
         </div>
+
+
 
         
 
@@ -498,7 +472,7 @@
 
   <!-- Custom scripts for all pages-->
   <script src="{% static 'js/sb-admin-2.min.js' %}"></script>
-
+  
 
 </body>
 

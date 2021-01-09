@@ -325,6 +325,36 @@ def ratio_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
+def show_trades(request):
+    if 'Adminlogin' in request.session:
+        get = request.GET.dict()
+
+        try:
+            trades = pd.read_csv('data/mex_trades.csv')
+            trades['transactTime'] = pd.to_datetime(trades['transactTime'])
+            trades['transactTime_trades'] = trades['transactTime']
+
+            funding = pd.read_csv('data/mex_funding.csv')
+            funding['transactTime'] = pd.to_datetime(funding['transactTime'])
+
+            funding['funding_paid'] = funding['price'] * funding['execComm']
+
+            sells = trades[trades['side'] == 'SELL']
+
+            fundings = pd.merge_asof(funding, sells, on='transactTime', direction='forward')[['transactTime_trades', 'funding_paid']]
+            fundings = fundings.groupby('transactTime_trades').sum()
+            fundings = fundings.reset_index().rename(columns={'transactTime_trades': 'transactTime'})
+
+            trades = trades.merge(fundings, on='transactTime', how='left')
+
+            trades['slippage'] = trades.apply(calc_slippage, axis=1)
+            trades = trades.round(2)
+            trades = trades[['transactTime', 'side', 'amount', 'fee', 'funding_paid', 'actualPrice', 'expectedPrice', 'slippage']]
+        except:
+            trades = pd.DataFrame()
+
+        return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
+
 def vol_trend_interface(request):
     if 'Adminlogin' in request.session:
         r = redis.Redis(host='localhost', port=6379, db=0)
@@ -423,6 +453,8 @@ def vol_trend_interface(request):
         return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods, 'total_balance': total_balance})
     else:
         return HttpResponseRedirect('/login')
+
+
 
 def daddy_interface(request):
 
@@ -588,17 +620,8 @@ def daddy_interface(request):
             stop_trading = float(r.get('stop_trading').decode())
         except:
             stop_trading = 0
-
-        try:
-            mex_trades =  pd.read_csv("data/mex_trades.csv")
-            mex_trades['slippage'] = mex_trades.apply(calc_slippage, axis=1)
-            mex_trades = mex_trades.round(2)
-            mex_trades = mex_trades[['transactTime', 'side', 'amount', 'fee', 'actualPrice', 'expectedPrice', 'slippage']]
-        except:
-            mex_trades = pd.DataFrame()
-
         
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'mex_trades': mex_trades.T.to_dict(), 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
 
     else:
         return HttpResponseRedirect('/login')
