@@ -349,7 +349,7 @@ def show_trades(request):
 
             trades['slippage'] = trades.apply(calc_slippage, axis=1)
             trades = trades.round(2)
-            trades = trades[['transactTime', 'side', 'amount', 'fee', 'funding_paid', 'actualPrice', 'expectedPrice', 'slippage']]
+            # trades = trades[['transactTime', 'side', 'amount', 'fee', 'funding_paid', 'actualPrice', 'expectedPrice', 'slippage']]
         except:
             trades = pd.DataFrame()
 
