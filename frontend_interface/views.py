@@ -18,6 +18,12 @@ from algos.ratio.bot import get_positions as get_ratio_positions
 
 from algos.altcoin.defines import trade_methods as altcoin_methods
 
+def calc_slippage(ser):
+    if ser['side'] == 'BUY':
+        return (((ser['expectedPrice'] - ser['actualPrice'])/ser['actualPrice']) * 100)
+    elif ser['side'] == 'SELL':
+        return (((ser['actualPrice'] - ser['expectedPrice'])/ser['expectedPrice']) * 100)
+
 def get_long_short_details(details_df):
     longs = details_df[details_df['backtest_position'] == 'LONG']
     shorts = details_df[details_df['backtest_position'] == 'SHORT']
@@ -584,10 +590,15 @@ def daddy_interface(request):
             stop_trading = 0
 
         try:
-            mex_trades =  open("data/mex_trades.csv").read()
+            mex_trades =  pd.read_csv("data/mex_trades.csv")
+            mex_trades['slippage'] = mex_trades.apply(calc_slippage, axis=1)
+            mex_trades = mex_trades.round(2)
+            mex_trades = mex_trades[['transactTime', 'side', 'amount', 'fee', 'actualPrice', 'expectedPrice', 'slippage']]
         except:
-            mex_trades = ""
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'mex_trades': mex_trades, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
+            mex_trades = pd.DataFrame()
+
+        
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'mex_trades': mex_trades.T.to_dict(), 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
 
     else:
         return HttpResponseRedirect('/login')

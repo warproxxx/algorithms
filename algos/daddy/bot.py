@@ -476,8 +476,8 @@ def save_trades():
     while True:
         mex_trades, mex_funding = get_trades('bitmex')
         mex_trades = process_data(mex_trades)
-        mex_trades = mex_trades[['transactTime', 'side', 'actualPrice', 'expectedPrice']]
         mex_trades.to_csv("data/mex_trades.csv", index=None)
+        mex_funding.to_csv("data/mex_funding.csv", index=None)
         time.sleep(60 * 60)
 
 def daddy_bot():

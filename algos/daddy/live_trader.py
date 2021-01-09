@@ -552,7 +552,7 @@ class liveTrading():
         elif self.exchange_name == 'ftx':
             return float(self.exchange.fetch_balance()['USD']['free'])
         elif self.exchange_name == 'okex':
-            return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['max_withdraw'])
+            return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['equity'])
         elif self.exchange_name == 'huobi_swap':
             return float(self.exchange.send_post_request('/swap-api/v1/swap_account_position_info', {'contract_code': self.symbol})['data'][0]['margin_available'])
 
