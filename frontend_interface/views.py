@@ -332,20 +332,20 @@ def show_trades(request):
         try:
             trades = pd.read_csv('data/mex_trades.csv')
             trades['transactTime'] = pd.to_datetime(trades['transactTime'])
-            trades['transactTime_trades'] = trades['transactTime']
+            # trades['transactTime_trades'] = trades['transactTime']
 
-            funding = pd.read_csv('data/mex_funding.csv')
-            funding['transactTime'] = pd.to_datetime(funding['transactTime'])
+            # funding = pd.read_csv('data/mex_funding.csv')
+            # funding['transactTime'] = pd.to_datetime(funding['transactTime'])
 
-            funding['funding_paid'] = funding['price'] * funding['execComm']
+            # funding['funding_paid'] = funding['price'] * funding['execComm']
 
-            sells = trades[trades['side'] == 'SELL']
+            # sells = trades[trades['side'] == 'SELL']
 
-            fundings = pd.merge_asof(funding, sells, on='transactTime', direction='forward')[['transactTime_trades', 'funding_paid']]
-            fundings = fundings.groupby('transactTime_trades').sum()
-            fundings = fundings.reset_index().rename(columns={'transactTime_trades': 'transactTime'})
+            # fundings = pd.merge_asof(funding, sells, on='transactTime', direction='forward')[['transactTime_trades', 'funding_paid']]
+            # fundings = fundings.groupby('transactTime_trades').sum()
+            # fundings = fundings.reset_index().rename(columns={'transactTime_trades': 'transactTime'})
 
-            trades = trades.merge(fundings, on='transactTime', how='left')
+            # trades = trades.merge(fundings, on='transactTime', how='left')
 
             trades['slippage'] = trades.apply(calc_slippage, axis=1)
             trades = trades.round(2)
