@@ -152,6 +152,7 @@
                             <b>Live</b><br/>
                             Current Price: {{value.live_price}} BTC<br/>
                             PnL Percentage: {{value.live_pnl}}% <br/>
+                            Worth: {% widthratio value.binance_balance 1 value.btc_price %}$, {{value.binance_balance}} BTC <br/>
                             Average Entry: {{value.entry}} BTC<br/>                            
                             Position: {{value.position}}<br/>
                             Position Size: {{value.pos_size}}<br/>

@@ -324,6 +324,8 @@ def ratio_interface(request):
         btc_balance = round(details_df['binance_balance'].sum(), 4)
         total_balance = round((details_df['btc_price'] * details_df['binance_balance']).sum(), 2)
 
+        details_df['binance_balance'] = details_df['binance_balance'].round(5)
+
         return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance})
     else:
         return HttpResponseRedirect('/login')
