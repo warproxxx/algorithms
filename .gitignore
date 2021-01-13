@@ -1,4 +1,4 @@
-__pycache__/
+_pycache__/
 *.py[cod]
 *$py.class
 *.log
@@ -7,4 +7,5 @@ old_logs/
 data/
 frontend_interface/static/*.html
 db.sqlite3
-algos/daddy/*.json
+algos/daddy/parameters.json
+algos/daddy/parameters/*.json
