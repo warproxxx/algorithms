@@ -194,8 +194,8 @@ def process_data(trades):
     trades['commission'] = trades['commission'].astype(float)
     trades = trades.sort_values('transactTime').reset_index(drop=True)
     trades['actualExecuted'] = trades['transactTime']
-    trades['transactTime'] = trades['transactTime'].agg(lambda x : x.round('10min'))
-    
+    trades['transactTime'] = trades['transactTime'].dt.round('10min')
+        
     exchange_name = trades.iloc[0]['exchange']
     
     if exchange_name == 'BITMEX':

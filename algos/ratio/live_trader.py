@@ -176,6 +176,14 @@ class liveTrading():
         df = pd.DataFrame(self.exchange.fetch_balance()['info']['balances'])
         return float(df[df['asset'] == symbol].iloc[0]['free'])
 
+    def get_subaccount_btc_balance(self, symbol):
+        try:
+            details = self.exchange.sapi_get_margin_isolated_account({'symbols': symbol})['assets'][0]
+            balance = float(details['quoteAsset']['netAssetOfBtc']) + float(details['baseAsset']['netAssetOfBtc'])
+            return balance
+        except:
+            return 0
+
     def get_subaccount_balance(self):
         try:
             return float(self.exchange.sapi_get_margin_isolated_account({'symbols': self.symbol})['assets'][0]['quoteAsset']['totalAsset'])

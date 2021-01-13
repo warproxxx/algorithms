@@ -103,6 +103,16 @@ def get_positions():
                 curr_detail['live_pnl'] = curr_detail['live_pnl'] * -1
         except:
             curr_detail['live_pnl'] = 0
+
+        try:
+            curr_detail['binance_balance'] = float(r.get('{}_net_worth'.format(asset)).decode())
+        except:
+            curr_detail['binance_balance'] = 0
+
+        try:
+            curr_detail['btc_price'] = round(float(r.get('binance_btc_price').decode()),2)
+        except:
+            curr_detail['btc_price'] = 0
             
         try:
             curr_detail['backtest_pnl'] = round(((curr_detail['live_price'] - curr_detail['entry_price'])/curr_detail['entry_price']) * 100 * curr_detail['live_lev'], 2)
@@ -211,8 +221,30 @@ def perform_close_and_main():
         except Exception as e:
             print(str(e))
 
+def get_balances():
+    while True:
+        config = pd.read_csv('algos/ratio/config.csv')
+        lt = liveTrading("ETHBTC")
+
+        try:
+            for idx, row in config.iterrows():
+                balance = lt.get_subaccount_btc_balance(row['name'])
+                r.set('{}_net_worth'.format(row['name']), balance)
+        except Exception as e:
+            print(str(e))
+
+        try:
+            book = lt.exchange.fetch_order_book("BTC/USDC")
+            r.set('binance_btc_price', book['bids'][0][0])
+        except:
+            pass
+        
+
+        time.sleep(60)
+
+
 def ratio_bot():
-    perform_backtests()
+    # perform_backtests()
     pairs = pd.read_csv('algos/ratio/config.csv')['name']
 
     for pair in pairs:
@@ -224,6 +256,9 @@ def ratio_bot():
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
+
+    balance_thread = threading.Thread(target=get_balances)
+    balance_thread.start()
 
     while True:
         time.sleep(1)
