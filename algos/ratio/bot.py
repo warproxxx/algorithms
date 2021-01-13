@@ -244,7 +244,7 @@ def get_balances():
 
 
 def ratio_bot():
-    # perform_backtests()
+    perform_backtests()
     pairs = pd.read_csv('algos/ratio/config.csv')['name']
 
     for pair in pairs:
