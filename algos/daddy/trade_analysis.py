@@ -50,7 +50,6 @@ def get_bitmex_data():
     funding['execComm'] = funding['execComm'] * 0.00000001
     funding['asset'] = 'XBT'
     funding = funding.rename(columns={'lastQty': 'qty'})
-    print(funding)
     # funding = funding[['transactTime', 'exchange', 'symbol', 'qty', 'price', 'asset']]
     return trades, funding
 
