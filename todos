@@ -1,8 +1,13 @@
-Add balance in ratio
+Have multiple exchange support on daddy bot. A lot change in needed for that
 
-Have Daddies for multiple users run in a single server with ability to add and remove.
-Have all others running in another.
+Have daddy store live trade data. Start first run with last 20 days.
+Verify every minute. Create "ASAP" close method.
 
-Apply to colleges before Jan 15.
 
-Oh i can actually add a thread to changge the old values of macd as required. Thats good. I think thats what i should do.
+
+
+
+Later:
+Have a manual logic consisten enough in backtest in daddy bot backtest.
+Use cheating for altcoin bot. Find which to use. Then find rebalancing.
+Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.

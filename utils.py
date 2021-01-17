@@ -35,7 +35,7 @@ def print(to_print):
     open("logs/{}.log".format(filename), "a").write(to_print + "\n")
 
 
-def flush_redis(r, EXCHANGES):
+def flush_redis():
     r = redis.StrictRedis(host='localhost', port=6379, db=0)
     
     for key in r.scan_iter("202*"):

@@ -32,10 +32,11 @@ lts = {}
 
 for idx, details in EXCHANGES.iterrows():
     exchange_name = details['exchange']
+    name = details['name']
 
     if details['trade'] == 1 or exchange_name == 'bitmex':       
-        lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-        lts[exchange_name].set_position()
+        lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
+        lts[name].set_position()
 
 def get_interferance_vars():
     try:
@@ -89,14 +90,17 @@ def merge_prices(curr_df):
 def custom_buy():
     print("Making a custom buy")
     EXCHANGES = pd.read_csv('exchanges.csv')
+
     
     for idx, details in EXCHANGES.iterrows():
+        exchange_name = details['name']
+
         if details['trade'] == 1:
             current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()
 
             if current_pos == "NONE":
-                curr_exchange = EXCHANGES[EXCHANGES['exchange'] == exchange_name].iloc[0]
-                lt = lts[details['exchange']]
+                curr_exchange = EXCHANGES[EXCHANGES['name'] == exchange_name].iloc[0]
+                lt = lts[details['name']]
                 lt.fill_order('buy', method=curr_exchange['buy_method'])
                 r.set('{}_position_since'.format(exchange_name), 1)
                 lt.add_stop_loss()
@@ -106,11 +110,13 @@ def custom_sell():
     EXCHANGES = pd.read_csv('exchanges.csv')
     
     for idx, details in EXCHANGES.iterrows():
+        exchange_name = details['name']
+
         if details['trade'] == 1:
             current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()
 
             if current_pos == "LONG":
-                curr_exchange = EXCHANGES[EXCHANGES['exchange'] == exchange_name].iloc[0]
+                curr_exchange = EXCHANGES[EXCHANGES['name'] == exchange_name].iloc[0]
                 lt = lts[details['exchange']]
                 lt.close_stop_order()
                 lt.fill_order('sell', method=curr_exchange['sell_method'])
@@ -143,21 +149,21 @@ def get_btc_price_manual():
 
     return btc_price
 
-def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call):
+def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call):
     position_since = 0
-    current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()
+    current_pos = r.get('{}_current_pos'.format(name)).decode()
     avgEntryPrice = float(r.get('bitmex_avgEntryPrice').decode())
 
     pnl_percentage = 0
-    curr_exchange = EXCHANGES[EXCHANGES['exchange'] == exchange_name].iloc[0]
+    curr_exchange = EXCHANGES[EXCHANGES['name'] == name].iloc[0]
 
     buy_missed, buy_at, close_and_stop, stop_trading = get_interferance_vars()
 
     if stop_trading == 0:
         if current_pos == "LONG":
-            position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
+            position_since = float(r.get('{}_position_since'.format(name)).decode())
             position_since = position_since + 1
-            r.set('{}_position_since'.format(exchange_name), position_since)
+            r.set('{}_position_since'.format(name), position_since)
 
 
             if manual_call == False:
@@ -179,18 +185,18 @@ def perform_trade(exchange_name, lt, parameters, macd, rsi, changes, percentage_
                     if (macd < parameters['profit_macd'])  or (rsi > parameters['rsi']):
                         lt.close_stop_order()
                         lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        r.set('{}_position_since'.format(exchange_name), 0)
+                        r.set('{}_position_since'.format(name), 0)
                 else:
                     if (pnl_percentage < parameters['close_percentage']) or (macd < parameters['macd'])  or (rsi > parameters['rsi']):
                         lt.close_stop_order()
                         lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        r.set('{}_position_since'.format(exchange_name), 0)
+                        r.set('{}_position_since'.format(name), 0)
 
         elif current_pos == "NONE":
             if (sum(changes < parameters['change']) >= (parameters['previous_days'] - parameters['position_since_diff'])) and (macd > parameters['macd']) and (rsi < parameters['rsi']):
                 if ((percentage_large > parameters['percentage_large']) and (buy_percentage_large > parameters['buy_percentage_large'])):
                     lt.fill_order('buy', method=curr_exchange['buy_method'])
-                    r.set('{}_position_since'.format(exchange_name), 1)
+                    r.set('{}_position_since'.format(name), 1)
                     lt.add_stop_loss()
 
     position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
@@ -220,24 +226,25 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     threads = {}
     for idx, details in EXCHANGES.iterrows():
         if details['trade'] == 1:
-            threads[details['exchange']] = threading.Thread(target=perform_trade, args=(details['exchange'], lts[details['exchange']], parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call, ))
-            threads[details['exchange']].start()
+            threads[details['name']] = threading.Thread(target=perform_trade, args=(details['exchange'], details['name'], lts[details['exchange']], parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call, ))
+            threads[details['name']].start()
 
     #wait till completion
     for idx, details in EXCHANGES.iterrows():
         if details['trade'] == 1:
-            threads[details['exchange']].join()
-            after_stuffs(details['exchange'])
+            threads[details['name']].join()
+            after_stuffs(details['name'])
 
     #add if new exchange added
     for idx, details in EXCHANGES.iterrows():
         exchange_name = details['exchange']
+        name = details['name']
 
         if details['trade'] == 1 or exchange_name == 'bitmex':       
 
-            if not exchange_name in lts:
-                lts[exchange_name] = liveTrading(exchange_name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-                lts[exchange_name].set_position()
+            if not name in lts:
+                lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
+                lts[name].set_position()
     
 
 def spaced_print(str, target_length=15):

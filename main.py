@@ -1,6 +1,3 @@
-from cryptofeed.feedhandler import FeedHandler
-from cryptofeed import exchanges
-from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 import requests
 
 import pandas as pd
@@ -18,31 +15,29 @@ import multiprocessing
 import threading
 
 from utils import flush_redis
-from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
-from algos.vol_trend.bot import vol_bot, vol_trend_trade, vol_trend_book, vol_trend_ticker
-from algos.altcoin.bot import alt_bot, altcoin_trade, altcoin_book, altcoin_ticker
-from algos.ratio.bot import ratio_bot, ratio_trade, ratio_book, ratio_ticker
+from algos.vol_trend.bot import vol_bot
+from algos.altcoin.bot import alt_bot
+from algos.ratio.bot import ratio_bot
 
 import ccxt
 from algos.daddy.huobi.HuobiDMService import HuobiDM
 
-from utils import print
 
-EXCHANGES = pd.read_csv('exchanges.csv')
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-if os.path.isdir("logs/"):
-    if os.path.isdir("old_logs/"):
-        shutil.rmtree("old_logs/")
+def initial_tasks():
+    if os.path.isdir("logs/"):
+        if os.path.isdir("old_logs/"):
+            shutil.rmtree("old_logs/")
 
-    shutil.move("logs/", "old_logs")
+        shutil.move("logs/", "old_logs")
 
-if not os.path.isdir("logs/"):
-    os.makedirs("logs/")
+    if not os.path.isdir("logs/"):
+        os.makedirs("logs/")
+        
+    flush_redis()
 
-flush_redis(r, EXCHANGES)
-
-f = FeedHandler(retries=100000)
+initial_tasks()
 
 def obook_process():
     while True:
@@ -109,9 +104,6 @@ def obook_process():
         time.sleep(20)
 
 def bot():
-    daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
-    daddy_thread.start()
-
     vol_thread = multiprocessing.Process(target=vol_bot, args=())
     vol_thread.start()
 
@@ -125,18 +117,7 @@ def bot():
     obook_thread.start()
 
     while True:
-        try:
-            if float(r.get('daddy_enabled').decode()) != 1:
-                if daddy_thread.is_alive():
-                    print("Daddy Bot terminated")
-                    daddy_thread.terminate()
-
-            if daddy_thread.is_alive() == False:
-                if float(r.get('daddy_enabled').decode()) == 1:
-                    print("Daddy Bot started")
-                    daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
-                    daddy_thread.start()
-            
+        try:            
             #vol
             if float(r.get('vol_trend_enabled').decode()) != 1:
                 if vol_thread.is_alive():
@@ -179,83 +160,3 @@ def bot():
 
 bot_thread = threading.Thread(target=bot)
 bot_thread.start()
-
-PAIRS = pd.read_csv('pairs.csv')
-PAIRS = PAIRS.fillna("")
-
-for idx, row in PAIRS.iterrows():
-    exchange = row['cryptofeed_name']
-    b = getattr(exchanges, exchange)
-
-    if "MOVE" in row['cryptofeed_symbol']:
-        pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
-        pairs = [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
-    else:
-        pairs = [row['cryptofeed_symbol']]
-
-    trade_callbacks = []
-    obook_callbacks = []
-    ticker_callbacks = []
-
-    if row['types'] != "":
-        for callback in row['feed'].split(";"):
-            types = row['types']
-
-            if callback == 'daddy':
-                if 'stream' in types:
-                    trade_callbacks.append(daddy_trade)
-
-                if 'book' in types:
-                    obook_callbacks.append(daddy_book)
-
-                if 'ticker' in types:
-                    ticker_callbacks.append(daddy_ticker)
-
-            elif callback == 'vol_trend':
-                if 'stream' in types:
-                    trade_callbacks.append(vol_trend_trade)
-
-                if 'book' in types:
-                    obook_callbacks.append(vol_trend_book)
-
-                if 'ticker' in types:
-                    ticker_callbacks.append(vol_trend_ticker)
-            elif callback == 'altcoin':
-                if 'stream' in types:
-                    trade_callbacks.append(altcoin_trade)
-
-                if 'book' in types:
-                    obook_callbacks.append(altcoin_book)
-
-                if 'ticker' in types:
-                    ticker_callbacks.append(altcoin_ticker)
-
-            elif callback == 'ratio':
-                if 'stream' in types:
-                    trade_callbacks.append(ratio_trade)
-
-                if 'book' in types:
-                    obook_callbacks.append(ratio_book)
-
-                if 'ticker' in types:
-                    ticker_callbacks.append(ratio_ticker)
-
-        channels = []
-        callbacks = {}
-
-        if len(trade_callbacks) > 0:
-            channels.append(TRADES)
-            callbacks[TRADES] = trade_callbacks
-
-        if len(obook_callbacks) > 0:
-            channels.append(L2_BOOK)
-            callbacks[L2_BOOK] = obook_callbacks
-
-        if len(ticker_callbacks) > 0:
-            channels.append(TICKER)
-            callbacks[TICKER] = ticker_callbacks
-
-        print("{} {} {}".format(pairs, callbacks, channels))
-        f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
-
-f.run()

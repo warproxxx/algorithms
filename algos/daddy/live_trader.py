@@ -23,7 +23,7 @@ def round_down(value, decimals):
 
         
 class liveTrading():
-    def __init__(self, exchange, symbol='BTC/USD', testnet=True):
+    def __init__(self, exchange, name, symbol='BTC/USD', testnet=True):
         self.symbol = symbol
         self.parameters = json.load(open('algos/daddy/parameters.json'))
         self.lev = self.parameters['mult']
@@ -31,14 +31,18 @@ class liveTrading():
         self.exchange_name = exchange
         self.threshold_tiggered = False
         self.attempts = 5
+        self.name = name
+
+        name_here = name.upper()
         
+
         if exchange == 'bitmex':
             if testnet == True:
                 apiKey = os.getenv('BITMEX_TESTNET_ID')
                 apiSecret = os.getenv('BITMEX_TESTNET_SECRET')
             else:
-                apiKey = os.getenv('BITMEX_ID')
-                apiSecret = os.getenv('BITMEX_SECRET')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             self.exchange = ccxt.bitmex({
                             'apiKey': apiKey,
@@ -59,8 +63,8 @@ class liveTrading():
                 apiKey = os.getenv('BINANCE_TESTNET_ID')
                 apiSecret = os.getenv('BINANCE_TESTNET_SECRET')
             else:
-                apiKey = os.getenv('BINANCE_ID')
-                apiSecret = os.getenv('BINANCE_SECRET')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             self.exchange = ccxt.binance({
                             'apiKey': apiKey,
@@ -80,8 +84,8 @@ class liveTrading():
                 apiKey = os.getenv('BYBIT_TESTNET_ID')
                 apiSecret = os.getenv('BYBIT_TESTNET_SECRET')
             else:
-                apiKey = os.getenv('BYBIT_ID')
-                apiSecret = os.getenv('BYBIT_SECRET')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             self.exchange = ccxt.bybit({
                             'apiKey': apiKey,
@@ -100,8 +104,8 @@ class liveTrading():
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
             else:
-                apiKey = os.getenv('FTX_ID')
-                apiSecret = os.getenv('FTX_SECRET')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             
             self.exchange = ccxt.ftx({
@@ -119,9 +123,9 @@ class liveTrading():
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
             else:
-                apiKey = os.getenv('OKEX_ID')
-                apiSecret = os.getenv('OKEX_SECRET')
-                password = os.getenv('OKEX_PASSWORD')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
+                password = os.getenv('{}_PASSWORD'.format(name_here))
 
             
             self.exchange = ccxt.okex({
@@ -139,8 +143,8 @@ class liveTrading():
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
             else:
-                apiKey = os.getenv('HUOBI_ID')
-                apiSecret = os.getenv('HUOBI_SECRET')
+                apiKey = os.getenv('{}_ID'.format(name_here))
+                apiSecret = os.getenv('{}_SECRET'.format(name_here))
                 self.exchange = HuobiDM("https://api.hbdm.com", apiKey, apiSecret)
 
             if self.symbol == "BTC-USD":
@@ -392,20 +396,20 @@ class liveTrading():
                 current_pos, avgEntryPrice, amount = self.get_position()
 
                 if current_pos == 'NONE':
-                    self.r.set('{}_position_since'.format(self.exchange_name), 0)
+                    self.r.set('{}_position_since'.format(self.name), 0)
 
                 try:
-                    self.r.get('{}_position_since'.format(self.exchange_name)).decode()
+                    self.r.get('{}_position_since'.format(self.name)).decode()
                 except:
                     print("Error getting position since. Setting to ten")
-                    self.r.set('{}_position_since'.format(self.exchange_name), 10)
+                    self.r.set('{}_position_since'.format(self.name), 10)
         
-                self.r.set('{}_avgEntryPrice'.format(self.exchange_name), avgEntryPrice)
-                self.r.set('{}_current_pos'.format(self.exchange_name), current_pos)
-                self.r.set('{}_pos_size'.format(self.exchange_name), amount)
+                self.r.set('{}_avgEntryPrice'.format(self.name), avgEntryPrice)
+                self.r.set('{}_current_pos'.format(self.name), current_pos)
+                self.r.set('{}_pos_size'.format(self.name), amount)
 
                 balance = self.actually_get_balance()
-                self.r.set('{}_balance'.format(self.exchange_name), balance)
+                self.r.set('{}_balance'.format(self.name), balance)
                 break
 
             except ccxt.BaseError as e:
