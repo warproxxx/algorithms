@@ -37,7 +37,6 @@ def initial_tasks():
         
     flush_redis()
 
-initial_tasks()
 
 def obook_process():
     while True:
@@ -158,5 +157,7 @@ def bot():
         except:
             print("error in main")
 
-bot_thread = threading.Thread(target=bot)
-bot_thread.start()
+if __name__ == "__main__":
+    initial_tasks()
+    bot_thread = threading.Thread(target=bot)
+    bot_thread.start()

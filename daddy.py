@@ -1,6 +1,7 @@
 import pandas as pd
 import redis
 import threading
+import multiprocessing
 
 from cryptofeed.feedhandler import FeedHandler
 from cryptofeed import exchanges
@@ -19,8 +20,6 @@ EXCHANGES = EXCHANGES.fillna("")
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-initial_tasks()
-
 
 def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
@@ -38,49 +37,52 @@ def bot():
                     print("Daddy Bot started")
                     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
                     daddy_thread.start()
+        except Exception as e:
+            print(str(e))
 
-bot_thread = threading.Thread(target=bot)
-bot_thread.start()
+if __name__ == "__main__":
+    initial_tasks()
 
-for idx, row in EXCHANGES.iterrows():
-    exchange = row['cryptofeed_name']
-    b = getattr(exchanges, exchange)
+    bot_thread = threading.Thread(target=bot)
+    bot_thread.start()
 
-    pairs = [row['cryptofeed_symbol']]
+    for idx, row in EXCHANGES.iterrows():
+        exchange = row['cryptofeed_name']
+        b = getattr(exchanges, exchange)
 
-    trade_callbacks = []
-    obook_callbacks = []
-    ticker_callbacks = []
+        pairs = [row['cryptofeed_symbol']]
 
-    if row['types'] != "":
-        for callback in row['feed'].split(";"):
-            types = row['types']
+        trade_callbacks = []
+        obook_callbacks = []
+        ticker_callbacks = []
 
-            if 'stream' in types:
-                trade_callbacks.append(daddy_trade)
+        if row['types'] != "":
+            for type in row['types'].split(";"):
+                if 'stream' in type:
+                    trade_callbacks.append(daddy_trade)
 
-            if 'book' in types:
-                obook_callbacks.append(daddy_book)
+                if 'book' in type:
+                    obook_callbacks.append(daddy_book)
 
-            if 'ticker' in types:
-                ticker_callbacks.append(daddy_ticker)
+                if 'ticker' in type:
+                    ticker_callbacks.append(daddy_ticker)
 
-        channels = []
-        callbacks = {}
+            channels = []
+            callbacks = {}
 
-        if len(trade_callbacks) > 0:
-            channels.append(TRADES)
-            callbacks[TRADES] = trade_callbacks
+            if len(trade_callbacks) > 0:
+                channels.append(TRADES)
+                callbacks[TRADES] = trade_callbacks
 
-        if len(obook_callbacks) > 0:
-            channels.append(L2_BOOK)
-            callbacks[L2_BOOK] = obook_callbacks
+            if len(obook_callbacks) > 0:
+                channels.append(L2_BOOK)
+                callbacks[L2_BOOK] = obook_callbacks
 
-        if len(ticker_callbacks) > 0:
-            channels.append(TICKER)
-            callbacks[TICKER] = ticker_callbacks
+            if len(ticker_callbacks) > 0:
+                channels.append(TICKER)
+                callbacks[TICKER] = ticker_callbacks
 
-        print("{} {} {}".format(pairs, callbacks, channels))
-        f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
+            print("{} {} {}".format(pairs, callbacks, channels))
+            f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
 
-f.run()
+    f.run()

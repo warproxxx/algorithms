@@ -26,7 +26,7 @@ from algos.daddy.plot import create_chart
 from utils import print
 
 TESTNET = False
-EXCHANGES = pd.read_csv('exchanges.csv')
+EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv')
 r = redis.Redis(host='localhost', port=6379, db=0)
 lts = {}
 
@@ -89,7 +89,7 @@ def merge_prices(curr_df):
 
 def custom_buy():
     print("Making a custom buy")
-    EXCHANGES = pd.read_csv('exchanges.csv')
+    EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv')
 
     
     for idx, details in EXCHANGES.iterrows():
@@ -107,7 +107,7 @@ def custom_buy():
 
 def custom_sell():
     print("Making a custom sell")
-    EXCHANGES = pd.read_csv('exchanges.csv')
+    EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv')
     
     for idx, details in EXCHANGES.iterrows():
         exchange_name = details['name']
@@ -201,7 +201,7 @@ def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, perce
 
     position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
     avgEntryPrice = float(r.get('{}_avgEntryPrice'.format(exchange_name)).decode())
-    print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(exchange_name, avgEntryPrice, round(pnl_percentage,2), position_since))
+    print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(name, avgEntryPrice, round(pnl_percentage,2), position_since))
 
 def after_stuffs(exchange_name):
     global lts
@@ -219,7 +219,7 @@ def after_stuffs(exchange_name):
 def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call=False):
     global lts
     global EXCHANGES
-    EXCHANGES = pd.read_csv('exchanges.csv') #update exchanges
+    EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv') #update exchanges
 
     print("Time: {} percentage_large: {} buy_percentage_large: {} rsi: {} macd: {} changes: {} manual_call: {}".format(datetime.datetime.utcnow(), round(percentage_large,3), round(buy_percentage_large,3), round(rsi,2), round(macd,2), changes, manual_call))
 
@@ -479,14 +479,6 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
-def save_trades():
-    while True:
-        mex_trades, mex_funding = get_trades('bitmex')
-        mex_trades = process_data(mex_trades)
-        mex_trades.to_csv("data/mex_trades.csv", index=None)
-        mex_funding.to_csv("data/mex_funding.csv", index=None)
-        time.sleep(60 * 60)
-
 def daddy_bot():
     if os.path.isdir("data/stream"):
         shutil.rmtree('data/stream')
@@ -499,6 +491,3 @@ def daddy_bot():
 
     calling_check_thread = threading.Thread(target=check_calling)
     calling_check_thread.start()
-
-    trade_thread = threading.Thread(target=save_trades)
-    trade_thread.start()

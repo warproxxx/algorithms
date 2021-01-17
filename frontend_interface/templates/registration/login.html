@@ -14,11 +14,7 @@
 <center>
 
 <form action="" method="post" style="margin-top:20vw">{% csrf_token %}
-   {{ form.username }}
-
-    <br/><br/>
-    {{ form.password }}
-    <br/><br/>
+    {{ form.as_p }}
     <button type="submit" name="login">LOGIN</button>     
 
 </form>

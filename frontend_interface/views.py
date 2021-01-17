@@ -41,7 +41,7 @@ def get_long_short_details(details_df):
 
 #create login then interface is done
 def index(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         if request.POST:
             dic = request.POST.dict()
         
@@ -85,7 +85,7 @@ def nissan(request):
         return HttpResponse("error")
 
 def reverse_status(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)
         var_name = request.GET['code_name'] + "_enabled"
         try:
@@ -101,7 +101,7 @@ def reverse_status(request):
         return HttpResponseRedirect('/login')
 
 def altcoin_interface(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         config_file = 'algos/altcoin/config.csv'
         r = redis.Redis(host='localhost', port=6379, db=0)
 
@@ -214,7 +214,7 @@ def altcoin_interface(request):
         return HttpResponseRedirect('/login')
 
 def ratio_interface(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         config_file = 'algos/ratio/config.csv'
         r = redis.Redis(host='localhost', port=6379, db=0)
 
@@ -331,7 +331,7 @@ def ratio_interface(request):
         return HttpResponseRedirect('/login')
 
 def show_trades(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         get = request.GET.dict()
 
         try:
@@ -361,7 +361,7 @@ def show_trades(request):
         return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
 
 def vol_trend_interface(request):
-    if 'Adminlogin' in request.session:
+    if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)
 
         if request.POST:
@@ -465,7 +465,8 @@ def daddy_interface(request):
 
     r = redis.Redis(host='localhost', port=6379, db=0)
 
-    if 'Adminlogin' in request.session:
+    
+    if request.user.is_authenticated:
         if request.POST:
             dic = request.POST.dict()
 
@@ -517,13 +518,13 @@ def daddy_interface(request):
 
                 new_exchanges = pd.DataFrame(new_exchanges)
                 new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'exchange'})
-                old_exchanges = pd.read_csv('exchanges.csv')
+                old_exchanges = pd.read_csv('algos/daddy/exchanges.csv')
                 final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['exchange']].merge(new_exchanges, on='exchange')
                 final_exchanges = final_exchanges[old_exchanges.columns]
-                final_exchanges.to_csv('exchanges.csv', index=None)
+                final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
 
             elif 'csv_file' in dic:
-                open('exchanges.csv', 'w').write(dic['csv_file'])
+                open('algos/daddy/exchanges.csv', 'w').write(dic['csv_file'])
             elif 'buy_missed_form' in dic:
                 if 'buy_missed' in dic:
                     r.set('buy_missed', 1)
@@ -546,23 +547,23 @@ def daddy_interface(request):
         
         parameters = json.load(open('algos/daddy/parameters.json'))
 
-        exchanges = pd.read_csv('exchanges.csv')
+        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
 
         new_df = []
 
         for idx, row in exchanges.iterrows():                
             try:
-                position_since = round(float(r.get('{}_position_since'.format(row['exchange'])).decode()), 2)
+                position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
             except:
                 position_since = 0
             
             try:
-                avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['exchange'])).decode()), 2)
+                avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
             except:
                 avgEntryPrice = 0
 
             try:
-                pos_size = round(float(r.get('{}_pos_size'.format(row['exchange'])).decode()), 2)
+                pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
             except:
                 pos_size = 0
 
@@ -572,7 +573,7 @@ def daddy_interface(request):
                 pnl_percentage = 0
 
             try:
-                free_balance = round(float(r.get('{}_balance'.format(row['exchange'])).decode()), 3)
+                free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
             except:
                 free_balance = 0
             
@@ -582,17 +583,23 @@ def daddy_interface(request):
             row['pos_size'] = pos_size
 
             row['balance'] = free_balance
-                
             
-            new_df.append(row.to_dict())
+            to_append = 1
+
+            if str(request.user) != "warproxxx":
+                if "bitmex_" in row['name']:
+                    to_append = 0
+
+            if to_append == 1:
+                new_df.append(row.to_dict())
 
 
-        exchanges = pd.read_csv('exchanges.csv')
-        exchanges = exchanges[['exchange', 'ccxt_symbol', 'symbol', 'cryptofeed_symbol', 'trade', 'max_trade', 'buy_method', 'sell_method']]
+        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+        exchanges = exchanges[['exchange', 'name', 'ccxt_symbol', 'symbol', 'cryptofeed_symbol', 'trade', 'max_trade', 'buy_method', 'sell_method']]
 
-        exchanges = exchanges.set_index('exchange').T.to_dict()
-        new_df = pd.DataFrame(new_df).set_index('exchange').T.to_dict()
-        csv_file = open('exchanges.csv', 'r').read()
+        exchanges = exchanges.set_index('name').T.to_dict()
+        new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
+        csv_file = open('algos/daddy/exchanges.csv', 'r').read()
         try:
             run_log = open("logs/daddy_bot.log").read()
         except:
@@ -679,29 +686,6 @@ def addParms(request):
             return HttpResponse("Fuck Off")
 
     return HttpResponse("Fuck Off")
-
-def adminLogin(request):
-    template_name = 'frontend_interface/login.html'
-
-    if request.method == 'GET':
-        if not "Adminlogin" in request.session:
-            return render(request, template_name, {"form":adminLoginForm})
-        else:
-            return HttpResponseRedirect('/')
-    if request.method == 'POST':
-            form = adminLoginForm(request.POST)
-            if form.is_valid():
-                uname  = form.cleaned_data.get("username")
-                pword  = form.cleaned_data.get('password')
-
-                username = os.getenv('DJANGO_USERNAME')
-                actual_pword = os.getenv('DJANGO_PASSWORD')
-
-                if uname == username and pword == actual_pword:
-                        request.session["Adminlogin"] = "True"
-                        return HttpResponseRedirect('/')
-                else:
-                    return render(request, template_name, {"form":adminLoginForm, "msg":"Incorrect Username or Password"})
 
 def adminLogout(request):
     del request.session['Adminlogin']

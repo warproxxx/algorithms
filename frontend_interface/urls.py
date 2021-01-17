@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth import views as auth_views
 
 from . import views
 
@@ -13,7 +14,7 @@ urlpatterns = [
     path('reverse_status/', views.reverse_status, name='reverse_status'),
     path('delete/', views.delete, name='delete'),
     path('trades/', views.show_trades, name='trades'),
-    path('login/', views.adminLogin, name='login'),
-    path('logout/', views.adminLogout, name='logout'),
+    path('login/', auth_views.LoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('nissan/', views.nissan, name='nissan')
 ]

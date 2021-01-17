@@ -1,11 +1,9 @@
-Have multiple exchange support on daddy bot. A lot change in needed for that
-
 Have daddy store live trade data. Start first run with last 20 days.
 Verify every minute. Create "ASAP" close method.
 
 
 
-
+Fix the trades in daddy
 
 Later:
 Have a manual logic consisten enough in backtest in daddy bot backtest.
