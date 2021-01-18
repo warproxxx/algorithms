@@ -41,7 +41,6 @@ def initial_tasks():
 def obook_process():
     while True:
         pairs_df = pd.read_csv('pairs.csv')
-        pairs_df = pairs_df[pairs_df['types'].isnull()]
         exchange_list = set(pairs_df['exchange'].values)
 
         exchanges = {}

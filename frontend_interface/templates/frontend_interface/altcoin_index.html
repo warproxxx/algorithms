@@ -269,10 +269,10 @@
                       <thead>
                         <tr>
                           <th>Name</th>
-                          <th>Gaussian</th>
+                          <th>Action Days</th>
                           <th>Mult</th>
                           <th>Prev Day</th>
-                          <th>Vol Day</th>
+                          <th>Total Days</th>
                           <th>Allocation</th>
                           <th>Enabled</th>
                           <th>Trade Method</th>
@@ -332,13 +332,15 @@
 
                   <center><input type="submit" value="Update"></center>
                 </form>
-
+            
+            {% if request.user.username == "warproxxx" %}
             <b>CSV:</b><br/>
             <form method="POST">
                 {% csrf_token %}
             <textarea rows="8" style="width:100%;" id="csv_file" name="csv_file">{{csv_file}}</textarea><br/><br/>
             <center><input type="submit" value="Update CSV"></center>
             </form>
+            {% endif %}
 
               
             </div>

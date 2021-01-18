@@ -74,13 +74,13 @@ def nissan(request):
         pnl = amount - 1910
 
         if amount > 0:
-            pnl = pnl / 2
+            pnl = pnl / (pnl/150)
 
         if amount < 50:
-            pnl = pnl / 3
+            pnl = pnl / 5
         
         amount = 1910 + pnl
-        return HttpResponse("error retriving value")
+        return HttpResponse(amount)
     except:
         return HttpResponse("error")
 
@@ -284,7 +284,6 @@ def ratio_interface(request):
         csv_file = open(config_file, 'r').read()
 
         details_df = get_ratio_positions()
-        print(details_df)
 
         try:
             run_log = open("logs/ratio_bot.log").read()
@@ -367,7 +366,6 @@ def vol_trend_interface(request):
         if request.POST:
             dic = request.POST.dict()
             if 'MOVE_mult' in dic:
-                print(dic)
                 r.set('MOVE_mult', dic['MOVE_mult'])
                 r.set('MOVE_method', dic['MOVE_method'])
 
@@ -471,8 +469,6 @@ def daddy_interface(request):
             dic = request.POST.dict()
 
             if 'mult' in dic:
-                #if file not exist make, else update
-
                 parameters = json.load(open('algos/daddy/parameters.json'))
                 new_pars = pd.Series(dic)[parameters.keys()].to_dict()
 
@@ -503,23 +499,23 @@ def daddy_interface(request):
 
                 for idx, value in dic.items():
                     splitted = idx.split("[")
-                    exchange = splitted[0]
+                    name = splitted[0]
                     column = splitted[1].replace("]", "")
                     
-                    curr_df = curr_df.append(pd.Series({'exchange': exchange, 'column': column, 'value': value}), ignore_index=True)
+                    curr_df = curr_df.append(pd.Series({'name': name, 'column': column, 'value': value}), ignore_index=True)
 
                 new_exchanges = {}
 
-                for exchange, exchange_values in curr_df.groupby('exchange'):
+                for exchange, exchange_values in curr_df.groupby('name'):
                     new_exchanges[exchange] = {}
                     
                     for idx, row in exchange_values.iterrows():
                         new_exchanges[exchange][row['column']] = row['value']
 
                 new_exchanges = pd.DataFrame(new_exchanges)
-                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'exchange'})
+                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
                 old_exchanges = pd.read_csv('algos/daddy/exchanges.csv')
-                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['exchange']].merge(new_exchanges, on='exchange')
+                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
                 final_exchanges = final_exchanges[old_exchanges.columns]
                 final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
 
