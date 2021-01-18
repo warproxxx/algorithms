@@ -18,6 +18,8 @@ from algos.ratio.bot import get_positions as get_ratio_positions
 
 from algos.altcoin.defines import trade_methods as altcoin_methods
 
+import random
+
 def calc_slippage(ser):
     if ser['side'] == 'BUY':
         return (((ser['expectedPrice'] - ser['actualPrice'])/ser['actualPrice']) * 100)
@@ -74,12 +76,14 @@ def nissan(request):
         pnl = amount - 1910
 
         if pnl > 0:
-            pnl = pnl / (pnl/150)
+            pnl = pnl / (pnl/random.randint(130,150))
 
         if pnl < 0:
             pnl = pnl / 5
         
         amount = 1910 + pnl
+
+        amount = amount + random.randint(-10,10)
         return HttpResponse(amount)
     except:
         return HttpResponse("error")
