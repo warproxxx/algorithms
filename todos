@@ -1,5 +1,9 @@
+Option to make backtest verification optional
+
 Have daddy store live trade data. Start first run with last 20 days.
 Verify every minute. Create "ASAP" close method. ASAP means upto 300k at once. After that 10 sec break and another 300k.
+
+Stop daddy trading when a new line is drawn. Show in interface.
 
 Use cheating for altcoin bot. Find which to use. Then find rebalancing.
 
