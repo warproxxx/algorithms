@@ -1,4 +1,4 @@
-git+git://github.com/bmoscon/cryptofeed.git
+cryptofeed==1.6.1
 ta
 requests
 websockets
