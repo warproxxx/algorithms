@@ -50,9 +50,4 @@ sudo service nginx stop
 sudo apt-get install certbot python3-certbot-nginx -y
 sudo certbot --nginx --preferred-challenges http -d algos.parsvirilis.com --redirect --email daniel@parsvirilis.com --agree-tos --no-eff-email
 
-sudo apt install mysql-server -y
-sudo mysql -e "CREATE DATABASE daddy"
-sudo mysql -e "CREATE USER 'daddy_user'@'localhost' IDENTIFIED BY '69Dnq4BQg6SCcf3M';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON daddy.* TO daddy_user@localhost"
-
 echo -e "\n\nNow add the API keys and start the program :)"

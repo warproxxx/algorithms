@@ -10,5 +10,4 @@ plotly
 Django==2.2.4
 bcrypt
 schedule
-sqlalchemy
-pymysql
+git+https://github.com/manahl/arctic.git
