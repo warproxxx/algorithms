@@ -1,15 +1,4 @@
-wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
-echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
-sudo apt-get update
-sudo apt-get install -y mongodb-org
-
-mkdir ~/mongod
-
-/etc/init.d/mongod > mongod --fork --logpath /var/log/mongod.log
-service mongod start
-
-update-rc.d service_name defaults
-
+Backtest dosen't get liquidated. IT needs to be fixed.
 
 If error again, remove try catch
 

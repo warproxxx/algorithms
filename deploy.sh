@@ -50,4 +50,15 @@ sudo service nginx stop
 sudo apt-get install certbot python3-certbot-nginx -y
 sudo certbot --nginx --preferred-challenges http -d algos.parsvirilis.com --redirect --email daniel@parsvirilis.com --agree-tos --no-eff-email
 
+
+wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
+echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/4.4 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-4.4.list
+sudo apt-get update
+sudo apt-get install -y mongodb-org
+
+mkdir ~/mongod
+echo 'mongod --dbpath /home/$USER/mongod --logpath /home/$USER/mongod/mongod.log --fork' | sudo tee -a /etc/init.d/mongod
+sudo service mongod start
+sudo update-rc.d mongod defaults
+
 echo -e "\n\nNow add the API keys and start the program :)"
