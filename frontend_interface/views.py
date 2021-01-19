@@ -264,13 +264,6 @@ def ratio_interface(request):
                 else:
                     r.set('close_and_main_ratio', 0)
 
-            elif 'backtest_disabled_form' in dic:
-                print('form exist')
-                if 'backtest_disabled' in dic:
-                    r.set('backtest_disabled', 1)
-                else:
-                    r.set('backtest_disabled', 0)
-
             elif 'enable_close_and_rebalance_form' in dic:
                 if 'close_and_rebalance_ratio' in dic:
                     r.set('close_and_rebalance_ratio', 1)
@@ -326,10 +319,7 @@ def ratio_interface(request):
         except:
             sub_account_ratio = 0
 
-        try:
-            backtest_disabled = float(r.get('backtest_disabled').decode())
-        except:
-            backtest_disabled = 0
+        
 
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
@@ -341,7 +331,7 @@ def ratio_interface(request):
 
         details_df['binance_balance'] = details_df['binance_balance'].round(5)
 
-        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance, 'backtest_disabled': backtest_disabled})
+        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance })
     else:
         return HttpResponseRedirect('/login')
 
@@ -535,6 +525,7 @@ def daddy_interface(request):
                 final_exchanges = final_exchanges[old_exchanges.columns]
                 final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
 
+
             elif 'csv_file' in dic:
                 open('algos/daddy/exchanges.csv', 'w').write(dic['csv_file'])
             elif 'buy_missed_form' in dic:
@@ -555,6 +546,11 @@ def daddy_interface(request):
                     r.set('stop_trading', 1)
                 else:
                     r.set('stop_trading', 0)
+            elif 'backtest_disabled_form' in dic:
+                if 'backtest_disabled' in dic:
+                    r.set('backtest_disabled', 1)
+                else:
+                    r.set('backtest_disabled', 0)
 
         
         parameters = json.load(open('algos/daddy/parameters.json'))
@@ -644,8 +640,13 @@ def daddy_interface(request):
             stop_trading = float(r.get('stop_trading').decode())
         except:
             stop_trading = 0
+
+        try:
+            backtest_disabled = float(r.get('backtest_disabled').decode())
+        except:
+            backtest_disabled = 0
         
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled})
 
     else:
         return HttpResponseRedirect('/login')
