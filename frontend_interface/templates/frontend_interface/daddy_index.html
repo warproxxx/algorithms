@@ -175,7 +175,7 @@
             <div class="card-body">
                 <table>
                   <tr>
-                    <td style="width: 33vw; text-align:center;">
+                    <td style="width: 25vw; text-align:center;">
                       <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="buy_missed_form">
@@ -188,7 +188,7 @@
                         
                       </form>
                     </td>
-                    <td style="width: 33vw; text-align:center;">
+                    <td style="width: 25vw; text-align:center;">
                       <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="enable_close_and_stop_form">
@@ -198,7 +198,7 @@
                           <input type="submit" value="Update">
                       </form>
                     </td>
-                    <td style="width: 33vw; text-align:center;">
+                    <td style="width: 25vw; text-align:center;">
                       <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="stop_trading_form">
@@ -207,6 +207,17 @@
                           <input type="submit" value="Update">
                       </form>
                     </td>
+
+                    <td style="width: 25vw; text-align:center;">
+                      <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="backtest_disabled_form">
+                        <input type="checkbox" name="backtest_disabled" value="backtest_disabled" {% if backtest_disabled == 1 %} checked {% endif %}> <b>Disable Backtest</b>
+                        <br/><br/><br/><br/>
+                          <input type="submit" value="Update">
+                      </form>
+                    </td>
+
                   </tr>
                                       
                   </table>

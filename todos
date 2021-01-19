@@ -1,8 +1,6 @@
+Option to make backtest verification optional in interface not working for some reason
+
 Test all is good
-Finish backtest verification
-Update trade data every min. 
-Another thread checks after it changes position etc. Create "ASAP" close method. ASAP means upto 300k at once. After that 10 sec break and another 300k.
-Option to make backtest verification optional
 
 
 

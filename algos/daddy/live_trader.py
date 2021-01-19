@@ -562,7 +562,7 @@ class liveTrading():
 
 
     def get_balance(self):
-        exchanges = pd.read_csv('exchanges.csv')
+        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
         balance_threshold = float(exchanges[exchanges['exchange'] == self.exchange_name].iloc[0]['max_trade'])
         actual_balance = self.actually_get_balance()
 
