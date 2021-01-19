@@ -1,11 +1,6 @@
+Test all is good
+
 Backtest dosen't get liquidated. IT needs to be fixed.
-
-If error again, remove try catch
-
-
-Can arctic get latest date or values > n
-
-Store trades data in SQL
 
 
 Option to make backtest verification optional
