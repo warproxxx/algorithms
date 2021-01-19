@@ -964,3 +964,12 @@ class liveTrading():
                 amount, price = self.get_max_amount(order_type)
                 order = self.market_trade(order_type, amount)
                 break
+            elif method == 'ASAP':
+                amount, price = self.get_max_amount(order_type)
+
+                if amount < 300000:
+                    order = self.market_trade(order_type, amount)
+                    break
+                else:
+                    number_of_orders = int(amount / 300000)
+                    self.second_average(number_of_orders, 10, order_type)

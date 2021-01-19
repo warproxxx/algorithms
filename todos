@@ -1,17 +1,19 @@
 Test all is good
-
-Backtest dosen't get liquidated. IT needs to be fixed.
-
-
+Finish backtest verification
+Update trade data every min. 
+Another thread checks after it changes position etc. Create "ASAP" close method. ASAP means upto 300k at once. After that 10 sec break and another 300k.
 Option to make backtest verification optional
-Have daddy store live trade data. Start first run with last 20 days.
-Verify every minute. Create "ASAP" close method. ASAP means upto 300k at once. After that 10 sec break and another 300k.
 
-Stop daddy trading when a new line is drawn. Show in interface.
+
+
+Stop daddy trading automatically when a new line is drawn. Show in interface.
 
 
 
 Use cheating for altcoin bot. Find which to use. Then find rebalancing.
+
+Backtest dosen't get liquidated in altcoin bots. IT needs to be fixed.
+
 
 Have a manual logic consisten enough in backtest in daddy bot backtest.
 Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.

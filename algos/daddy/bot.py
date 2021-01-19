@@ -23,6 +23,7 @@ from algos.daddy.live_trader import liveTrading
 from algos.daddy.trade_analysis import get_trades, process_data, get_details
 from algos.daddy.historic import single_price_from_rest
 from algos.daddy.plot import create_chart
+from algos.daddy.trades import update_trades, run_backtest
 from utils import print
 
 TESTNET = False
@@ -234,6 +235,37 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
         if details['trade'] == 1:
             threads[details['name']].join()
             after_stuffs(details['name'])
+
+    #perform backtest verification
+    backtest_disabled = 0
+
+    try:
+        backtest_disabled = int(r.get('backtest_disabled').decode())
+    except:
+        pass
+
+    if backtest_disabled == 0:
+        #add to interface
+        analysis = run_backtest()
+
+        for idx, details in EXCHANGES.iterrows():
+            if details['trade'] == 1:
+                lt = lts[details['name']]
+                current_pos, _, _ = lt.get_position()
+                balance = lt.actually_get_balance()
+
+                if balance > 0:
+                    if 'open' in analysis['total']:
+                        if analysis['total']['open'] == 1 and current_pos == "NONE":
+                            print("Opened position from backtest_verification for {}".format(details['name']))
+                            lt.fill_order('buy', method='ASAP')
+                        elif analysis['total']['open'] == 0 and current_pos == "OPEN":
+                            print("Closed position from backtest_verification for {}".format(details['name']))
+                            lt.fill_order('sell', method='ASAP')
+                        else:
+                            print("As required for {}".format(details['name']))
+
+    
 
     #add if new exchange added
     for idx, details in EXCHANGES.iterrows():
@@ -479,6 +511,13 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
+def trades_update():
+    update_trades()
+
+    while True:
+        time.sleep(60)
+        update_trades()
+
 def daddy_bot():
     if os.path.isdir("data/stream"):
         shutil.rmtree('data/stream')
@@ -488,6 +527,9 @@ def daddy_bot():
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
+
+    trades_update_thread = threading.Thread(target=trades_update)
+    trades_update_thread.start()
 
     calling_check_thread = threading.Thread(target=check_calling)
     calling_check_thread.start()
