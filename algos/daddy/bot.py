@@ -515,7 +515,7 @@ def trades_update():
     update_trades()
 
     while True:
-        time.sleep(60)
+        time.sleep(4*60)
         update_trades()
 
 def daddy_bot():
