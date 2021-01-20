@@ -1,5 +1,6 @@
 Jan 20:
 Test all is good. With eye then locally then in server. Initially disable backtest verification for this paramter
+Try catch for continuoslly rechecking may have been removed
 
 
 Test cheating for altcoin bot. If its good, use it in ratio too. Find new, paris, parameters, add to live.
