@@ -186,8 +186,8 @@ def update_trades():
             library.write('trades', df)               
             break
         except Exception as e:
-            print("Exception: {}. Retrying in 5 secs".format(str(e)))
-            time.sleep(5)
+            print("Exception: {}. Retrying in 20 secs".format(str(e)))
+            time.sleep(20)
     
 def get_significant_traders(df):
     df = df[['timestamp', 'side', 'homeNotional', 'foreignNotional']]

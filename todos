@@ -1,6 +1,8 @@
 Test all working.
 
-
-Have a proper backtest of altcoin and ratio with changing parameter, rebalancing and all every 2 months including liquidation. Then try 1,2,3,4 month.
 Have a manual logic consisten enough in backtest in daddy bot backtest.
+
+Have a proper backtest of altcoin and ratio with changing parameter, rebalancing and all every 3 months including liquidation. Then try 1,2,3,4 month and none.
+Rebalance by closing all positions?
+
 Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.
