@@ -268,7 +268,6 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     #set position again
     for idx, details in EXCHANGES.iterrows():
         if details['trade'] == 1:
-            threads[details['name']].join()
             after_stuffs(details['name'])
 
     #add if new exchange added
