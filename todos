@@ -1,15 +1,16 @@
-Test all is good
+Jan 20:
+Restart and see it restarts this way
+Test all is good. With eye then locally then in server. Initially disable backtest verification for this paramter
 
 
+Test cheating for altcoin bot. If its good, use it in ratio too. Find new, paris, parameters, add to live.
 
-Stop daddy trading automatically when a new line is drawn. Show in interface.
-
-
-
-Use cheating for altcoin bot. Find which to use. Then find rebalancing.
-
-Backtest dosen't get liquidated in altcoin bots. IT needs to be fixed.
-
-
+Jan 21:
 Have a manual logic consisten enough in backtest in daddy bot backtest.
 Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.
+
+
+
+Later:
+Find rebalancing in altcoin/ratio.
+Backtest dosen't get liquidated in altcoin bots. IT needs to be fixed.

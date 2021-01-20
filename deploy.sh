@@ -60,5 +60,6 @@ mkdir ~/mongod
 echo 'mongod --dbpath /home/$USER/mongod --logpath /home/$USER/mongod/mongod.log --fork' | sudo tee -a /etc/init.d/mongod
 sudo service mongod start
 sudo update-rc.d mongod defaults
+sudo crontab -l -u root | { cat; echo "@reboot service mongod start"; } | sudo crontab -u root - 
 
 echo -e "\n\nNow add the API keys and start the program :)"

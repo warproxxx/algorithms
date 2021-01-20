@@ -7,7 +7,8 @@ from scipy.ndimage import gaussian_filter
 import plotly.graph_objects as go
 import time
 from utils import print
-
+from algos.daddy.trades import get_trends
+import redis
 
 def create_plot(biased=True):
     df = pd.read_csv("data/btc_daily.csv")
@@ -112,33 +113,12 @@ def create_plot(biased=True):
         ranges.to_csv('data/ranges_unbiased.csv', index=None)
 
 def create_chart():
-    start_time = "2020-01-01"
+    
+    trends = get_trends()
 
-    if os.path.isfile("data/btc_daily.csv"):
-        os.remove("data/btc_daily.csv")
-
-    if (pd.to_datetime(start_time).date() < pd.Timestamp.utcnow().date()):
-        try:
-            new_url = 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=1d&partial=false&symbol=XBTUSD&count=500&reverse=false&startTime={}'.format(start_time)
-            res = requests.get(new_url)
-            price_df = pd.DataFrame(json.loads(res.text))
-            price_df['timestamp'] = pd.to_datetime(price_df['timestamp'])
-            price_df = price_df.set_index('timestamp').tz_localize(None).reset_index()
-
-
-            if os.path.isfile("data/btc_daily.csv"):
-                old_df = pd.read_csv("data/btc_daily.csv")
-                old_df['timestamp'] = pd.to_datetime(old_df['timestamp'])
-                df = pd.concat([old_df, price_df])
-                df = df.drop_duplicates(subset=['timestamp'])
-                df.to_csv('data/btc_daily.csv', index=None)
-            else:
-                price_df.to_csv('data/btc_daily.csv', index=None)
-        except Exception as e:
-            print("Exception in parameter performer: {}".format(str(e)))
-    else:
-        pass
-
+    if trends.iloc[0]['curr_group'] != trends.iloc[-1]['curr_group']:
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        r.set('stop_trading', 1)
 
     create_plot(biased=True)
     create_plot(biased=False)

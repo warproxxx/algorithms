@@ -23,7 +23,7 @@ from algos.daddy.live_trader import liveTrading
 from algos.daddy.trade_analysis import get_trades, process_data, get_details
 from algos.daddy.historic import single_price_from_rest
 from algos.daddy.plot import create_chart
-from algos.daddy.trades import update_trades, run_backtest
+from algos.daddy.trades import update_trades, run_backtest, get_trends
 from utils import print
 
 TESTNET = False
