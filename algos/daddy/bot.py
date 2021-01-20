@@ -516,10 +516,6 @@ def start_schedlued():
 def trades_update():
     update_trades()
 
-    while True:
-        time.sleep(4*60)
-        update_trades()
-
 def daddy_bot():
     if os.path.isdir("data/stream"):
         shutil.rmtree('data/stream')
