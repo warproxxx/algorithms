@@ -1,15 +1,10 @@
 Jan 20:
-Test all is good. With eye then locally then in server. Initially disable backtest verification for this paramter
-Try catch for continuoslly rechecking may have been removed
-
-
+Test all working.
 Test cheating for altcoin bot. If its good, use it in ratio too. Find new, paris, parameters, add to live.
 
 Jan 21:
 Have a manual logic consisten enough in backtest in daddy bot backtest.
 Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.
-
-
 
 Later:
 Find rebalancing in altcoin/ratio.

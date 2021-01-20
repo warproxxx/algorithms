@@ -243,19 +243,8 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
         backtest_disabled = int(r.get('backtest_disabled').decode())
     except:
         pass    
-
-    #add if new exchange added
-    for idx, details in EXCHANGES.iterrows():
-        exchange_name = details['exchange']
-        name = details['name']
-
-        if details['trade'] == 1 or exchange_name == 'bitmex':       
-
-            if not name in lts:
-                lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-                lts[name].set_position()
     
-    #add to interface
+    #backtest verification
     if backtest_disabled == 0:
         analysis = run_backtest()
 
@@ -276,6 +265,22 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
                         else:
                             print("As required for {}".format(details['name']))
     
+    #set position again
+    for idx, details in EXCHANGES.iterrows():
+        if details['trade'] == 1:
+            threads[details['name']].join()
+            after_stuffs(details['name'])
+
+    #add if new exchange added
+    for idx, details in EXCHANGES.iterrows():
+        exchange_name = details['exchange']
+        name = details['name']
+
+        if details['trade'] == 1 or exchange_name == 'bitmex':       
+
+            if not name in lts:
+                lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
+                lts[name].set_position()
 
 def spaced_print(str, target_length=15):
     str_len =len(str)
