@@ -671,6 +671,7 @@ def clearLog(request):
     return HttpResponseRedirect('/' + req['from'])
 
 def addParms(request):
+    #update parameters.json too if it is current
     req = request.GET.dict()
 
     if 'key' in req:
@@ -695,6 +696,12 @@ def addParms(request):
 
             with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
+
+            parameters = json.load(open('algos/daddy/parameters.json'))
+            
+            if parameters['name'] == req['name']:
+                with open('algos/daddy/parameters.json', 'w') as f:
+                    json.dump(new_pars, f)
 
             return HttpResponseRedirect('/daddy')
         else:
