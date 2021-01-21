@@ -227,7 +227,7 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     threads = {}
     for idx, details in EXCHANGES.iterrows():
         if details['trade'] == 1:
-            threads[details['name']] = threading.Thread(target=perform_trade, args=(details['exchange'], details['name'], lts[details['exchange']], parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call, ))
+            threads[details['name']] = threading.Thread(target=perform_trade, args=(details['exchange'], details['name'], lts[details['name']], parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call, ))
             threads[details['name']].start()
 
     #wait till completion
@@ -254,18 +254,16 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
             if details['trade'] == 1:
                 lt = lts[details['name']]
                 current_pos, _, _ = lt.get_position()
-                balance = lt.actually_get_balance()
-
-                if balance > 0:
-                    if 'open' in analysis['total']:
-                        if analysis['total']['open'] == 1 and current_pos == "NONE":
-                            print("Opened position from backtest_verification for {}".format(details['name']))
-                            lt.fill_order('buy', method='ASAP')
-                        elif analysis['total']['open'] == 0 and current_pos == "OPEN":
-                            print("Closed position from backtest_verification for {}".format(details['name']))
-                            lt.fill_order('sell', method='ASAP')
-                        else:
-                            print("As required for {}".format(details['name']))
+                
+                if 'open' in analysis['total']:
+                    if analysis['total']['open'] == 1 and current_pos == "NONE":
+                        print("Opened position from backtest_verification for {}".format(details['name']))
+                        lt.fill_order('buy', method='ASAP')
+                    elif analysis['total']['open'] == 0 and current_pos != "NONE":
+                        print("Closed long position from backtest_verification for {}".format(details['name']))
+                        lt.fill_order('sell', method='ASAP')
+                    else:
+                        print("As required for {}".format(details['name']))
     
         #set position again
         for idx, details in EXCHANGES.iterrows():
