@@ -1,11 +1,9 @@
+Add a profit cap to live too.
 Find a more liberal parameter to test current.
-For a trend like current, there needs to be "Sell at pnl %"
+
 
 Had done half grid search
-Test all working.
-
 Have a manual logic consisten enough in backtest in daddy bot backtest.
-
 Have a proper backtest of altcoin and ratio with changing parameter, rebalancing and all every 3 months including liquidation. Then try 1,2,3,4 month and none.
 Rebalance by closing all positions?
 

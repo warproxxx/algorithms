@@ -67,6 +67,7 @@ class tradingStrategy(bt.Strategy):
         self.profit_macd_par = params['profit_macd']
         self.mult = params['mult']
         self.stop_percentage_par = params['stop_percentage']
+        self.profit_cap_par = params['profit_cap']
         self.print = params['print']
         
     def log(self, txt, dt=None):
@@ -168,6 +169,12 @@ class tradingStrategy(bt.Strategy):
                         cls_ord = self.close(oco=self.sl_ord)
                         cls_ord.addinfo(name="MANUAL CLOSE")
                         self.position_since = 0
+                    
+                    if (pnl_percentage > self.profit_cap_par):
+                        cls_ord = self.close(oco=self.sl_ord)
+                        cls_ord.addinfo(name="MANUAL CLOSE")
+                        self.position_since = 0
+                        
                 else:               
                     if (pnl_percentage < self.close_percentage_par) or (self.macd < self.macd_par) or (self.rsi > self.rsi_par): #close at loss or macd
                         self.log("LONG CLOSE {}".format(self.close_price[0]))

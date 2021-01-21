@@ -491,6 +491,7 @@ def daddy_interface(request):
                 new_pars['close_percentage'] = float(new_pars['close_percentage'])
                 new_pars['profit_macd'] = float(new_pars['profit_macd'])
                 new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
+                new_pars['profit_cap'] = float(new_pars['profit_cap'])
                 new_pars['name'] = dic['pars_name']
 
                 with open('algos/daddy/parameters.json', 'w') as f:
@@ -689,6 +690,7 @@ def addParms(request):
             new_pars['close_percentage'] = float(req['close_p'])
             new_pars['profit_macd'] = float(req['p_macd'])
             new_pars['stop_percentage'] = float(req['stop'])
+            new_pars['profit_cap'] = float(req['profit_cap'])
             new_pars['name'] = req['name']
 
             with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
