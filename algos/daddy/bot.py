@@ -23,7 +23,7 @@ from algos.daddy.live_trader import liveTrading
 from algos.daddy.trade_analysis import get_trades, process_data, get_details
 from algos.daddy.historic import single_price_from_rest
 from algos.daddy.plot import create_chart
-from algos.daddy.trades import update_trades, run_backtest, get_trends
+from algos.daddy.trades import update_trades, run_backtest
 from utils import print
 
 TESTNET = False
@@ -244,8 +244,10 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     except:
         pass    
     
+    buy_missed, buy_at, close_and_stop, stop_trading = get_interferance_vars()
+
     #backtest verification
-    if backtest_disabled == 0:
+    if backtest_disabled == 0 and stop_trading == 0:
         analysis = run_backtest()
 
         for idx, details in EXCHANGES.iterrows():
@@ -265,10 +267,10 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
                         else:
                             print("As required for {}".format(details['name']))
     
-    #set position again
-    for idx, details in EXCHANGES.iterrows():
-        if details['trade'] == 1:
-            after_stuffs(details['name'])
+        #set position again
+        for idx, details in EXCHANGES.iterrows():
+            if details['trade'] == 1:
+                after_stuffs(details['name'])
 
     #add if new exchange added
     for idx, details in EXCHANGES.iterrows():
@@ -521,7 +523,7 @@ def daddy_bot():
         shutil.rmtree('data/stream')
 
     update_price_from_rest()
-    schedule.every().day.at("00:03").do(create_chart)
+    schedule.every().day.at("00:30").do(create_chart)
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()

@@ -408,4 +408,6 @@ def run_backtest():
     parameters = json.load(open('algos/daddy/parameters.json'))
     run = perform_backtest(features, parameters)
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
+    portfolio, trades, operations = run[0].get_logs()
+    trades.to_csv("data/XBTUSD_trades.csv", index=None)
     return analysis

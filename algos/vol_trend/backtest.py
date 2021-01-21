@@ -20,6 +20,8 @@ import backtrader as bt
 
 from utils import print
 
+from algos.altcoin.backtest import plot
+
 def get_df(symbol):
     res = requests.get('https://ftx.com/api/markets/{}/candles?resolution=86400&limit=5000'.format(symbol))
     df = pd.DataFrame(json.loads(res.text)['result'])
@@ -364,6 +366,7 @@ class priceStrategy(bt.Strategy):
                 order=self.order_target_percent(target=0.99*price_direction)
                 order.addinfo(name=price_data._name)
 
+
 def perform_backtests():
     if not os.path.isdir("data/"):
         os.makedirs("data/")
@@ -441,6 +444,8 @@ def perform_backtests():
     run = cerebro.run()
     portfolio, trades, operations = run[0].get_logs()
     trades.to_csv("data/trades_move.csv", index=None)
+
+    plot(price_df, portfolio, 'BTC')
 
 if __name__ == "__main__":
     perform_backtests()
