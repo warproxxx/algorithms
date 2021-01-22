@@ -69,11 +69,7 @@ def nissan(request):
         details_df = get_positions()
         altcoin_balance = details_df['ftx_balance'].sum()
 
-        details_df, balances = get_position_balance()    
-        bitcoin_balance = details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
-
-        amount = altcoin_balance + bitcoin_balance
-        pnl = amount - 1910
+        pnl = altcoin_balance - 2500
 
         if pnl > 0:
             pnl = pnl / (pnl/random.randint(130,150))
