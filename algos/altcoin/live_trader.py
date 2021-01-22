@@ -159,12 +159,34 @@ class liveTrading():
                 print(e)
                 time.sleep(1)
                 pass
-    
-    def get_balance(self):
+                
+    def get_chopped_balance(self):
         try:
-            return float(self.exchange.fetch_balance()['USD']['free'])
+            current_pos, avgEntryPrice, amount = self.get_position()
+            obook = self.get_orderbook()
+            price = obook['best_ask']
+
+            open_worth = 0
+
+            total_balance = self.exchange.fetch_balance()['USD']['total'] * self.lev
+            
+            open_worth = amount* price
+
+            free = (total_balance - open_worth)/self.lev
+
+            return free, free / price
+
         except:
             return 0
+
+    def get_balance(self):
+        #its equivalent in ratio is get_subaccount_balance
+        balance, _ = self.get_chopped_balance()
+
+        if balance <= 0:
+            balance = 0
+
+        return balance
 
     def get_subaccount_balance(self, name, type='free'):
         balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])

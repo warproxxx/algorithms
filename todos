@@ -1,8 +1,10 @@
-There is an extra in altcoin bot and ratio too. In the chart at least.
+Ratio dosen't have this issue
 
-Need to add liquidations
+There is an extra day in altcoin, ratio, vol_trend. Daddy is perfect tho. In the chart at least.
+Vol trend seems to be a day late in opening positions by the chart tho or maybe thats how lines form. Verify
 
 Altcoin unifier:
+1) Add liquidations
 1) First store all df in csv.
 2) Then get the ones containing first 3 month. test them at 10% per month return threshold
 3) Select the pairs that did good.
