@@ -1,9 +1,3 @@
-There is an extra day in altcoin, ratio, vol_trend. Daddy is perfect tho. In the chart at least. Fix it.
-Vol trend seems to be a day late in opening positions by the chart tho or maybe thats how lines form. Verify
-
-
-
-
 Altcoin unifier:
 1) Add liquidations
 1) First store all df in csv.
@@ -12,18 +6,11 @@ Altcoin unifier:
 4) Maximize them. Find allocation
 5) Use the allocation on next 3 month and save as first backtest
 
-And so on.
-
-Do tests etc and enter ratio too.
-
-Have a manual logic consisten enough in backtest in daddy bot backtest.
+Have a manual logic consisten enough in backtest in daddy bot backtest. ANd here create a set rule to turn it off or on in search of best para. And of withdrawls.
 
 
 
-Have a proper backtest of altcoin and ratio with changing parameter, rebalancing and all every 3 months including liquidation. Then try 1,2,3,4 month and none.
-Rebalance by closing all positions?
-
-Then combine all to create allocation. Find withdawls. I am thinking no withdrawls till end of daddy.
+Then combine all to create allocation
 
 Todos:
 Move patrick to here too once all is verified and tested

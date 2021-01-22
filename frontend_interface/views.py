@@ -69,7 +69,7 @@ def nissan(request):
         details_df = get_positions()
         altcoin_balance = details_df['ftx_balance'].sum()
 
-        pnl = altcoin_balance - 3500
+        pnl = altcoin_balance - 4000
 
         if pnl > 0:
             pnl = pnl / (pnl/random.randint(130,150))
