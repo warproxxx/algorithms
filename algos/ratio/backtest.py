@@ -9,7 +9,7 @@ import backtrader as bt
 from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy, plot
 from utils import print
 
-
+#this includes one extra day in the chart. But the logic is that backtrader needs 1 day to open position. So although it looks wrong in chart, overall this is right
 def get_binance_df(symbol, cache=False):
 
     if cache == False:

@@ -22,6 +22,7 @@ from utils import print
 
 from algos.altcoin.backtest import plot
 
+#this includes one extra day in the chart. But the logic is that backtrader needs 1 day to open position. So although it looks wrong in chart, overall this is right
 def get_df(symbol):
     res = requests.get('https://ftx.com/api/markets/{}/candles?resolution=86400&limit=5000'.format(symbol))
     df = pd.DataFrame(json.loads(res.text)['result'])

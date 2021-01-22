@@ -101,6 +101,7 @@ def create_multiple_plot(df, variable_names, time='Time', verbose=False):
 
     return fig
 
+#this includes one extra day in the chart. But the logic is that backtrader needs 1 day to open position. So although it looks wrong in chart, overall this is right
 def get_df(symbol, cache=False):
 
     if cache == False:

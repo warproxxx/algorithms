@@ -1,7 +1,8 @@
-Ratio dosen't have this issue
-
-There is an extra day in altcoin, ratio, vol_trend. Daddy is perfect tho. In the chart at least.
+There is an extra day in altcoin, ratio, vol_trend. Daddy is perfect tho. In the chart at least. Fix it.
 Vol trend seems to be a day late in opening positions by the chart tho or maybe thats how lines form. Verify
+
+
+
 
 Altcoin unifier:
 1) Add liquidations
@@ -12,6 +13,8 @@ Altcoin unifier:
 5) Use the allocation on next 3 month and save as first backtest
 
 And so on.
+
+Do tests etc and enter ratio too.
 
 Have a manual logic consisten enough in backtest in daddy bot backtest.
 
