@@ -72,7 +72,7 @@ def nissan(request):
         pnl = altcoin_balance - 4000
 
         if pnl > 0:
-            pnl = pnl / (pnl/random.randint(130,150))
+            pnl = pnl / 10
 
         if pnl < 0:
             pnl = pnl / 5
