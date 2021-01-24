@@ -92,6 +92,24 @@ class liveTrading():
 
         return orderbook
 
+    def get_avg_entry(self):
+        trades = self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})
+        trades_df = pd.DataFrame(trades)
+        trades_df['price'] = trades_df['price'].astype(float)
+        trades_df['qty'] = trades_df['qty'].astype(float)
+        reverse_df = trades_df[::-1].reset_index(drop=True)
+
+        select_df = pd.DataFrame()
+
+        for idx, row in reverse_df.iterrows():
+            if row['isBuyer'] != reverse_df.iloc[0]['isBuyer']:
+                break
+
+            select_df = select_df.append(row, ignore_index=True)
+
+        return (select_df['price'] * select_df['qty']).sum()/(select_df['qty'].sum())
+
+
     def get_position(self):
         '''
         Returns position (LONG, SHORT, NONE), average entry price and current quantity
@@ -117,7 +135,7 @@ class liveTrading():
                         return "NONE", 0, 0
 
                     asset = details['baseAsset']['asset']
-                    avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
+                    avgEntryPrice = self.get_avg_entry()
 
                 elif float(details['baseAsset']['borrowed']) > threshold and float(details['quoteAsset']['borrowed']) <= quote_threshold:
                     current_pos = "SHORT"
@@ -127,7 +145,7 @@ class liveTrading():
                         return "NONE", 0, 0
 
                     asset = details['baseAsset']['asset']
-                    avgEntryPrice = float(self.exchange.sapi_get_margin_mytrades({'symbol': self.symbol, 'isIsolated': 'TRUE'})[-1]['price'])
+                    avgEntryPrice = self.get_avg_entry()
                     
                 amount = round_down(amount,self.round_step)
                 
