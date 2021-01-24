@@ -177,7 +177,7 @@ class liveTrading():
             return free, free / price
 
         except:
-            return 0
+            return 0, 0
 
     def get_balance(self):
         #its equivalent in ratio is get_subaccount_balance
