@@ -186,8 +186,25 @@ def update_trades():
             library.write('trades', df)               
             break
         except Exception as e:
-            print("Exception: {}. Retrying in 20 secs".format(str(e)))
-            time.sleep(20)
+            error_mess = str(e)
+
+            if "Document already exists with" in error_mess:
+                splitted = error_mess.split(" ")
+                exist_date = splitted[6].replace("end:", "")
+                exist_date_2 = splitted[7]
+                exist_till = pd.to_datetime(exist_date + " " + exist_date_2)
+                new_df = df[df.index > exist_till]
+
+                if len(new_df) == 0:
+                    print("This timeframe already exists")
+                else:
+                    print("Writing from middle")
+                    library.write('trades', new_df)               
+                
+                break
+            else:
+                print("Exception: {}. Retrying in 20 secs".format(str(e)))
+                time.sleep(20)
     
 def get_significant_traders(df):
     df = df[['timestamp', 'side', 'homeNotional', 'foreignNotional']]
