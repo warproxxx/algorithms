@@ -70,8 +70,11 @@ def save_move_data():
     pairs = json.load(open('algos/vol_trend/pairs.json'))
 
     for pair in pairs:
-        curr_move_df = get_df(pair)
-        curr_move_df.to_csv('data/vol_data/{}.csv'.format(pair), index=None)
+        try:
+            curr_move_df = get_df(pair)
+            curr_move_df.to_csv('data/vol_data/{}.csv'.format(pair), index=None)
+        except Exception as e:
+            print("Error in {}: {}".format(pair, str(e)))
 
 class CommInfoFractional(bt.CommissionInfo):
     
@@ -372,8 +375,14 @@ def perform_backtests():
     if not os.path.isdir("data/"):
         os.makedirs("data/")
 
+    old_pairs = []
+
+    for date in pd.date_range(start="2019Q4", end=pd.to_datetime('now'), freq='1Q'):
+        old_pairs.append("BTC-MOVE-" + str(date.year) + "Q" + str(date.quarter))
+
     pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
     pairs_list =  [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
+    pairs_list = list(set(old_pairs + pairs_list))
 
     with open('algos/vol_trend/pairs.json', 'w') as f:
         json.dump(pairs_list, f)
