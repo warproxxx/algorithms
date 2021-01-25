@@ -102,7 +102,7 @@ def custom_buy():
             if current_pos == "NONE":
                 curr_exchange = EXCHANGES[EXCHANGES['name'] == exchange_name].iloc[0]
                 lt = lts[details['name']]
-                lt.fill_order('buy', method=curr_exchange['buy_method'])
+                lt.fill_order('buy', method='ASAP')
                 r.set('{}_position_since'.format(exchange_name), 1)
                 lt.add_stop_loss()
 
@@ -118,9 +118,9 @@ def custom_sell():
 
             if current_pos == "LONG":
                 curr_exchange = EXCHANGES[EXCHANGES['name'] == exchange_name].iloc[0]
-                lt = lts[details['exchange']]
+                lt = lts[details['name']]
                 lt.close_stop_order()
-                lt.fill_order('sell', method=curr_exchange['sell_method'])
+                lt.fill_order('sell', method='ASAP')
                 r.set('{}_position_since'.format(exchange_name), 0)
 
 def get_btc_price_manual():

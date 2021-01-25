@@ -1,14 +1,27 @@
-why does alt keep on happening
-
-Doing in live is a bit tricky
-
-Liquidation is not a big deal. If negative it means liquidated.
-
-Have a manual logic consisten enough in backtest in daddy bot backtest. ANd here create a set rule to turn it off or on in search of best para. And of withdrawls.
-
-
+Create daddy gym
 
 Then combine all to create allocation
 
 Todos:
 Move patrick to here too once all is verified and tested
+
+
+Making a custom sell
+Closing Order: 47a4344c-97bf-42d8-8fef-6d6393fc9f69
+Time at filling order is: 2021-01-24 12:13:15.882662
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:13:21.899647
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:13:33.718581
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:13:43.570555
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:13:53.431001
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:03.294535
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:13.172581
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:23.058532
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:32.930558
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:42.786534
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:14:52.663150
+Sending market sell order for BTC/USD of size 976 on bitmex in 2021-01-24 12:15:02.520573
+Sending market sell order for BTC/USD of size 982 on bitmex in 2021-01-24 12:15:12.376455
+Time at filling order is: 2021-01-24 12:15:26.285664
+
+
+Didn't seem to close for 2

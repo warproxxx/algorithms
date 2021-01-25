@@ -57,18 +57,20 @@ class liveTrading():
         self.increment = 0.5
         self.update_parameters()
         
-    def create_subaccount(self, name):
+    def create_subaccount(self, name, to_print = True):
         try:
             self.neutral_exchange.private_post_subaccounts({'nickname': name})
             return 1
         except Exception as e:
-            if 'already exists' in str(e):
-                print("Subaccount {} exist".format(name))
-                return 1
+            if to_print == True:
+                if 'already exists' in str(e):
+                    print("Subaccount {} exist".format(name))
+                    return 1
         
         return 0
 
     def transfer_to_subaccount(self, amount, destination, source='main', coin='USD'):
+        self.create_subaccount(destination, to_print=False)
         if amount > 0:
             print("Moving {} {} from {} to {}".format(amount, coin, source, destination))
             self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
