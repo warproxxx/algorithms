@@ -214,7 +214,7 @@ def perform_close_and_main():
             if pos != "NONE":
                 lt.fill_order('close', pos.lower())
 
-            amount = lt.get_balance()
+            amount = lt.get_subaccount_btc_balance(row['name'])
 
             if amount > 0:
                 lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
