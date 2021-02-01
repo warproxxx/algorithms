@@ -377,8 +377,8 @@ def perform_backtests():
 
     old_pairs = []
 
-    for date in pd.date_range(start="2019Q4", end=pd.to_datetime('now'), freq='1Q'):
-        old_pairs.append("BTC-MOVE-" + str(date.year) + "Q" + str(date.quarter))
+    # for date in pd.date_range(start="2019Q4", end=pd.to_datetime('now'), freq='1Q'):
+    #     old_pairs.append("BTC-MOVE-" + str(date.year) + "Q" + str(date.quarter))
 
     pairs = json.loads(requests.get('https://ftx.com/api/markets').text)['result']
     pairs_list =  [pair['name'] for pair in pairs if re.search("MOVE-20[0-9][0-9]Q", pair['name'])]
