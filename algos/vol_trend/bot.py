@@ -342,54 +342,57 @@ def vol_bot():
             pairs.append('BTC-PERP')
 
             for pair in pairs:
-                price = float(r.get('FTX_{}_best_bid'.format(pair)).decode())
-                
-                if pair == 'BTC-PERP':
-                    if buy_missed_perp == 1:
-                        lt = liveTrading(symbol='BTC-PERP')
-                        pos, _, _ = lt.get_position()
-
-                        type = "open" if pos == "NONE" else "close"
-
-                        if perp_long_or_short == 1:
-                            if price < price_perp:
-                                r.set('buy_missed_perp', 0)
-                                lt.fill_order(type, 'long')
-                        else:
-                            if price > price_perp:
-                                r.set('buy_missed_perp', 0)
-                                lt.fill_order(type, 'short')
+                try:
+                    price = float(r.get('FTX_{}_best_bid'.format(pair)).decode())
                     
-                    if enable_per_close_and_stop == 1:
-                        r.set('enable_per_close_and_stop', 0)
-                        r.set('stop_perp', 1)
-                        lt = liveTrading(symbol='BTC-PERP')
-                        pos, _, _ = lt.get_position()
-                        lt.fill_order('close', pos.lower())
+                    if pair == 'BTC-PERP':
+                        if buy_missed_perp == 1:
+                            lt = liveTrading(symbol='BTC-PERP')
+                            pos, _, _ = lt.get_position()
 
+                            type = "open" if pos == "NONE" else "close"
+
+                            if perp_long_or_short == 1:
+                                if price < price_perp:
+                                    r.set('buy_missed_perp', 0)
+                                    lt.fill_order(type, 'long')
+                            else:
+                                if price > price_perp:
+                                    r.set('buy_missed_perp', 0)
+                                    lt.fill_order(type, 'short')
                         
-                elif 'MOVE' in pair:
-                    if buy_missed_move == 1:
-                        
-                        pair = get_curr_move_pair()
-                        lt = liveTrading(symbol=pair)
-                        pos, _, _ = lt.get_position()
+                        if enable_per_close_and_stop == 1:
+                            r.set('enable_per_close_and_stop', 0)
+                            r.set('stop_perp', 1)
+                            lt = liveTrading(symbol='BTC-PERP')
+                            pos, _, _ = lt.get_position()
+                            lt.fill_order('close', pos.lower())
 
-                        type = "open" if pos == "NONE" else "close"
+                            
+                    elif 'MOVE' in pair:
+                        if buy_missed_move == 1:
+                            
+                            pair = get_curr_move_pair()
+                            lt = liveTrading(symbol=pair)
+                            pos, _, _ = lt.get_position()
 
-                        if move_long_or_short == 1:
-                            if price < price_move:
-                                r.set('buy_missed_move', 0)
-                                lt.fill_order(type, 'long')
-                        else:
-                            if price > price_move:
-                                r.set('buy_missed_move', 0)
-                                lt.fill_order(type, 'short')
+                            type = "open" if pos == "NONE" else "close"
 
-                    if enable_move_close_and_stop == 1:
-                        r.set('enable_move_close_and_stop', 0)
-                        r.set('stop_move', 1)
-                        pair = get_curr_move_pair()
-                        lt = liveTrading(symbol=pair)
-                        pos, _, _ = lt.get_position()
-                        lt.fill_order('close', pos.lower())
+                            if move_long_or_short == 1:
+                                if price < price_move:
+                                    r.set('buy_missed_move', 0)
+                                    lt.fill_order(type, 'long')
+                            else:
+                                if price > price_move:
+                                    r.set('buy_missed_move', 0)
+                                    lt.fill_order(type, 'short')
+
+                        if enable_move_close_and_stop == 1:
+                            r.set('enable_move_close_and_stop', 0)
+                            r.set('stop_move', 1)
+                            pair = get_curr_move_pair()
+                            lt = liveTrading(symbol=pair)
+                            pos, _, _ = lt.get_position()
+                            lt.fill_order('close', pos.lower())
+                except:
+                    pass
