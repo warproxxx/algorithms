@@ -50,8 +50,12 @@ class liveTrading():
         self.method = "now"
 
         config = pd.read_csv('algos/ratio/config.csv')
-        curr_config = config[config['name'] == self.symbol].iloc[0]
-        self.method = curr_config['method']
+
+        try:
+            curr_config = config[config['name'] == self.symbol].iloc[0]
+            self.method = curr_config['method']
+        except:
+            self.method = 'now'
 
         self.update_parameters()
 
@@ -61,9 +65,12 @@ class liveTrading():
             self.exchange.sapi_post_margin_isolated_transfer({'asset': coin, 'symbol': symbol, 'transFrom': source, 'transTo': destination, 'amount': amount})
 
     def update_parameters(self):
-        config = pd.read_csv('algos/ratio/config.csv')
-        curr_config = config[config['name'] == self.symbol].iloc[0]
-        self.lev = int(curr_config['mult'])
+        try:
+            config = pd.read_csv('algos/ratio/config.csv')
+            curr_config = config[config['name'] == self.symbol].iloc[0]
+            self.lev = int(curr_config['mult'])
+        except:
+            self.lev = 2
 
     def close_open_orders(self, close_stop=False):
         self.update_parameters()

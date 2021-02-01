@@ -224,6 +224,7 @@ def perform_close_and_main():
 def get_balances():
     while True:
         config = pd.read_csv('algos/ratio/config.csv')
+        
         lt = liveTrading("ETHBTC")
 
         try:
