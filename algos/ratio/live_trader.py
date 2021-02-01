@@ -208,6 +208,13 @@ class liveTrading():
             return balance
         except:
             return 0
+    
+    def get_subaccount_base_quote_balance(self, symbol):
+        try:
+            details = self.exchange.sapi_get_margin_isolated_account({'symbols': symbol})['assets'][0]
+            return float(details['quoteAsset']['free']), float(details['baseAsset']['free'])
+        except:
+            return 0
 
     def get_subaccount_balance(self):
         #its equivalent in altcoin is get_balance

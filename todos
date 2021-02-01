@@ -1,5 +1,4 @@
-Multithread close all and main.
-Fix the binance.
+Fix the binance. Add autoloan pay etc.
 
 Make auto utility for binance too. Step is: Repay all collaterals of another after this. Then move all that can be both asset. The covert dust. Then to btc.
 

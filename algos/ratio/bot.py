@@ -230,10 +230,13 @@ def close_thread_perform(row):
     if pos != "NONE":
         lt.fill_order('close', pos.lower())
 
-    amount = lt.get_subaccount_btc_balance(row['name'])
+    btc_amount, quote_amount = lt.get_subaccount_base_quote_balance(row['name'])
 
-    if amount > 0:
-        lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
+    if btc_amount > 0:
+        lt.transfer_to_subaccount(btc_amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
+
+    if quote_amount > 0:
+        lt.transfer_to_subaccount(quote_amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT', coin=row['name'][:-3])
 
 def perform_close_and_main():
     config = pd.read_csv('algos/ratio/config.csv')
