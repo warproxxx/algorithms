@@ -390,7 +390,6 @@ def perform_backtests():
     price_df = get_df('BTC/USD')
     new_price_df = add_volatility(price_df)    
     new_price_df.to_csv('data/price_df.csv', index=None)
-
     save_move_data()
 
     price_df = pd.read_csv('data/price_df.csv')

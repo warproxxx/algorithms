@@ -97,7 +97,7 @@ def obook_process():
                         r.set('{}_best_bid'.format(pair), bid)
                         r.set('{}_best_ask'.format(pair), ask)
                 except Exception as e:
-                    print(str(e))
+                    pass
 
         time.sleep(20)
 
