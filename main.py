@@ -37,10 +37,40 @@ def initial_tasks():
         
     flush_redis()
 
+def get_pairs_df():
+    pairs_df = pd.DataFrame(columns=['exchange', 'cryptofeed_name', 'ccxt_symbol', 'cryptofeed_symbol', 'feed'])
+
+    pairs_df = pairs_df.append({'exchange': 'ftx', 'cryptofeed_name': 'FTX', 'ccxt_symbol': 'BTC-PERP', 'cryptofeed_symbol': 'BTC-PERP', 'feed': 'vol_trend'}, ignore_index=True)
+    pairs_df = pairs_df.append({'exchange': 'ftx', 'cryptofeed_name': 'FTX', 'ccxt_symbol': 'BTC-MOVE', 'cryptofeed_symbol': 'BTC-MOVE', 'feed': 'vol_trend'}, ignore_index=True)
+
+    ftx_pairs = pd.read_csv('algos/altcoin/config.csv')
+
+    ftx_pairs = ftx_pairs[['name']]
+
+    ftx_pairs['exchange'] = 'ftx'
+    ftx_pairs['cryptofeed_name'] = 'FTX'
+    ftx_pairs['ccxt_symbol'] = ftx_pairs['name']
+    ftx_pairs['cryptofeed_symbol'] = ftx_pairs['name']
+    ftx_pairs['feed'] = 'altcoin'
+
+    pairs_df = pairs_df.append(ftx_pairs[pairs_df.columns], ignore_index=True)
+
+    binance = pd.read_csv('algos/ratio/config.csv')
+
+    binance = binance[['name']]
+
+    binance['exchange'] = 'binance'
+    binance['cryptofeed_name'] = 'Binance'
+    binance['ccxt_symbol'] = binance['name']
+    binance['cryptofeed_symbol'] = binance['name']
+    binance['feed'] = 'ratio'
+
+    pairs_df = pairs_df.append(binance[pairs_df.columns], ignore_index=True)
+    return pairs_df
 
 def obook_process():
     while True:
-        pairs_df = pd.read_csv('pairs.csv')
+        pairs_df = get_pairs_df()
         exchange_list = set(pairs_df['exchange'].values)
 
         exchanges = {}
