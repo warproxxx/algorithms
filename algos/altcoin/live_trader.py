@@ -77,7 +77,10 @@ class liveTrading():
         self.create_subaccount(destination, to_print=False)
         if amount > 0:
             print("Moving {} {} from {} to {}".format(amount, coin, source, destination))
-            self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
+            try:
+                self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
+            except:
+                self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': self.exchange.fetch_balance()['USD']['free'], 'source': source, 'destination': destination})
 
     def update_parameters(self):
         try:

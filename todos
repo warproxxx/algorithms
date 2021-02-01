@@ -1,6 +1,4 @@
-Obook needs to work differently than just pairs.csv
-
-Needs to happen multithreaded
+Manually reduce position and lev in binance
 
 Make auto utility for binance too. Step is: Repay all collaterals of another after this. Then move all that can be both asset. The covert dust. Then to btc.
 
