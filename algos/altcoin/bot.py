@@ -177,8 +177,8 @@ def daily_tasks(force=0):
                     close_threads[row['name']].start()
 
         #wait till completion
-        for idx, name in close_threads.items():
-            close_threads[name].join()
+        for key, value in close_threads.items():
+            close_threads[key].join()
         
         to_open = details_df[details_df['target_pos'] != 0]
 
@@ -189,9 +189,9 @@ def daily_tasks(force=0):
             open_threads[row['name']].start()
 
         #wait till completion
-        for idx, name in open_threads.items():
-            open_threads[name].join()
-            
+        for key, value in open_threads.items():
+            open_threads[key].join()
+
         print("\n")
 
 def start_schedlued():
