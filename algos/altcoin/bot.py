@@ -110,6 +110,35 @@ def get_positions():
     
     return details_df
 
+def close_thread(row):
+    lt = liveTrading(symbol=row['name'])
+    lt.fill_order('close', row['position'].lower())
+
+def open_thread(row, force):
+    if row['to_trade'] == 1:
+        if force == 0:
+            try:
+                if row['target_pos'] == row['curr_pos']:
+                    print("As required for {}".format(row['name']))
+                    pass
+                elif row['target_pos'] * row['curr_pos'] == -1:
+                    print("Closing and opening for {}".format(row['name']))
+                    lt = liveTrading(symbol=row['name'])
+                    lt.fill_order('close', row['position'].lower())
+                    lt.fill_order('open', row['backtest_position'].lower())
+                else:
+                    print("Opening for {}".format(row['name']))
+                    lt = liveTrading(symbol=row['name'])
+                    lt.fill_order('open', row['backtest_position'].lower())
+            except Exception as e:
+                print(str(e))
+        else:
+            try:
+                print("Opening for {}".format(row['name']))
+                lt = liveTrading(symbol=row['name'])
+                lt.fill_order('open', row['backtest_position'].lower())
+            except Exception as e:
+                print(str(e))
 
 def daily_tasks(force=0):
     print("Time: {}".format(datetime.datetime.utcnow()))
@@ -139,41 +168,30 @@ def daily_tasks(force=0):
 
         to_close = details_df[details_df['target_pos'] == 0]
 
+        close_threads = {}
+
         for idx, row in to_close.iterrows():
             if row['to_trade'] == 1:
                 if row['curr_pos'] != 0:
-                    lt = liveTrading(symbol=row['name'])
-                    lt.fill_order('close', row['position'].lower())
+                    close_threads[row['name']] = threading.Thread(target=close_thread, args=(row,))
+                    close_threads[row['name']].start()
+
+        #wait till completion
+        for idx, name in close_threads.items():
+            close_threads[name].join()
         
         to_open = details_df[details_df['target_pos'] != 0]
 
+        open_threads = {}
+        
         for idx, row in to_open.iterrows():
-            if row['to_trade'] == 1:
-                if force == 0:
-                    try:
-                        if row['target_pos'] == row['curr_pos']:
-                            print("As required for {}".format(row['name']))
-                            pass
-                        elif row['target_pos'] * row['curr_pos'] == -1:
-                            print("Closing and opening for {}".format(row['name']))
-                            lt = liveTrading(symbol=row['name'])
-                            lt.fill_order('close', row['position'].lower())
-                            lt.fill_order('open', row['backtest_position'].lower())
-                        else:
-                            print("Opening for {}".format(row['name']))
-                            lt = liveTrading(symbol=row['name'])
-                            lt.fill_order('open', row['backtest_position'].lower())
-                    except Exception as e:
-                        print(str(e))
-                else:
-                    try:
-                        print("Opening for {}".format(row['name']))
-                        lt = liveTrading(symbol=row['name'])
-                        lt.fill_order('open', row['backtest_position'].lower())
-                    except Exception as e:
-                        print(str(e))
+            open_threads[row['name']] = threading.Thread(target=open_thread, args=(row,force,))
+            open_threads[row['name']].start()
 
-
+        #wait till completion
+        for idx, name in open_threads.items():
+            open_threads[name].join()
+            
         print("\n")
 
 def start_schedlued():
