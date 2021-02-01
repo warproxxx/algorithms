@@ -240,7 +240,7 @@ def perform_close_and_main():
     threads =  {}
 
     for idx, row in config.iterrows():
-        threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row))
+        threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row,))
         threads[row['name']].start()
 
     #wait till completion
