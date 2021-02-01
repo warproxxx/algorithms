@@ -205,20 +205,29 @@ def hourly_tasks():
         lt = liveTrading(row['name'])
         lt.set_position()
 
+def close_thread_perform(row):
+    lt = liveTrading(row['name'])
+    pos, _, _ = lt.get_position()
+
+    if pos != "NONE":
+        lt.fill_order('close', pos.lower())
+
+    amount = lt.get_balance()
+
+    if amount > 0:
+        lt.transfer_to_subaccount(amount, 'main', source=row['name'])
+
 def perform_close_and_main():
     config = pd.read_csv('algos/altcoin/config.csv')
+    threads =  {}
 
     for idx, row in config.iterrows():
-        lt = liveTrading(row['name'])
-        pos, _, _ = lt.get_position()
+        threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row))
+        threads[row['name']].start()
 
-        if pos != "NONE":
-            lt.fill_order('close', pos.lower())
-
-        amount = lt.get_balance()
-
-        if amount > 0:
-            lt.transfer_to_subaccount(amount, 'main', source=row['name'])
+    #wait till completion
+    for key, value in threads.items():
+        threads[key].join()
 
 def get_balances():
     while True:

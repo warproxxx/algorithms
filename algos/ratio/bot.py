@@ -223,23 +223,30 @@ def hourly_tasks():
         lt = liveTrading(row['name'])
         lt.set_position()
 
+def close_thread_perform(row):
+    lt = liveTrading(row['name'])
+    pos, _, _ = lt.get_position()
+
+    if pos != "NONE":
+        lt.fill_order('close', pos.lower())
+
+    amount = lt.get_subaccount_btc_balance(row['name'])
+
+    if amount > 0:
+        lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
+
 def perform_close_and_main():
     config = pd.read_csv('algos/ratio/config.csv')
+    threads =  {}
 
     for idx, row in config.iterrows():
-        try:
-            lt = liveTrading(row['name'])
-            pos, _, _ = lt.get_position()
+        threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row))
+        threads[row['name']].start()
 
-            if pos != "NONE":
-                lt.fill_order('close', pos.lower())
+    #wait till completion
+    for key, value in threads.items():
+        threads[key].join()
 
-            amount = lt.get_subaccount_btc_balance(row['name'])
-
-            if amount > 0:
-                lt.transfer_to_subaccount(amount, row['name'], source='ISOLATED_MARGIN', destination='SPOT')
-        except Exception as e:
-            print(str(e))
 
 def get_balances():
     while True:
