@@ -80,7 +80,7 @@ def nissan(request):
         amount = 1910 + pnl
 
         amount = amount + random.randint(-10,10)
-        return HttpResponse(amount)
+        return HttpResponse("Under mt gimme few days to fix")
     except:
         return HttpResponse("error")
 
