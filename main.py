@@ -58,13 +58,15 @@ def get_pairs_df():
     binance = pd.read_csv('algos/ratio/config.csv')
 
     binance = binance[['name']]
-
     binance['exchange'] = 'binance'
     binance['cryptofeed_name'] = 'Binance'
     binance['ccxt_symbol'] = binance['name']
     binance['cryptofeed_symbol'] = binance['name']
     binance['feed'] = 'ratio'
-
+    
+    
+    binance['ccxt_symbol'] = binance['ccxt_symbol'].apply(lambda x: x[:-3] + "/BTC")
+    
     pairs_df = pairs_df.append(binance[pairs_df.columns], ignore_index=True)
     return pairs_df
 
