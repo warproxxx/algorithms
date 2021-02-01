@@ -260,6 +260,7 @@ class liveTrading():
             trading_array.append(final_amount)
 
         for amount in trading_array:
+            amount = round_down(amount, self.round_step)
             order = self.market_trade(trade_direction, amount, side_effect)
             time.sleep(sleep_time)
 
