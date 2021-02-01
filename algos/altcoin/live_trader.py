@@ -299,10 +299,6 @@ class liveTrading():
             order = self.market_trade(trade_direction, amount) 
             time.sleep(sleep_time)
 
-        if self.threshold_tiggered == False:
-            amount, price = self.get_max_amount(type)
-            order = self.market_trade(trade_direction, amount)
-
 
     def fill_order(self, type, direction):
         '''

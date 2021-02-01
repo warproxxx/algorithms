@@ -263,10 +263,7 @@ class liveTrading():
             amount = round_down(amount, self.round_step)
             order = self.market_trade(trade_direction, amount, side_effect)
             time.sleep(sleep_time)
-
-        if self.threshold_tiggered == False:
-            amount, price = self.get_max_amount(type)
-            order = self.market_trade(trade_direction, amount, side_effect)
+            
 
     def trade_now(self, type, trade_direction, side_effect):
         amount, price = self.get_max_amount(type)
