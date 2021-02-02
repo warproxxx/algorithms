@@ -142,7 +142,9 @@ def open_thread(row, force):
 
 def daily_tasks(force=0):
     print("Time: {}".format(datetime.datetime.utcnow()))
+
     perform_backtests()
+    
     print("\n")
 
     config = pd.read_csv('algos/altcoin/config.csv')

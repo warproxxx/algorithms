@@ -20,6 +20,8 @@ import requests
 from datetime import datetime
 from utils import print
 
+import redis
+
 def create_multiple_plot(df, variable_names, time='Time', verbose=False):        
     fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
     colors = ['#727272', '#56b4e9', "#009E73", "#000000"]
@@ -242,6 +244,129 @@ def get_sharpe(col):
 
     return sharpe
 
+
+class unbiasedTest(bt.Strategy):
+    params = dict(number_days={})
+    
+    def __init__(self):        
+        self.trades = io.StringIO()
+        self.trades_writer = csv.writer(self.trades)
+
+        self.operations = io.StringIO()
+        self.operations_writer = csv.writer(self.operations)
+
+        self.portfolioValue = io.StringIO()
+        self.portfolioValue_writer = csv.writer(self.portfolioValue)
+        
+        self.first_time = True
+        
+        self.number_days = self.params.number_days['number_days']
+        self.lag = self.params.number_days['lag']
+
+        self.entered = False
+
+    def log(self, txt, dt=None):
+        dt = dt or self.datas[0].datetime.datetime(0)
+#         print("Datetime: {} Message: {}".format(dt, txt))
+    
+    def notify_order(self, order):
+            
+        if order.status in [order.Submitted, order.Accepted]:
+            return
+
+        if order.status in [order.Completed]:
+            if order.isbuy():
+                ordertype = "BUY"
+                self.log("BUY EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
+            else:
+                ordertype = "SELL"
+                self.log("SELL EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
+            
+#             print(order)
+            self.trades_writer.writerow([self.datas[0].datetime.datetime(0), ordertype, order.info['name'], order.executed.price, order.executed.size, order.executed.comm])
+            self.bar_executed = len(self)
+
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log("Order Canceled/Margin/Rejected")
+            self.log(order.Rejected)
+
+        self.order = None
+
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+
+        self.log('OPERATION PROFIT, GROSS: {}, NET: {}'.format(trade.pnl, trade.pnlcomm))
+        self.operations_writer.writerow([self.datas[0].datetime.datetime(0), trade.pnlcomm])
+
+    def start(self):
+        self.order = None 
+
+    def get_logs(self):
+        self.portfolioValue.seek(0)
+        portfolioValueDf = pd.read_csv(self.portfolioValue, names=['Date', 'Value'])
+        portfolioValueDf['Date'] = pd.to_datetime(portfolioValueDf['Date'])
+
+        self.trades.seek(0)
+        tradesDf = pd.read_csv(self.trades, names=['Date', 'Type', 'Data', 'Price', 'Size', 'Comission'])
+        tradesDf['Date'] = pd.to_datetime(tradesDf['Date'])
+        tradesDf['Total Spent'] = tradesDf['Price'] * tradesDf['Size']
+
+        self.operations.seek(0)
+        operationsDf = pd.read_csv(self.operations, names=['Date', 'Profit'])
+        operationsDf['Date'] = pd.to_datetime(operationsDf['Date'])
+        operationsDf = operationsDf.merge(portfolioValueDf, on='Date',how='left')
+        operationsDf['original_value'] = operationsDf['Value'] - operationsDf['Profit']
+        operationsDf['pct_change'] = (operationsDf.Value - operationsDf.original_value)/operationsDf.original_value * 100
+
+        return portfolioValueDf, tradesDf, operationsDf
+    
+    def next(self):       
+        self.portfolioValue_writer.writerow([self.datas[0].datetime.datetime(0), self.broker.getvalue()])
+        
+        price_data = self.datas[0]
+        price_pos = self.getposition(price_data).size
+        curr_group = pd.to_datetime(price_data.curr_group[0])
+        curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
+        
+        if curr_datetime.day == 1 + self.lag:
+            n_days = (curr_group-curr_datetime).days
+            
+            four_days_ago_price = price_data.open[n_days - self.number_days]
+            today_price = price_data.close[n_days]
+                        
+            if today_price >= four_days_ago_price:
+                price_direction = 1
+            else:
+                price_direction = -1
+                        
+            pos_direction = 1 if price_pos > 0 else -1
+
+            order=self.order_target_percent(target=0.99*price_direction)
+            order.addinfo(name=price_data._name)
+            
+            self.entered = True
+
+        
+        if self.entered == True:
+            curr_group = pd.to_datetime(price_data.curr_group[0])
+            curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
+
+            if curr_group == curr_datetime:
+                four_days_ago_price = price_data.open[-1 * self.number_days]
+                today_price = price_data.close[0]
+
+                if today_price >= four_days_ago_price:
+                    price_direction = 1
+                else:
+                    price_direction = -1
+
+                pos_direction = 1 if price_pos > 0 else -1
+
+                if pos_direction != price_direction:
+                    order=self.order_target_percent(target=0.99*price_direction)
+                    order.addinfo(name=price_data._name)
+
 class priceStrategy(bt.Strategy):
     params = dict(number_days={})
     
@@ -358,6 +483,7 @@ def perform_backtests():
     config = pd.read_csv('algos/altcoin/config.csv')
     config['vol_day'] = config['vol_day'].astype(int)
     config['prev_day'] = config['prev_day'].astype(int)
+    porfolios = pd.DataFrame()
 
     for idx, row in config.iterrows():
         print(row['name'])
@@ -395,6 +521,67 @@ def perform_backtests():
         portfolio, trades, operations = run[0].get_logs()
         trades.to_csv("data/trades_{}.csv".format(pair), index=None)
         plot(price_df, portfolio, pair)
+
+        now = pd.Timestamp.utcnow().date()
+        now = pd.to_datetime(now.replace(day=1))
+
+        price_df = price_df[(price_df['startTime'] >= now - pd.Timedelta(days=20))].reset_index(drop=True)
+        price_data = Custom_Data(dataname=price_df)
+        initial_cash = 1000
+
+        cerebro = bt.Cerebro()
+
+        cerebro.adddata(price_data, name='data')
+        cerebro.addstrategy(unbiasedTest, number_days={'number_days': int(row['prev_day']), 'lag': 0})
+        cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
+        cerebro.addanalyzer(bt.analyzers.Calmar)
+        cerebro.addanalyzer(bt.analyzers.DrawDown)
+        cerebro.addanalyzer(bt.analyzers.Returns)
+        cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
+        cerebro.addanalyzer(bt.analyzers.TimeReturn)
+        cerebro.addanalyzer(bt.analyzers.PyFolio)
+        cerebro.addanalyzer(bt.analyzers.PositionsValue)
+
+        cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*row['mult'])/100, mult=row['mult']), slip_open=True, slip_out=True)  # 0.5%
+        run = cerebro.run()
+
+        portfolio, trades, operations = run[0].get_logs()
+        pct_change = portfolio['Value'].pct_change().fillna(0)
+
+        start = 1000
+        vals = []
+
+        for val in pct_change * row['mult']:
+            start = start * (1+val)
+            if start < 0:
+                start = 0
+
+            vals.append(start)
+
+        portfolio[row['name']] = vals
+        portfolio = portfolio[['Date', row['name']]]
+
+        if len(porfolios) == 0:
+            porfolios = portfolio
+        else:
+            porfolios = porfolios.merge(portfolio, on='Date', how='left')
+
+    porfolios = porfolios[porfolios['Date'] >= now]
+    porfolios.to_csv("data/altcoin_port.csv", index=None)
+
+    check_days=[3,5,10,15,20,25]
+
+    porfolios = porfolios.set_index('Date')
+    ret = porfolios.sum(axis=1)
+
+    for d in check_days:
+        if len(ret) > d:
+            curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+            if curr_ret < -10:
+                r = redis.Redis(host='localhost', port=6379, db=0)
+                r.set('close_and_main', 1)
+                r.set('altcoin_enabled', 0)
 
 if __name__ == "__main__":
     perform_backtests()

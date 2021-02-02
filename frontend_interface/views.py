@@ -209,7 +209,22 @@ def altcoin_interface(request):
 
         total_balance = round(details_df['ftx_balance'].sum(), 2)
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance})
+        porfolios = pd.read_csv("data/altcoin_port.csv")
+        check_days=[3,5,10,15,20,25]
+
+        porfolios = porfolios.set_index('Date')
+        ret = porfolios.sum(axis=1)
+
+        backtest_details = {}
+
+        for d in check_days:
+            if len(ret) > d:
+                backtest_details['{} Day Return'.format(d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+        backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance})
     else:
         return HttpResponseRedirect('/login')
 

@@ -136,7 +136,12 @@
             <b>{{details.longs}} ({{details.long_allocation_per}}%)</b> Long, <b>{{details.shorts}} ({{details.short_allocation_per}}%)</b> Short<br/><br/>
             <b>Balance:</b> {{total_balance}}$<br/>
             <!-- <b>Backtest PnL:</b> {{backtest_pnl}}%<br/> -->
-            <b>PnL:</b> {{live_pnl}}%
+            <b>PnL:</b> {{live_pnl}}%<br/>
+            
+            {% for key, value in backtest_details.items %}
+            <b>{{key}}:</b> {{value}}%<br/>
+            {% endfor %}
+
            </center><br/>
             <div class="row">
 
