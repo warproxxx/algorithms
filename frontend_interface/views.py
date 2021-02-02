@@ -342,7 +342,21 @@ def ratio_interface(request):
 
         details_df['binance_balance'] = details_df['binance_balance'].round(5)
 
-        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance })
+        porfolios = pd.read_csv("data/ratio_port.csv")
+        check_days=[3,5,10,15,20,25]
+
+        porfolios = porfolios.set_index('Date')
+        ret = porfolios.sum(axis=1)
+
+        backtest_details = {}
+
+        for d in check_days:
+            if len(ret) > d:
+                backtest_details['{} Day Return'.format(d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+        backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance })
     else:
         return HttpResponseRedirect('/login')
 
