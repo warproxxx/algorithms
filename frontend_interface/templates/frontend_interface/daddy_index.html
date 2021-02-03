@@ -484,7 +484,7 @@
        }
 
        $('#multiplier').change(function() {
-         var val = $("#multiplier").val();
+         var val = eval($("#multiplier").val());
          var mult = $("#mult").val();
          var profit_cap = $("#profit_cap").val();
          var pnl_percentage = $("#pnl_percentage").val();
