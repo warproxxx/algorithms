@@ -267,7 +267,10 @@
                               </table>
                             
                           </td>
-                          <td style="padding-left: 15vw; padding-right: 15vw;">
+                          <td style="width: 15vw">
+                            <Center>Multiplier: <br/><input type="text" name="multiplier" id="multiplier" value="1" size=2></center>
+                          </td>
+                          <td style="padding-right: 15vw;">
                             Current Parameters: 
                             <select id="current_parms">
                               {% for par in all_parameters.keys %}
@@ -295,6 +298,8 @@
                               </select>
 
                               <button type="button" name="submit" style="background: red; color: white" onclick="deletePar()">Delete</button>
+
+
                               
                           </td>
                         </tr>
@@ -477,6 +482,17 @@
          var url = "/delete?name=" + $("#delete_par").val()
          window.location.href = url;
        }
+
+       $('#multiplier').change(function() {
+         var val = $("#multiplier").val();
+         var mult = $("#mult").val();
+         var profit_cap = $("#profit_cap").val();
+         var pnl_percentage = $("#pnl_percentage").val();
+        
+         $('#mult').val(mult*val);
+         $('#profit_cap').val(profit_cap*val);
+         $('#pnl_percentage').val(pnl_percentage*val);
+      });
 
         // alert(parameters['best_tested']['mult']);
         
