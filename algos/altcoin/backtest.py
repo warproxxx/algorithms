@@ -262,6 +262,7 @@ class unbiasedTest(bt.Strategy):
         
         self.number_days = self.params.number_days['number_days']
         self.lag = self.params.number_days['lag']
+        self.start_month = self.params.number_days['start_month']
 
         self.entered = False
 
@@ -329,7 +330,7 @@ class unbiasedTest(bt.Strategy):
         curr_group = pd.to_datetime(price_data.curr_group[0])
         curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
         
-        if curr_datetime.day == 1 + self.lag:
+        if curr_datetime.day == 1 + self.lag and curr_datetime.month == self.start_month:
             n_days = (curr_group-curr_datetime).days
             
             four_days_ago_price = price_data.open[n_days - self.number_days]
@@ -527,14 +528,20 @@ def perform_backtests():
             now = pd.Timestamp.utcnow().date()
             now = pd.to_datetime(now.replace(day=1))
 
-            price_df = price_df[(price_df['startTime'] >= now - pd.Timedelta(days=20))].reset_index(drop=True)
+            start_from = pd.to_datetime(price_df['curr_group'].iloc[-1]['curr_group']) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            start_month = price_df['startTime'].iloc[-1].month
+
+            
+            price_df = price_df[(price_df['startTime'] >= now - start_from)].reset_index(drop=True)
             price_data = Custom_Data(dataname=price_df)
             initial_cash = 1000
 
             cerebro = bt.Cerebro()
 
             cerebro.adddata(price_data, name='data')
-            cerebro.addstrategy(unbiasedTest, number_days={'number_days': int(row['prev_day']), 'lag': 0})
+
+            details = {'number_days': int(row['prev_day']), 'start_month': start_month, 'lag': 0}
+            cerebro.addstrategy(unbiasedTest, number_days=details)
             cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
             cerebro.addanalyzer(bt.analyzers.Calmar)
             cerebro.addanalyzer(bt.analyzers.DrawDown)
