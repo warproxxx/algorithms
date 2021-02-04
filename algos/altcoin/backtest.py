@@ -577,7 +577,7 @@ def perform_backtests():
             print(str(e))
 
     porfolios = porfolios[porfolios['Date'] >= now]
-    porfolios.to_csv("data/altcoin_port.csv", index=None)
+    porfolios[:-1].to_csv("data/altcoin_port.csv", index=None)
 
     check_days=[3,5,10,15,20,25]
 
