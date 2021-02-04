@@ -532,7 +532,8 @@ def perform_backtests():
             start = start.replace(day=1)
             first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
 
-            start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            # start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            start_from = now - pd.Timedelta(days=20)
             start_month = price_df['startTime'].iloc[-1].month
 
             price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
