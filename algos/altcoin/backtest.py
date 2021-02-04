@@ -330,7 +330,7 @@ class unbiasedTest(bt.Strategy):
         curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
         
         if curr_datetime.day == 1 + self.lag:
-            n_days = (curr_group-curr_datetime).days + 1
+            n_days = (curr_group-curr_datetime).days
             
             four_days_ago_price = price_data.open[n_days - self.number_days]
             today_price = price_data.close[n_days]
@@ -339,7 +339,8 @@ class unbiasedTest(bt.Strategy):
                 price_direction = 1
             else:
                 price_direction = -1
-                        
+            
+            print("Going {}".format(price_direction))
             pos_direction = 1 if price_pos > 0 else -1
 
             order=self.order_target_percent(target=0.99*price_direction)
