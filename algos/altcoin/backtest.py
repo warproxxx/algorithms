@@ -528,11 +528,10 @@ def perform_backtests():
             now = pd.Timestamp.utcnow().date()
             now = pd.to_datetime(now.replace(day=1))
 
-            start_from = pd.to_datetime(price_df['curr_group'].iloc[-1]['curr_group']) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            start_from = pd.to_datetime(price_df['curr_group'].iloc[-1]) - pd.Timedelta(days=int(row['prev_day']) + 4)
             start_month = price_df['startTime'].iloc[-1].month
 
-            
-            price_df = price_df[(price_df['startTime'] >= now - start_from)].reset_index(drop=True)
+            price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
             price_data = Custom_Data(dataname=price_df)
             initial_cash = 1000
 
@@ -576,6 +575,7 @@ def perform_backtests():
                 porfolios = porfolios.merge(portfolio, on='Date', how='left')
         except Exception as e:
             print(str(e))
+
     porfolios = porfolios[porfolios['Date'] >= now]
     porfolios.to_csv("data/altcoin_port.csv", index=None)
 
