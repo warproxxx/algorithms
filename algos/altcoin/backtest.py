@@ -20,6 +20,8 @@ import requests
 from datetime import datetime
 from utils import print
 
+import time
+
 import redis
 
 def create_multiple_plot(df, variable_names, time='Time', verbose=False):        
@@ -582,7 +584,8 @@ def perform_backtests():
             print(str(e))
 
     porfolios = porfolios[porfolios['Date'] >= now]
-    porfolios[:-1].to_csv("data/altcoin_port.csv", index=None)
+    portfolios = porfolios[:-1]
+    porfolios.to_csv("data/altcoin_port.csv", index=None)
 
     check_days=[3,5,10,15,20,25]
 
@@ -596,6 +599,7 @@ def perform_backtests():
             if curr_ret < -10:
                 r = redis.Redis(host='localhost', port=6379, db=0)
                 r.set('close_and_main', 1)
+                time.sleep(3600)
                 r.set('altcoin_enabled', 0)
 
 if __name__ == "__main__":

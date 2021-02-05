@@ -6,10 +6,12 @@ import requests
 
 import backtrader as bt
 
-from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy, unbiasedTest, plot
+from algos.altcoin.backtest import add_volatility, CommInfoFractional, Custom_Data, get_sharpe, priceStrategy, unbiasedTest, plot, get_df
 from utils import print
 
 import redis
+
+import time
 
 #this includes one extra day in the chart. But the logic is that backtrader needs 1 day to open position. So although it looks wrong in chart, overall this is right
 def get_binance_df(symbol, cache=False):
@@ -145,11 +147,21 @@ def perform_backtests():
 
 
     porfolios = porfolios[porfolios['Date'] >= now]
-    porfolios.to_csv("data/ratio_port.csv", index=None)
+    porfolios = porfolios[:-1]
+    
+    btc = get_df('BTC-PERP', cache=False)
+    btc_price = porfolios.merge(btc[['startTime', 'close']], left_on='Date', right_on='startTime', how='left')['close'].values
+    
+    for col in porfolios.columns:
+        porfolios[col] = porfolios[col] * btc_price
+
+    porfolios = porfolios.set_index('Date')
+    porfolios = porfolios/porfolios.iloc[0] * 1000
+    porfolios.to_csv("data/ratio_port.csv")
 
     check_days=[1,2,3,5,6,7,8,9,10,15,20,25]
 
-    porfolios = porfolios.set_index('Date')
+    
     ret = porfolios.sum(axis=1)
 
     for d in check_days:
@@ -159,6 +171,7 @@ def perform_backtests():
             if curr_ret < -20:
                 r = redis.Redis(host='localhost', port=6379, db=0)
                 r.set('close_and_main_ratio', 1)
+                time.sleep(3600)
                 r.set('ratio_enabled', 0)
 
 if __name__ == "__main__":
