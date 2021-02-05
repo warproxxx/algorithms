@@ -103,9 +103,11 @@ def perform_backtests():
             initial_cash = 1000
 
             cerebro = bt.Cerebro()
-
+            
             cerebro.adddata(price_data, name='data')
-            cerebro.addstrategy(unbiasedTest, number_days={'number_days': int(row['prev_day']), 'lag': 0})
+
+            details = {'number_days': int(row['prev_day']), 'start_month': start_month, 'lag': 0}
+            cerebro.addstrategy(unbiasedTest, number_days=details)
             cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
             cerebro.addanalyzer(bt.analyzers.Calmar)
             cerebro.addanalyzer(bt.analyzers.DrawDown)
@@ -154,7 +156,7 @@ def perform_backtests():
         if len(ret) > d:
             curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
-            if curr_ret < -10:
+            if curr_ret < -20:
                 r = redis.Redis(host='localhost', port=6379, db=0)
                 r.set('close_and_main_ratio', 1)
                 r.set('ratio_enabled', 0)
