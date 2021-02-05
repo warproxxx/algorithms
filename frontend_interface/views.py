@@ -343,7 +343,7 @@ def ratio_interface(request):
         details_df['binance_balance'] = details_df['binance_balance'].round(5)
 
         porfolios = pd.read_csv("data/ratio_port.csv")
-        check_days=[3,5,10,15,20,25]
+        check_days=[1,2,3,5,6,7,8,9,10,15,20,25]
 
         porfolios = porfolios.set_index('Date')
         ret = porfolios.sum(axis=1)
