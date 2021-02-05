@@ -90,7 +90,15 @@ def perform_backtests():
             now = pd.Timestamp.utcnow().date()
             now = pd.to_datetime(now.replace(day=1))
 
-            price_df = price_df[(price_df['startTime'] >= now - pd.Timedelta(days=20))].reset_index(drop=True)
+            start = pd.to_datetime(price_df['curr_group'].iloc[-1])
+            start = start.replace(day=1)
+            first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
+
+            start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            # start_from = now - pd.Timedelta(days=20)
+            start_month = price_df['startTime'].iloc[-1].month
+
+            price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
             price_data = Custom_Data(dataname=price_df)
             initial_cash = 1000
 
@@ -137,7 +145,7 @@ def perform_backtests():
     porfolios = porfolios[porfolios['Date'] >= now]
     porfolios.to_csv("data/ratio_port.csv", index=None)
 
-    check_days=[3,5,10,15,20,25]
+    check_days=[1,2,3,5,6,7,8,9,10,15,20,25]
 
     porfolios = porfolios.set_index('Date')
     ret = porfolios.sum(axis=1)
