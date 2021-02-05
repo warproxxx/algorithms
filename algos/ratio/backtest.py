@@ -151,11 +151,12 @@ def perform_backtests():
     
     btc = get_df('BTC-PERP', cache=False)
     btc_price = porfolios.merge(btc[['startTime', 'close']], left_on='Date', right_on='startTime', how='left')['close'].values
+    porfolios = porfolios.set_index('Date')
     
     for col in porfolios.columns:
         porfolios[col] = porfolios[col] * btc_price
 
-    porfolios = porfolios.set_index('Date')
+    
     porfolios = porfolios/porfolios.iloc[0] * 1000
     porfolios.to_csv("data/ratio_port.csv")
 
