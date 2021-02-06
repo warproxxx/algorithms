@@ -256,12 +256,10 @@ def get_features(curr_df):
         
     for curr_range in set(readable_labels):
         group = curr_df[curr_df['new_range'] == curr_range]
-        ser["percentage_{}".format(curr_range)] = group['homeNotional'].sum()/total
+        ser["percentage_{}".format(curr_range)] = np.nan_to_num(group['homeNotional'].sum()/total, 0)
         buy_orders = group[group['side'] == 'Buy']
-        ser['buy_percentage_{}'.format(curr_range)] = (buy_orders['homeNotional'].sum())/group['homeNotional'].sum()
+        ser['buy_percentage_{}'.format(curr_range)] = np.nan_to_num((buy_orders['homeNotional'].sum())/group['homeNotional'].sum(), 0)
 
-    
-        
     return pd.Series(ser)
 
 def get_features_from_sig(df):
@@ -277,7 +275,6 @@ def get_features_from_sig(df):
     features['timestamp'] = pd.to_datetime(features['timestamp'])
     features = features.drop_duplicates(subset=['timestamp'])
     features = features.sort_values('timestamp')
-    features = features.dropna()
     return features
 
 def get_intervaled_date(startTime):
