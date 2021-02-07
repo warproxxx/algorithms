@@ -388,7 +388,13 @@ def show_trades(request):
         except:
             trades = pd.DataFrame()
 
-        return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename=trades.csv'
+
+        trades.to_csv(path_or_buf=response,index=False)
+        return response
+
+        # return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
 
 def vol_trend_interface(request):
     if request.user.is_authenticated:
