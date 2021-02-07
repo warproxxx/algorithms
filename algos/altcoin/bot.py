@@ -12,6 +12,7 @@ import redis
 
 from algos.altcoin.backtest import perform_backtests
 from algos.altcoin.live_trader import liveTrading, round_down
+from algos.altcoin.trade_analysis import save_ftx_trades
 from utils import print
 
 
@@ -245,6 +246,15 @@ def get_balances():
 
         time.sleep(60)
 
+def save_trades():
+    while True:
+        try:
+            save_ftx_trades()
+            time.sleep(6 * 60)
+        except Exception as e:
+            print(str(e))
+
+
 def alt_bot():
     perform_backtests()
     pairs = pd.read_csv('algos/altcoin/config.csv')['name']
@@ -261,6 +271,9 @@ def alt_bot():
 
     balance_thread = threading.Thread(target=get_balances)
     balance_thread.start()
+
+    trade_thread = threading.Thread(target=save_trades)
+    trade_thread.start()
 
     while True:
         time.sleep(1)
