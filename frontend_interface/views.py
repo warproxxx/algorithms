@@ -391,7 +391,8 @@ def show_trades(request):
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename=trades.csv'
 
-        trades.to_csv(path_or_buf=response,index=False)
+        trades = trades[trades['transactTime'] >= "2021-02-05"]
+        trades.to_csv(path_or_buf=response,index=None)
         return response
 
         # return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
