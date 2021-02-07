@@ -396,8 +396,6 @@ def show_trades(request):
         trades.to_csv(path_or_buf=response,index=None)
         return response
 
-        # return render(request, "frontend_interface/trades.html", {'trades': trades.T.to_dict()})
-
 def vol_trend_interface(request):
     if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)
