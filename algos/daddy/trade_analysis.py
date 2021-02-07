@@ -19,7 +19,7 @@ def get_bitmex_data():
                         'enableRateLimit': True,
                     })
     limit = 500
-    since = exchange.parse8601("2020-12-15 00:00:00")
+    since = exchange.parse8601("2021-02-15 00:00:00")
 
     all_trades = []
 

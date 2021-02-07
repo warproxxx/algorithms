@@ -521,6 +521,14 @@ def start_schedlued():
 def trades_update():
     update_trades()
 
+def save_trades():
+    while True:
+        mex_trades, mex_funding = get_trades('bitmex')
+        mex_trades = process_data(mex_trades)
+        mex_trades.to_csv("data/mex_trades.csv", index=None)
+        mex_funding.to_csv("data/mex_funding.csv", index=None)
+        time.sleep(60 * 60)
+
 def daddy_bot():
     if os.path.isdir("data/stream"):
         shutil.rmtree('data/stream')
@@ -536,3 +544,6 @@ def daddy_bot():
 
     calling_check_thread = threading.Thread(target=check_calling)
     calling_check_thread.start()
+
+    trade_thread = threading.Thread(target=save_trades)
+    trade_thread.start()
