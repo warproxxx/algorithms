@@ -360,6 +360,15 @@ def ratio_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
+def csv_downloader(request):
+    if request.user.is_authenticated:
+        get = request.GET.dict()
+        df = pd.read_csv('data/{}.csv'.format(get['fname']))
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(get['fname'])
+        df.to_csv(path_or_buf=response,index=None)
+        return response
+
 def show_trades(request):
     if request.user.is_authenticated:
         get = request.GET.dict()

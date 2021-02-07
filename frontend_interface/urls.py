@@ -13,6 +13,7 @@ urlpatterns = [
     path('clear_log/', views.clearLog, name='clearLog'),
     path('reverse_status/', views.reverse_status, name='reverse_status'),
     path('delete/', views.delete, name='delete'),
+    path('download/', views.csv_downloader, name='download'),
     path('trades/', views.show_trades, name='trades'),
     path('login/', auth_views.LoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
