@@ -384,14 +384,14 @@ def show_trades(request):
 
             trades['slippage'] = trades.apply(calc_slippage, axis=1)
             trades = trades.round(2)
-            trades = trades[['transactTime', 'side', 'amount', 'fee', 'funding_paid', 'actualPrice', 'expectedPrice', 'slippage']]
+            trades = trades[['transactTime', 'side', 'amount', 'actualPrice', 'expectedPrice', 'fee', 'funding_paid', 'slippage']]
         except:
             trades = pd.DataFrame()
 
         response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=trades.csv'
+        response['Content-Disposition'] = 'attachment; filename=daddy_trades.csv'
 
-        trades = trades[trades['transactTime'] >= "2021-02-05"]
+        trades = trades[trades['transactTime'] >= "2021-02-05 14:00:00"]
         trades.to_csv(path_or_buf=response,index=None)
         return response
 
