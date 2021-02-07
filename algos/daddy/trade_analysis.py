@@ -106,7 +106,7 @@ def get_all_price():
         if os.path.isfile(price_file):
             start_time = int(pd.read_csv(price_file).iloc[-1]['Time'])
         else:
-            start_time = 1607990400000
+            start_time = 1612137600000
             
         timeframe = '5m'
         
