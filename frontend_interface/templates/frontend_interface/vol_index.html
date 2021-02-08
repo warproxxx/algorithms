@@ -134,7 +134,9 @@
             </div> 
             
             <center>
-                <b>Balance:</b> {{total_balance}}$<br/><br/>
+                <b>Balance:</b> {{total_balance}}$<br/>
+                <b>PnL:</b> {{live_pnl}}%<br/><br/>
+
                 <a href="/download?fname=altcoin_trades" target="_blank"><i class="fa fa-download" aria-hidden="true">Trades</i></a> <a href="/download?fname=altcoin_funding" target="_blank"><br/><i class="fa fa-download" aria-hidden="true">Fundings</i></a><br/><br/>
 
             </center>
@@ -180,6 +182,14 @@
     
     
               </div>
+
+              <center>
+                <form method="POST">
+                  {% csrf_token %}
+                  Starting Capital: <input type="number" name="vol_trend_starting_capital" value="{{vol_trend_starting_capital}}" style="width: 120px;">
+                  <input type="submit" value="Update">
+                </form>
+              </center>
 
               <div class="row">
                 

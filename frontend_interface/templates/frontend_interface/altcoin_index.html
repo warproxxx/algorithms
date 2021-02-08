@@ -183,9 +183,16 @@
     
     
               </div>
-
+              <br/>
+              <center>
+                <form method="POST">
+                  {% csrf_token %}
+                  Starting Capital: <input type="number" name="alt_starting_capital" value="{{alt_starting_capital}}" style="width: 120px;">
+                  <input type="submit" value="Update">
+                </form>
+              </center>
               <div class="row">
-
+                
                 <!-- Page Heading -->
                 <h4>Manual Interference</h4>
                 <div class="col-lg-12 mb-4">

@@ -144,6 +144,15 @@
             
             
            </center><br/>
+
+           <center>
+            <form method="POST">
+              {% csrf_token %}
+              Starting Capital: <input type="number" name="ratio_starting_capital" value="{{ratio_starting_capital}}" style="width: 120px;">
+              <input type="submit" value="Update">
+            </form>
+          </center>
+          <br/>
             <div class="row">
 
                 <!-- Page Heading -->                  

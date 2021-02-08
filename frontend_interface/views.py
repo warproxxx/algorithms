@@ -162,6 +162,8 @@ def altcoin_interface(request):
                     r.set('sub_account', 1)
                 else:
                     r.set('sub_account', 0)
+            elif 'alt_starting_capital' in dic:
+                r.set('alt_starting_capital', dic['alt_starting_capital'])
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
@@ -202,12 +204,19 @@ def altcoin_interface(request):
         except:
             sub_account = 0
 
+        try:
+            alt_starting_capital = float(r.get('alt_starting_capital').decode())
+        except:
+            alt_starting_capital = 0
+
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
-        live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+        
 
         details = get_long_short_details(details_df)
 
         total_balance = round(details_df['ftx_balance'].sum(), 2)
+
+        live_pnl = round((alt_starting_capital-total_balance)/total_balance, 2) * 100
 
         porfolios = pd.read_csv("data/altcoin_port.csv")
         check_days=[3,5,10,15,20,25]
@@ -224,7 +233,7 @@ def altcoin_interface(request):
         backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance})
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance, 'alt_starting_capital': alt_starting_capital})
     else:
         return HttpResponseRedirect('/login')
 
@@ -290,6 +299,8 @@ def ratio_interface(request):
                     r.set('sub_account_ratio', 1)
                 else:
                     r.set('sub_account_ratio', 0)
+            elif 'ratio_starting_capital' in dic:
+                r.set('ratio_starting_capital', dic['ratio_starting_capital'])
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
@@ -330,15 +341,22 @@ def ratio_interface(request):
         except:
             sub_account_ratio = 0
 
+        try:
+            ratio_starting_capital = float(r.get('ratio_starting_capital').decode())
+        except:
+            ratio_starting_capital = 0
+
         
 
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
-        live_pnl = round((details_df['live_pnl'] * details_df['allocation']).sum(), 2)
+        
 
         details = get_long_short_details(details_df)
         
         btc_balance = round(details_df['binance_balance'].sum(), 4)
         total_balance = round((details_df['btc_price'] * details_df['binance_balance']).sum(), 2)
+
+        live_pnl = round((total_balance-ratio_starting_capital)/ratio_starting_capital, 2) * 100
 
         details_df['binance_balance'] = details_df['binance_balance'].round(5)
 
@@ -356,7 +374,7 @@ def ratio_interface(request):
 
         backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
-        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance })
+        return render(request, "frontend_interface/ratio_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free_ratio': move_free_ratio, 'close_and_rebalance_ratio': close_and_rebalance_ratio, 'close_and_main_ratio': close_and_main_ratio, 'enter_now_ratio': enter_now_ratio, 'sub_account_ratio': sub_account_ratio, 'details': details, 'btc_balance': btc_balance, 'total_balance': total_balance, 'ratio_starting_capital': ratio_starting_capital })
     else:
         return HttpResponseRedirect('/login')
 
@@ -471,8 +489,14 @@ def vol_trend_interface(request):
                     r.set('stop_move', 1)
                 else:
                     r.set('stop_move', 0)
+            elif 'vol_trend_starting_capital' in dic:
+                r.set('vol_trend_starting_capital', dic['vol_trend_starting_capital'])
 
-        
+        try:
+            vol_trend_starting_capital = float(r.get('vol_trend_starting_capital').decode())
+        except:
+            vol_trend_starting_capital = 0
+
         details_df, balances = get_position_balance()
 
         pars = {}
@@ -499,7 +523,9 @@ def vol_trend_interface(request):
         
         total_balance = details_df[details_df['name'].str.contains('MOVE')].iloc[0]['ftx_balance'] + details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
 
-        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods, 'total_balance': total_balance})
+        live_pnl = round((total_balance-vol_trend_starting_capital)/vol_trend_starting_capital, 2) * 100
+
+        return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods, 'total_balance': total_balance, 'vol_trend_starting_capital': vol_trend_starting_capital, 'live_pnl': live_pnl})
     else:
         return HttpResponseRedirect('/login')
 
