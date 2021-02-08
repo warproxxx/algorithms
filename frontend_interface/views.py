@@ -216,7 +216,7 @@ def altcoin_interface(request):
 
         total_balance = round(details_df['ftx_balance'].sum(), 2)
 
-        live_pnl = round((total_balance-alt_starting_capital)/alt_starting_capital, 2) * 100
+        live_pnl = round((total_balance-alt_starting_capital)/alt_starting_capital, 4) * 100
 
         porfolios = pd.read_csv("data/altcoin_port.csv")
         check_days=[3,5,10,15,20,25]
@@ -356,7 +356,7 @@ def ratio_interface(request):
         btc_balance = round(details_df['binance_balance'].sum(), 4)
         total_balance = round((details_df['btc_price'] * details_df['binance_balance']).sum(), 2)
 
-        live_pnl = round((total_balance-ratio_starting_capital)/ratio_starting_capital, 2) * 100
+        live_pnl = round((total_balance-ratio_starting_capital)/ratio_starting_capital, 4) * 100
 
         details_df['binance_balance'] = details_df['binance_balance'].round(5)
 
@@ -523,7 +523,7 @@ def vol_trend_interface(request):
         
         total_balance = details_df[details_df['name'].str.contains('MOVE')].iloc[0]['ftx_balance'] + details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
 
-        live_pnl = round((total_balance-vol_trend_starting_capital)/vol_trend_starting_capital, 2) * 100
+        live_pnl = round((total_balance-vol_trend_starting_capital)/vol_trend_starting_capital, 4) * 100
 
         return render(request, "frontend_interface/vol_index.html", {'details_df': details_df.T.to_dict(), 'balances': balances, 'pars': pars, 'run_log': run_log, 'trade_methods': trade_methods, 'total_balance': total_balance, 'vol_trend_starting_capital': vol_trend_starting_capital, 'live_pnl': live_pnl})
     else:
