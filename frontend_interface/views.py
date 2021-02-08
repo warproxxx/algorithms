@@ -216,7 +216,7 @@ def altcoin_interface(request):
 
         total_balance = round(details_df['ftx_balance'].sum(), 2)
 
-        live_pnl = round((alt_starting_capital-total_balance)/total_balance, 2) * 100
+        live_pnl = round((total_balance-alt_starting_capital)/alt_starting_capital, 2) * 100
 
         porfolios = pd.read_csv("data/altcoin_port.csv")
         check_days=[3,5,10,15,20,25]
