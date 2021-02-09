@@ -193,7 +193,7 @@ def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, perce
                         lt.fill_order('sell', method=curr_exchange['sell_method'])
                         r.set('{}_position_since'.format(name), 0)
                 else:
-                    if (pnl_percentage < parameters['close_percentage']) or (macd < parameters['macd'])  or (rsi > parameters['rsi']):
+                    if (macd < parameters['macd'] + 5)  or (rsi - 5 > parameters['rsi']):
                         lt.close_stop_order()
                         lt.fill_order('sell', method=curr_exchange['sell_method'])
                         r.set('{}_position_since'.format(name), 0)
