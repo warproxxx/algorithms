@@ -173,7 +173,7 @@ def altcoin_interface(request):
         csv_file = open(config_file, 'r').read()
 
         details_df = get_positions()
-        details_df = details_df.clip(-100)
+        details_df['live_pnl'] = details_df['live_pnl'].clip(-100)
 
         try:
             run_log = open("logs/altcoin_bot.log").read()
@@ -311,7 +311,7 @@ def ratio_interface(request):
         csv_file = open(config_file, 'r').read()
 
         details_df = get_ratio_positions()
-        details_df = details_df.clip(-100)
+        details_df['live_pnl'] = details_df['live_pnl'].clip(-100)
 
         try:
             run_log = open("logs/ratio_bot.log").read()
