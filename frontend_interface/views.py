@@ -521,7 +521,7 @@ def vol_trend_interface(request):
         trade_methods = ['attempt_limit', '5sec_average', '10sec_average', '1min_average', '10min_average', 'now']
 
         
-        total_balance = details_df[details_df['name'].str.contains('MOVE')].iloc[0]['ftx_balance'] + details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance']
+        total_balance = round(details_df[details_df['name'].str.contains('MOVE')].iloc[0]['ftx_balance'] + details_df[details_df['name'].str.contains('PERP')].iloc[0]['ftx_balance'], 2)
 
         live_pnl = round(round((total_balance-vol_trend_starting_capital)/vol_trend_starting_capital, 4) * 100, 2)
 
