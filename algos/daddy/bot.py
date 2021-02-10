@@ -212,7 +212,11 @@ def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, perce
 def after_stuffs(exchange_name):
     global lts
     lt = lts[exchange_name]
-    lt.set_position()
+    try:
+        lt.set_position()
+    except Exception as e:
+        print("Error in setting pos in {}".format(exchange_name))
+        
     lt.update_parameters()
 
     current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()

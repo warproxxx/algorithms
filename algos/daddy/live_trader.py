@@ -420,6 +420,9 @@ class liveTrading():
                 print(e)
                 time.sleep(1)
                 pass
+            except Exception as e:
+                print(e)
+
 
     def get_stop(self):
         start_time = time.time()
