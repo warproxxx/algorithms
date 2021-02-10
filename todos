@@ -1,9 +1,1 @@
-Just does this till EoD
-
-2021-02-07 21:18:06.196000 to 2021-02-08 04:18:09.122632
-Manual scrape for 2021-02-07 21:18:06.196000
-Got 25528 data till 2021-02-07T23:59:59.428Z
-Got 1 data till 2021-02-07T23:59:59.428Z
-NB treating all values as 'exists' - no longer sparse
-
-Change pnl calc in altcoin, vol_trend ratio. Add initial balance started with.
+Store obook for those other exchanges thats enabled too
