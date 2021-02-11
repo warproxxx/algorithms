@@ -525,11 +525,6 @@ def perform_backtests():
             run = cerebro.run()
             portfolio, trades, operations = run[0].get_logs()
 
-            try:
-                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:] = 0
-            except:
-                pass
-            
             trades.to_csv("data/trades_{}.csv".format(pair), index=None)
             plot(price_df, portfolio, pair)
 
@@ -567,11 +562,6 @@ def perform_backtests():
             run = cerebro.run()
 
             portfolio, trades, operations = run[0].get_logs()
-
-            try:
-                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:] = 0
-            except:
-                pass
 
             portfolio[row['name']] = portfolio['Value']
             
