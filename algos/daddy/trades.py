@@ -44,7 +44,8 @@ def get_data(url, index, proxy):
           "https": "https://" + proxy,
         }
         res = requests.get(url, proxies=proxies, timeout=2)
-        
+    
+    print(res.text)
     results[index] = pd.DataFrame(json.loads(res.text))
 
 def get_df(start_time, proxy=None, total_range=30):
@@ -204,6 +205,8 @@ def update_trades():
                     print("Writing from middle")
                     library.write('trades', new_df)               
                 
+                break
+            elif 'timestamp' in str(e):
                 break
             else:
                 print("Exception: {}. Retrying in 20 secs".format(str(e)))
