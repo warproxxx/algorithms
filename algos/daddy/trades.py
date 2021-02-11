@@ -425,5 +425,6 @@ def run_backtest():
     run = perform_backtest(features, parameters)
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
     portfolio, trades, operations, stops_triggered = run[0].get_logs()
+    
     trades.to_csv("data/XBTUSD_trades.csv", index=None)
     return analysis

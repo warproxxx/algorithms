@@ -273,6 +273,8 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
                         lt.fill_order('sell', method='ASAP')
                     else:
                         print("As required for {}".format(details['name']))
+                else:
+                    print("As required for {}".format(details['name']))
     
         #set position again
         for idx, details in EXCHANGES.iterrows():
