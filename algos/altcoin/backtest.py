@@ -524,6 +524,12 @@ def perform_backtests():
             cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
             run = cerebro.run()
             portfolio, trades, operations = run[0].get_logs()
+
+            try:
+                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:] = 0
+            except:
+                pass
+            
             trades.to_csv("data/trades_{}.csv".format(pair), index=None)
             plot(price_df, portfolio, pair)
 
@@ -561,6 +567,12 @@ def perform_backtests():
             run = cerebro.run()
 
             portfolio, trades, operations = run[0].get_logs()
+
+            try:
+                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:] = 0
+            except:
+                pass
+
             portfolio[row['name']] = portfolio['Value']
             
             portfolio = portfolio[['Date', row['name']]]
