@@ -82,7 +82,7 @@ def perform_backtests():
             cerebro.addanalyzer(bt.analyzers.PyFolio)
             cerebro.addanalyzer(bt.analyzers.PositionsValue)
             
-            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
+            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075)/100, leverage=mult), slip_open=True, slip_out=True)  # 0.5%
             run = cerebro.run()
             portfolio, trades, operations = run[0].get_logs()
             trades.to_csv("data/binance/trades_{}.csv".format(pair), index=None)
@@ -119,23 +119,12 @@ def perform_backtests():
             cerebro.addanalyzer(bt.analyzers.PyFolio)
             cerebro.addanalyzer(bt.analyzers.PositionsValue)
 
-            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*row['mult'])/100, mult=row['mult']), slip_open=True, slip_out=True)  # 0.5%
+            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075)/100, leverage=row['mult']), slip_open=True, slip_out=True)  # 0.5%
             run = cerebro.run()
 
             portfolio, trades, operations = run[0].get_logs()
-            pct_change = portfolio['Value'].pct_change().fillna(0)
-
-            start = 1000
-            vals = []
-
-            for val in pct_change * row['mult']:
-                start = start * (1+val)
-                if start < 0:
-                    start = 0
-
-                vals.append(start)
-
-            portfolio[row['name']] = vals
+            
+            portfolio[row['name']] = portfolio['Value']
             portfolio = portfolio[['Date', row['name']]]
 
             if len(porfolios) == 0:
