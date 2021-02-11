@@ -142,9 +142,6 @@ def aws_scrape(name):
     return aws_df
 
 def get_bitmex_data(start, end, sleep=True):
-    if start.day != end.day:
-        end = end.date() + pd.Timedelta(days=1)
-
     all_df = []
 
     for scrape_date in pd.date_range(start, end):
