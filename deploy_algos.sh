@@ -20,6 +20,7 @@ ssh-keyscan gitlab.com >> $HOME/.ssh/known_hosts
 ssh-keyscan github.com >> $HOME/.ssh/known_hosts
 git clone git@gitlab.com:warproxxx/algorithms.git
 python3 -m pip install -r algorithms/requirements.txt
+cp -rf algorithms/backup/* algorithms/
 
 sudo rm /etc/nginx/sites-enabled/default
 
