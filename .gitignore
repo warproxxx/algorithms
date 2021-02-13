@@ -6,6 +6,5 @@ logs/
 old_logs/
 data/
 frontend_interface/static/*.html
-db.sqlite3
 algos/daddy/parameters.json
 algos/daddy/parameters/*.json
