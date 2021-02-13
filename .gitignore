@@ -8,3 +8,4 @@ data/
 frontend_interface/static/*.html
 algos/daddy/parameters.json
 algos/daddy/parameters/*.json
+db.sqlite3
