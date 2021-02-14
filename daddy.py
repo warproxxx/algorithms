@@ -19,7 +19,7 @@ EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange'])
 EXCHANGES = EXCHANGES.fillna("")
 
 r = redis.Redis(host='localhost', port=6379, db=0)
-
+r.set('update_running', 0)
 
 def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
