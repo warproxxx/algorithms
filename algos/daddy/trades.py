@@ -173,7 +173,7 @@ def update_trades():
         r.set('update_running', 1)
 
         end = pd.to_datetime(datetime.datetime.utcnow()).date()
-        original_start = end - pd.Timedelta(days=90)
+        original_start = end - pd.Timedelta(days=20)
         
         try:
             start = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
@@ -365,7 +365,7 @@ def get_trends():
 
 def run_backtest():
     r = redis.Redis(host='localhost', port=6379, db=0)
-    
+
     try:
         running = int(r.get('update_running').decode())
     except:
