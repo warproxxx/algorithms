@@ -164,6 +164,8 @@
 
           </div>
 
+          
+
           <div class="row">
 
             <!-- Page Heading -->
@@ -226,6 +228,14 @@
           </div>
 
           </div>
+
+          <center>
+            <form method="POST">
+              {% csrf_token %}
+              Trend Start Date: <input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;">
+              <input type="submit" value="Update">
+            </form>
+          </center>
           
           <b>Run Log:</b><br/>
           <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea>

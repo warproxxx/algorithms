@@ -620,6 +620,8 @@ def daddy_interface(request):
                     r.set('backtest_disabled', 1)
                 else:
                     r.set('backtest_disabled', 0)
+            elif 'trend_start_date' in dic:
+                r.set('trend_start_date', dic['trend_start_date'])
 
         
         parameters = json.load(open('algos/daddy/parameters.json'))
@@ -653,6 +655,11 @@ def daddy_interface(request):
                 free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
             except:
                 free_balance = 0
+
+            try:
+                trend_start_date = r.get('trend_start_date').decode()
+            except:
+                trend_start_date = ""
             
             row['position_since'] = position_since
             row['avgEntryPrice'] = avgEntryPrice
@@ -715,7 +722,7 @@ def daddy_interface(request):
         except:
             backtest_disabled = 0
         
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date})
 
     else:
         return HttpResponseRedirect('/login')

@@ -21,6 +21,7 @@ from arctic.date import DateRange
 
 from scipy.ndimage import gaussian_filter
 import requests
+import redis
 
 from algos.daddy.backtest import perform_backtest
 
@@ -163,7 +164,7 @@ def get_bitmex_data(start, end, sleep=True):
 
 def update_trades():
     end = pd.to_datetime(datetime.datetime.utcnow()).date()
-    original_start = end - pd.Timedelta(days=20)
+    original_start = end - pd.Timedelta(days=90)
     
     try:
         start = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
@@ -418,9 +419,14 @@ def run_backtest():
     if last_date.day - curr_group.day < 4:
         curr_group = last_date - pd.Timedelta(days=4)
     
-    curr_group =pd.to_datetime(curr_group)
-    features = features[features['timestamp'] >= curr_group]
-
+    try:
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        trend_start_date = r.get('trend_start_date').decode()
+        features = features[features['timestamp'] >= trend_start_date]
+    except:
+        curr_group =pd.to_datetime(curr_group)
+        features = features[features['timestamp'] >= curr_group]
+    
     parameters = json.load(open('algos/daddy/parameters.json'))
     run = perform_backtest(features, parameters)
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
