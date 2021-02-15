@@ -1,6 +1,6 @@
 pandas==1.1.2
 cryptofeed==1.6.1
-ta
+ta==0.5.17
 requests
 websockets
 ccxt
