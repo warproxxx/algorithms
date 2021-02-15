@@ -378,8 +378,8 @@ def run_backtest():
     startTime = get_intervaled_date(min_date)
 
     if os.path.isfile('data/features.csv'):
-        startTime = pd.to_datetime(pd.read_csv('data/features.csv').iloc[-1]['timestamp']) + pd.Timedelta(minutes=10)
-
+        startTime = pd.to_datetime(subprocess.check_output(["tail", "-1", "data/features.csv"]).decode().split(",")[0])
+    
     have_till = have_till.tz_localize(tz='UTC')
     startTime = startTime.tz_localize(tz='UTC')
 
@@ -406,14 +406,10 @@ def run_backtest():
         features['macd'] = ta.trend.macd_signal(features['close'])
         features['rsi'] = ta.momentum.rsi(features['close'])
         
-        features.to_csv('data/features.csv', index=None)
+    #     features.to_csv('data/features.csv', index=None)
     
-    features = pd.read_csv('data/features.csv')
+    # features = pd.read_csv('data/features.csv')
     features['timestamp'] = pd.to_datetime(features['timestamp'])
-    dupe = features.iloc[-1]
-    dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
-    features = features.append(dupe, ignore_index=True)
-
     trends = get_trends()
     curr_group = trends.iloc[-1]['curr_group'].date()
     last_date = features.iloc[-1]['timestamp'].date()
@@ -429,6 +425,11 @@ def run_backtest():
         curr_group =pd.to_datetime(curr_group)
         features = features[features['timestamp'] >= curr_group]
     
+    
+    dupe = features.iloc[-1]
+    dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
+    features = features.append(dupe, ignore_index=True)
+
     parameters = json.load(open('algos/daddy/parameters.json'))
     run = perform_backtest(features, parameters)
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
