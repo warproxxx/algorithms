@@ -259,7 +259,7 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     if backtest_disabled == 0 and stop_trading == 0:
         analysis, backtest_date = run_backtest()
         save_file_name = r.get('save_file_name').decode()
-        backtest_date = pd.to_datetime(backtest_date)
+        backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
         save_file_name = pd.to_datetime(save_file_name)
 
         print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
