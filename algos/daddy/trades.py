@@ -354,6 +354,9 @@ def get_trends():
             
     return new_price_df
 
+def save_features(features):
+    features.to_csv('data/features.csv', index=None)
+
 def run_backtest():
     update_trades()
     last_date = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
@@ -406,7 +409,8 @@ def run_backtest():
         features['macd'] = ta.trend.macd_signal(features['close'])
         features['rsi'] = ta.momentum.rsi(features['close'])
         
-    #     features.to_csv('data/features.csv', index=None)
+        save_fe_thread = threading.Thread(target=save_features, args=(features,))
+        save_fe_thread.start()
     
     # features = pd.read_csv('data/features.csv')
     features['timestamp'] = pd.to_datetime(features['timestamp'])
