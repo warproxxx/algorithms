@@ -257,29 +257,34 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
 
     #backtest verification
     if backtest_disabled == 0 and stop_trading == 0:
-        analysis = run_backtest()
+        analysis, backtest_date = run_backtest()
+        save_file_name = r.get('save_file_name').decode()
+        backtest_date = pd.to_datetime(backtest_date)
+        save_file_name = pd.to_datetime(save_file_name)
 
-        for idx, details in EXCHANGES.iterrows():
-            if details['trade'] == 1:
-                lt = lts[details['name']]
-                current_pos, _, _ = lt.get_position()
-                
-                if 'open' in analysis['total']:
-                    if analysis['total']['open'] == 1 and current_pos == "NONE":
-                        print("Opened position from backtest_verification for {}".format(details['name']))
-                        lt.fill_order('buy', method='ASAP')
-                    elif analysis['total']['open'] == 0 and current_pos != "NONE":
-                        print("Closed long position from backtest_verification for {}".format(details['name']))
-                        lt.fill_order('sell', method='ASAP')
+        print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
+        if backtest_date == save_file_name:
+            for idx, details in EXCHANGES.iterrows():
+                if details['trade'] == 1:
+                    lt = lts[details['name']]
+                    current_pos, _, _ = lt.get_position()
+                    
+                    if 'open' in analysis['total']:
+                        if analysis['total']['open'] == 1 and current_pos == "NONE":
+                            print("Opened position from backtest_verification for {}".format(details['name']))
+                            lt.fill_order('buy', method='ASAP')
+                        elif analysis['total']['open'] == 0 and current_pos != "NONE":
+                            print("Closed long position from backtest_verification for {}".format(details['name']))
+                            lt.fill_order('sell', method='ASAP')
+                        else:
+                            print("As required for {}".format(details['name']))
                     else:
                         print("As required for {}".format(details['name']))
-                else:
-                    print("As required for {}".format(details['name']))
-    
-        #set position again
-        for idx, details in EXCHANGES.iterrows():
-            if details['trade'] == 1:
-                after_stuffs(details['name'])
+        
+            #set position again
+            for idx, details in EXCHANGES.iterrows():
+                if details['trade'] == 1:
+                    after_stuffs(details['name'])
 
     #add if new exchange added
     for idx, details in EXCHANGES.iterrows():
@@ -422,12 +427,14 @@ def check_calling():
 
             df = pd.DataFrame(pd.Series({'Time': curr_time})).T
             save_file = str(df.groupby(pd.Grouper(key='Time', freq="10Min", label='left')).sum().index[0])
+            
 
             timestamp = pd.to_datetime(curr_time)
             current_full_time = str(timestamp.minute)
             current_time_check = current_full_time[1:]
 
             if current_full_time == '8' or current_time_check == '8':
+                r.set('save_file_name', save_file)
                 if (timestamp.second > 5) and (r.get(save_file) == None):
                     r.set(save_file, 1)
                     print("\n\033[1m" + str(datetime.datetime.utcnow()) + "(Manual Call) \033[0;0m:")

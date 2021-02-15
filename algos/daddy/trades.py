@@ -163,62 +163,53 @@ def get_bitmex_data(start, end, sleep=True):
     return pd.concat(all_df, axis=0)
 
 def update_trades():
-    r = redis.Redis(host='localhost', port=6379, db=0)
+
+
+    end = pd.to_datetime(datetime.datetime.utcnow()).date()
+    original_start = end - pd.Timedelta(days=20)
+    
     try:
-        running = int(r.get('update_running').decode())
-    except:
-        running = 0
-
-    if running == 0:
-        r.set('update_running', 1)
-
-        end = pd.to_datetime(datetime.datetime.utcnow()).date()
-        original_start = end - pd.Timedelta(days=20)
+        start = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
         
+        if start.hour == 23 and start.minute >= 58:
+            start = pd.to_datetime(start.date() + pd.Timedelta(days=1))
+    except:
+        start = original_start
+
+    while True:
         try:
-            start = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
-            
-            if start.hour == 23 and start.minute >= 58:
-                start = pd.to_datetime(start.date() + pd.Timedelta(days=1))
-        except:
-            start = original_start
+            end = pd.to_datetime(datetime.datetime.utcnow())
 
-        while True:
-            try:
-                end = pd.to_datetime(datetime.datetime.utcnow())
+            print("{} to {}".format(start, end))
+            df = get_bitmex_data(start, end)
+            df = df[['timestamp', 'symbol', 'side', 'size', 'price', 'homeNotional', 'foreignNotional']]
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df = df.set_index('timestamp')
+            df = df.tz_localize(tz='UTC')
+            library.write('trades', df)               
+            break
+        except Exception as e:
+            error_mess = str(e)
 
-                print("{} to {}".format(start, end))
-                df = get_bitmex_data(start, end)
-                df = df[['timestamp', 'symbol', 'side', 'size', 'price', 'homeNotional', 'foreignNotional']]
-                df['timestamp'] = pd.to_datetime(df['timestamp'])
-                df = df.set_index('timestamp')
-                df = df.tz_localize(tz='UTC')
-                library.write('trades', df)               
-                break
-            except Exception as e:
-                error_mess = str(e)
+            if "Document already exists with" in error_mess:
+                splitted = error_mess.split(" ")
+                exist_date = splitted[6].replace("end:", "")
+                exist_date_2 = splitted[7]
+                exist_till = pd.to_datetime(exist_date + " " + exist_date_2)
+                new_df = df[df.index > exist_till]
 
-                if "Document already exists with" in error_mess:
-                    splitted = error_mess.split(" ")
-                    exist_date = splitted[6].replace("end:", "")
-                    exist_date_2 = splitted[7]
-                    exist_till = pd.to_datetime(exist_date + " " + exist_date_2)
-                    new_df = df[df.index > exist_till]
-
-                    if len(new_df) == 0:
-                        print("This timeframe already exists")
-                    else:
-                        print("Writing from middle")
-                        library.write('trades', new_df)               
-                    
-                    break
-                elif 'timestamp' in str(e):
-                    print("Timestamp error")
+                if len(new_df) == 0:
+                    print("This timeframe already exists")
                 else:
-                    print("Exception: {}. Retrying in 20 secs".format(str(e)))
-                    time.sleep(20)
-
-        r.set('update_running', 0)
+                    print("Writing from middle")
+                    library.write('trades', new_df)               
+                
+                break
+            elif 'timestamp' in str(e):
+                print("Timestamp error")
+            else:
+                print("Exception: {}. Retrying in 20 secs".format(str(e)))
+                time.sleep(20)
 
 def get_significant_traders(df):
     df = df[['timestamp', 'side', 'homeNotional', 'foreignNotional']]
@@ -364,96 +355,84 @@ def get_trends():
     return new_price_df
 
 def run_backtest():
-    r = redis.Redis(host='localhost', port=6379, db=0)
+    update_trades()
+    last_date = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
 
-    try:
-        running = int(r.get('update_running').decode())
-    except:
-        running = 0
+    minute = str(last_date.time().minute)
 
-    if running == 0:
-        r.set('update_running', 1)
-        update_trades()
-        last_date = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
-
-        minute = str(last_date.time().minute)
-
-        if len(minute) == 1:
-            minute_only = int(minute)
-        else:
-            minute_only = int(minute[1:])
-            
-        if (minute_only < 8):
-            have_till_calc = last_date - pd.Timedelta(minutes=10)
-        else:
-            have_till_calc = last_date
-
-        
-        have_till = get_intervaled_date(have_till_calc)
-
-
-        min_date = pd.to_datetime(library.min_date('trades').astimezone(pytz.UTC)).tz_localize(None)
-        startTime = get_intervaled_date(min_date)
-
-        if os.path.isfile('data/features.csv'):
-            startTime = pd.to_datetime(pd.read_csv('data/features.csv').iloc[-1]['timestamp']) + pd.Timedelta(minutes=10)
-
-        have_till = have_till.tz_localize(tz='UTC')
-        startTime = startTime.tz_localize(tz='UTC')
-
-        if have_till + pd.Timedelta(minutes=10) != startTime:
-            df = library.read('trades', date_range = DateRange(start=startTime, end=have_till + pd.Timedelta(minutes=10)))
-            df = df.tz_convert('UTC').tz_localize(None)
-            df = df.reset_index()
-
-            df = df.rename(columns={'index': 'timestamp'})
-            
-            #calculate and save features
-            df = get_significant_traders(df)
-            features = get_features_from_sig(df)
-
-            features['change'] = ((features['close'] - features['open'])/features['open']) * 100
-            features = features[['timestamp', 'open', 'high', 'low', 'close', 'volume', 'change', 'percentage_large', 'buy_percentage_large']]
-            
-            if os.path.isfile('data/features.csv'):
-                old_features = pd.read_csv('data/features.csv')
-                old_features['timestamp'] = pd.to_datetime(old_features['timestamp'])
-                features = pd.concat([old_features, features])
-                features = features.drop_duplicates(subset=['timestamp']).reset_index(drop=True)
-
-            features['macd'] = ta.trend.macd_signal(features['close'])
-            features['rsi'] = ta.momentum.rsi(features['close'])
-            
-            features.to_csv('data/features.csv', index=None)
-        
-        features = pd.read_csv('data/features.csv')
-        features['timestamp'] = pd.to_datetime(features['timestamp'])
-        dupe = features.iloc[-1]
-        dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
-        features = features.append(dupe, ignore_index=True)
-
-        trends = get_trends()
-        curr_group = trends.iloc[-1]['curr_group'].date()
-        last_date = features.iloc[-1]['timestamp'].date()
-
-        if last_date.day - curr_group.day < 4:
-            curr_group = last_date - pd.Timedelta(days=4)
-        
-        try:
-            r = redis.Redis(host='localhost', port=6379, db=0)
-            trend_start_date = r.get('trend_start_date').decode()
-            features = features[features['timestamp'] >= trend_start_date]
-        except:
-            curr_group =pd.to_datetime(curr_group)
-            features = features[features['timestamp'] >= curr_group]
-        
-        parameters = json.load(open('algos/daddy/parameters.json'))
-        run = perform_backtest(features, parameters)
-        analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
-        portfolio, trades, operations, stops_triggered = run[0].get_logs()
-        
-        trades.to_csv("data/XBTUSD_trades.csv", index=None)
-        r.set('update_running', 0)
-        return analysis
+    if len(minute) == 1:
+        minute_only = int(minute)
     else:
-        return []
+        minute_only = int(minute[1:])
+        
+    if (minute_only < 8):
+        have_till_calc = last_date - pd.Timedelta(minutes=10)
+    else:
+        have_till_calc = last_date
+
+    
+    have_till = get_intervaled_date(have_till_calc)
+
+
+    min_date = pd.to_datetime(library.min_date('trades').astimezone(pytz.UTC)).tz_localize(None)
+    startTime = get_intervaled_date(min_date)
+
+    if os.path.isfile('data/features.csv'):
+        startTime = pd.to_datetime(pd.read_csv('data/features.csv').iloc[-1]['timestamp']) + pd.Timedelta(minutes=10)
+
+    have_till = have_till.tz_localize(tz='UTC')
+    startTime = startTime.tz_localize(tz='UTC')
+
+    if have_till + pd.Timedelta(minutes=10) != startTime:
+        df = library.read('trades', date_range = DateRange(start=startTime, end=have_till + pd.Timedelta(minutes=10)))
+        df = df.tz_convert('UTC').tz_localize(None)
+        df = df.reset_index()
+
+        df = df.rename(columns={'index': 'timestamp'})
+        
+        #calculate and save features
+        df = get_significant_traders(df)
+        features = get_features_from_sig(df)
+
+        features['change'] = ((features['close'] - features['open'])/features['open']) * 100
+        features = features[['timestamp', 'open', 'high', 'low', 'close', 'volume', 'change', 'percentage_large', 'buy_percentage_large']]
+        
+        if os.path.isfile('data/features.csv'):
+            old_features = pd.read_csv('data/features.csv')
+            old_features['timestamp'] = pd.to_datetime(old_features['timestamp'])
+            features = pd.concat([old_features, features])
+            features = features.drop_duplicates(subset=['timestamp']).reset_index(drop=True)
+
+        features['macd'] = ta.trend.macd_signal(features['close'])
+        features['rsi'] = ta.momentum.rsi(features['close'])
+        
+        features.to_csv('data/features.csv', index=None)
+    
+    features = pd.read_csv('data/features.csv')
+    features['timestamp'] = pd.to_datetime(features['timestamp'])
+    dupe = features.iloc[-1]
+    dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
+    features = features.append(dupe, ignore_index=True)
+
+    trends = get_trends()
+    curr_group = trends.iloc[-1]['curr_group'].date()
+    last_date = features.iloc[-1]['timestamp'].date()
+
+    if last_date.day - curr_group.day < 4:
+        curr_group = last_date - pd.Timedelta(days=4)
+    
+    try:
+        r = redis.Redis(host='localhost', port=6379, db=0)
+        trend_start_date = r.get('trend_start_date').decode()
+        features = features[features['timestamp'] >= trend_start_date]
+    except:
+        curr_group =pd.to_datetime(curr_group)
+        features = features[features['timestamp'] >= curr_group]
+    
+    parameters = json.load(open('algos/daddy/parameters.json'))
+    run = perform_backtest(features, parameters)
+    analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
+    portfolio, trades, operations, stops_triggered = run[0].get_logs()
+    
+    trades.to_csv("data/XBTUSD_trades.csv", index=None)
+    return analysis, portfolio.iloc[-1]['Date']
