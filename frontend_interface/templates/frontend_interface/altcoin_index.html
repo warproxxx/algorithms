@@ -162,8 +162,7 @@
                             Worth: {{value.ftx_balance}}$ <br/>
                             Average Entry: {{value.entry}}$<br/>                            
                             Position: {{value.position}}<br/>
-                            Position Size: {{value.pos_size}}<br/>
-                            
+                            Position Size: {% widthratio value.pos_size 1 value.live_price %}$<br/>                            
                             <br/>
                         
                             <b><a href="/static/{{value.name}}_price.html" target="_blank">Backtest</a></b><br/>
