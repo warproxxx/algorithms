@@ -451,6 +451,8 @@ class priceStrategy(bt.Strategy):
         
         curr_group = pd.to_datetime(price_data.curr_group[0])
         curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
+
+        if (curr_datetime.day == 1) and (curr_datetime.month == self.start_month):
         
         if curr_group == curr_datetime:
             four_days_ago_price = price_data.open[-1 * self.number_days]
@@ -535,8 +537,8 @@ def perform_backtests():
             start = start.replace(day=1)
             first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
 
-            # start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
-            start_from = now - pd.Timedelta(days=20)
+            start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+            # start_from = now - pd.Timedelta(days=20)
             start_month = price_df['startTime'].iloc[-1].month
 
             price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
@@ -562,6 +564,12 @@ def perform_backtests():
             run = cerebro.run()
 
             portfolio, trades, operations = run[0].get_logs()
+
+            try:
+                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:]['Value'] = 0
+            except:
+                pass
+
 
             portfolio[row['name']] = portfolio['Value']
             
