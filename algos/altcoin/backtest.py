@@ -600,7 +600,7 @@ def perform_backtests():
             if curr_ret < -10:
                 r = redis.Redis(host='localhost', port=6379, db=0)
                 r.set('close_and_main', 1)
-                time.sleep(3600)
+                time.sleep(3600 * 5)
                 r.set('altcoin_enabled', 0)
 
 if __name__ == "__main__":
