@@ -451,8 +451,6 @@ class priceStrategy(bt.Strategy):
         
         curr_group = pd.to_datetime(price_data.curr_group[0])
         curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
-
-        if (curr_datetime.day == 1) and (curr_datetime.month == self.start_month):
         
         if curr_group == curr_datetime:
             four_days_ago_price = price_data.open[-1 * self.number_days]
@@ -565,11 +563,15 @@ def perform_backtests():
 
             portfolio, trades, operations = run[0].get_logs()
 
-            try:
-                portfolio.loc[portfolio[portfolio['Value'] < 0].index[0]:]['Value'] = 0
-            except:
-                pass
 
+            curr = portfolio[portfolio['Value'] < 0]
+
+            if len(curr) > 0:
+                old = portfolio[curr.index[0]:]
+                portfolio = portfolio[:curr.index[0]]
+                old['Value'] = 0
+                portfolio = portfolio.append(old)
+                portfolio = portfolio.fillna(0)
 
             portfolio[row['name']] = portfolio['Value']
             
