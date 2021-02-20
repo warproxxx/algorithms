@@ -229,6 +229,18 @@ def after_stuffs(exchange_name):
 def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call=False):
     global lts
     global EXCHANGES
+
+    #add if new exchange added
+    for idx, details in EXCHANGES.iterrows():
+        exchange_name = details['exchange']
+        name = details['name']
+
+        if details['trade'] == 1 or exchange_name == 'bitmex':       
+
+            if not name in lts:
+                lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
+                lts[name].set_position()
+                
     EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv') #update exchanges
 
     print("Time: {} percentage_large: {} buy_percentage_large: {} rsi: {} macd: {} changes: {} manual_call: {}".format(datetime.datetime.utcnow(), round(percentage_large,3), round(buy_percentage_large,3), round(rsi,2), round(macd,2), changes, manual_call))
@@ -285,17 +297,6 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
             for idx, details in EXCHANGES.iterrows():
                 if details['trade'] == 1:
                     after_stuffs(details['name'])
-
-    #add if new exchange added
-    for idx, details in EXCHANGES.iterrows():
-        exchange_name = details['exchange']
-        name = details['name']
-
-        if details['trade'] == 1 or exchange_name == 'bitmex':       
-
-            if not name in lts:
-                lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
-                lts[name].set_position()
 
 def spaced_print(str, target_length=15):
     str_len =len(str)
