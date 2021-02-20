@@ -230,6 +230,8 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
     global lts
     global EXCHANGES
 
+    EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv') #update exchanges
+
     #add if new exchange added
     for idx, details in EXCHANGES.iterrows():
         exchange_name = details['exchange']
@@ -241,7 +243,7 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
                 lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET) 
                 lts[name].set_position()
                 
-    EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv') #update exchanges
+    
 
     print("Time: {} percentage_large: {} buy_percentage_large: {} rsi: {} macd: {} changes: {} manual_call: {}".format(datetime.datetime.utcnow(), round(percentage_large,3), round(buy_percentage_large,3), round(rsi,2), round(macd,2), changes, manual_call))
 
