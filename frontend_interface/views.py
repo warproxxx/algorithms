@@ -107,31 +107,33 @@ def altcoin_interface(request):
 
         if request.POST:
             dic = request.POST.dict()
-            if 'BTC-PERP[allocation]' in dic:
+
+            if '0[gaussian]' in dic:
                 dic.pop('csrfmiddlewaretoken', None)
+                
                 curr_df = pd.DataFrame()
 
                 for idx, value in dic.items():
                     splitted = idx.split("[")
                     exchange = splitted[0]
                     column = splitted[1].replace("]", "")
-                    
-                    curr_df = curr_df.append(pd.Series({'name': exchange, 'column': column, 'value': value}), ignore_index=True)
+                    curr_df = curr_df.append(pd.Series({'col_name': exchange, 'column': column, 'value': value}), ignore_index=True)
 
                 new_exchanges = {}
 
-                for exchange, exchange_values in curr_df.groupby('name'):
+                for exchange, exchange_values in curr_df.groupby('col_name'):
                     new_exchanges[exchange] = {}
                     
                     for idx, row in exchange_values.iterrows():
                         new_exchanges[exchange][row['column']] = row['value']
 
+                
+
                 new_exchanges = pd.DataFrame(new_exchanges)
-                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
-                old_exchanges = pd.read_csv(config_file)
-                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
-                final_exchanges = final_exchanges[old_exchanges.columns]
-                final_exchanges.to_csv(config_file, index=None)
+
+                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': '0'})
+                new_exchanges = new_exchanges.drop(columns=['0'])
+                new_exchanges.to_csv(config_file, index=None)
 
             elif 'csv_file' in dic:
                 open(config_file, 'w').write(dic['csv_file'])
@@ -168,7 +170,8 @@ def altcoin_interface(request):
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
 
-        config = config_df.set_index('name').T.to_dict()
+        config = config_df.T.to_dict()
+        print(config)
 
         csv_file = open(config_file, 'r').read()
 

@@ -289,6 +289,8 @@
                           <th>Prev Day</th>
                           <th>Total Days</th>
                           <th>Allocation</th>
+                          <th>Subalgo</th>
+                          <th>Stop Threshold</th>
                           <th>Enabled</th>
                           <th>Trade Method</th>
                         </tr>
@@ -297,9 +299,12 @@
 
                         {% for key, value in config.items %}
                             <tr>
-                                <td>{{key}}</td>
                                 {% for inside_key, inside_value in value.items %}
-                                    {% if inside_key == "to_trade" %}
+                                    {% if inside_key == "name" %}
+                                        <td>{{value.name}}</td>
+                                        <input type="hidden" name="{{ key }}[{{ inside_key }}]" value="{{value.name}}">
+
+                                    {% elif inside_key == "to_trade" %}
                                         <td>
 
                                             <select name="{{ key }}[{{ inside_key }}]" id="{{ key }}__{{ inside_key }}">
@@ -330,7 +335,7 @@
 
                                     {% else %}
                                     <td>
-                                        <input type="number" name="{{ key }}[{{ inside_key }}]" value="{{inside_value}}" style="width:100px;" step="1">
+                                        <input type="text" name="{{ key }}[{{ inside_key }}]" value="{{inside_value}}" style="width:100px;">
                                       </td>
                                     
                                     {% endif %}
