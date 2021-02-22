@@ -242,7 +242,7 @@ def get_balances():
                 balance = lt.get_subaccount_balance(row['name'], type='total')
                 r.set('{}_net_worth'.format(row['name']), balance)
         except Exception as e:
-            print(str(e))
+            print("Error getting balance on {}".format(datetime.datetime.utcnow()))
 
         time.sleep(60)
 
