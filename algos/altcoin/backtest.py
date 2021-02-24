@@ -478,6 +478,7 @@ def plot(df, portfolio, name):
     with open('frontend_interface/static/{}_price.html'.format(name), 'w') as file:
         file.write(price_html)
 
+#add return and all for both.
 def perform_backtests():
     if not os.path.isdir("data/"):
         os.makedirs("data/")
@@ -583,22 +584,37 @@ def perform_backtests():
 
     porfolios = porfolios[porfolios['Date'] >= now]
     portfolios = porfolios[:-1]
-    porfolios.to_csv("data/altcoin_port.csv", index=None)
-
-    check_days=[3,5,10,15,20,25]
-
     porfolios = porfolios.set_index('Date')
-    ret = porfolios.sum(axis=1)
 
-    for d in check_days:
-        if len(ret) > d:
-            curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+    for subalgo, rows in config.groupby('subalgo'):
+        stop_threshold = rows.iloc[0]['stop_threshold']
+        names = list(rows['name'].values)
 
-            if curr_ret < -10:
-                r = redis.Redis(host='localhost', port=6379, db=0)
-                r.set('close_and_main', 1)
-                time.sleep(3600 * 5)
-                r.set('altcoin_enabled', 0)
+        porfolios = porfolios[names]
+
+        porfolios.to_csv("data/altcoin_port_{}.csv".format(subalgo), index=None)
+
+        check_days=[3,5,10,15,20,25]        
+        ret = porfolios.sum(axis=1)
+
+        for d in check_days:
+            if len(ret) > d:
+                curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+                if curr_ret < stop_threshold:
+                    r = redis.Redis(host='localhost', port=6379, db=0)
+                    
+                    
+                    try:
+                        altcoin_close = r.get('altcoin_close').decode()
+                        altcoin_close = altcoin_close.split(",")
+
+                        if subalgo not in altcoin_close:
+                            r.set('altcoin_close', r.get('altcoin_close').decode() + "," + subalgo)
+                    except:
+                        r.set('altcoin_close', subalgo)
+
+
 
 if __name__ == "__main__":
     perform_backtests()

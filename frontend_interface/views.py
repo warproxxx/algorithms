@@ -166,12 +166,12 @@ def altcoin_interface(request):
                     r.set('sub_account', 0)
             elif 'alt_starting_capital' in dic:
                 r.set('alt_starting_capital', dic['alt_starting_capital'])
+                r.set('altcoin_close', dic['altcoin_close'])
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
 
         config = config_df.T.to_dict()
-        print(config)
 
         csv_file = open(config_file, 'r').read()
 
@@ -213,6 +213,11 @@ def altcoin_interface(request):
         except:
             alt_starting_capital = 0
 
+        try:
+            altcoin_close = r.get('altcoin_close').decode()
+        except:
+            altcoin_close = ""
+
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         
 
@@ -226,18 +231,26 @@ def altcoin_interface(request):
         check_days=[3,5,10,15,20,25]
 
         porfolios = porfolios.set_index('Date')
-        ret = porfolios.sum(axis=1)
-
-        backtest_details = {}
-
-        for d in check_days:
-            if len(ret) > d:
-                backtest_details['{} Day Return'.format(d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
-
-        backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
 
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance, 'alt_starting_capital': alt_starting_capital})
+        config_df = pd.read_csv(config_file)
+
+        for subalgo, rows in config_df.groupby('subalgo'):
+
+            names = list(rows['name'].values)
+            porfolios = porfolios[names]
+            ret = porfolios.sum(axis=1)
+
+            backtest_details = {}
+
+            for d in check_days:
+                if len(ret) > d:
+                    backtest_details['{} {} Day Return'.format(subalgo, d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+            backtest_details['{} EOD Backtest Return'.format(subalgo)] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+
+
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'altcoin_close': altcoin_close,'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance, 'alt_starting_capital': alt_starting_capital})
     else:
         return HttpResponseRedirect('/login')
 

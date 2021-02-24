@@ -107,6 +107,16 @@ def get_positions():
             
         curr_detail['allocation'] = row['allocation']
 
+        try:
+            altcoin_close = r.get('altcoin_close').decode()
+            altcoin_close = altcoin_close.split(",")
+
+            if curr_detail['subalgo'] in altcoin_close:
+                continue
+        except:
+            pass
+
+
         details_df = details_df.append(curr_detail, ignore_index=True)
     
     return details_df
@@ -145,7 +155,7 @@ def open_thread(row, force):
 def daily_tasks(force=0):
     print("Time: {}".format(datetime.datetime.utcnow()))
 
-    # perform_backtests()
+    perform_backtests()
     
     print("\n")
 
@@ -254,7 +264,7 @@ def save_trades():
             print(str(e))
 
 def alt_bot():
-    # perform_backtests()
+    perform_backtests()
     config = pd.read_csv('algos/altcoin/config.csv')
 
     for idx, row in config.iterrows():

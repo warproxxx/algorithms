@@ -186,6 +186,7 @@
               <center>
                 <form method="POST">
                   {% csrf_token %}
+                  Altcoin Close: <input type="text" name="altcoin_close" value="{{altcoin_close}}" style="width: 120px;">
                   Starting Capital: <input type="number" name="alt_starting_capital" value="{{alt_starting_capital}}" style="width: 120px;">
                   <input type="submit" value="Update">
                 </form>
