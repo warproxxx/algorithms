@@ -19,8 +19,9 @@ def round_down(value, decimals):
         return float(round(d, decimals))
 
 class liveTrading():
-    def __init__(self, symbol, testnet=True):
+    def __init__(self, symbol, subalgo='', testnet=True):
         self.symbol = symbol
+        self.subalgo  = subalgo
         
         self.threshold_tiggered = False
         self.attempts = 5
@@ -46,17 +47,22 @@ class liveTrading():
 
         self.method = "now"
 
-        self.exchange.headers = {
-                                        'FTX-SUBACCOUNT': symbol,
-                                }
-
         config = pd.read_csv('algos/altcoin/config.csv')
 
         try:
-            curr_config = config[config['name'] == self.symbol].iloc[0]
+            curr_config = config[(config['name'] == self.symbol) & (config['subalgo'] == self.subalgo)].iloc[0]
             self.method = curr_config['method']
         except:
             self.method = "now"
+
+        if self.subalgo == "":
+            self.subaccount = symbol
+        else:
+            self.subaccount = self.subalgo + "-" + symbol
+        
+        self.exchange.headers = {
+                                        'FTX-SUBACCOUNT': self.subaccount,
+                                }
 
         self.increment = 0.5
         self.update_parameters()
@@ -142,9 +148,14 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
+                elif "subaccount" in str(e).lower():
+                    print("No such subaccount {}. Creating".format(self.subalgo + "-" + self.symbol))
+                    self.create_subaccount(self.subalgo + "-" + self.symbol)
+                    return self.get_position()
 
                 print(e)
                 time.sleep(1)
+            
 
         return 'NONE', 0, 0
 
@@ -153,21 +164,21 @@ class liveTrading():
             try:
                 current_pos, avgEntryPrice, amount = self.get_position()
         
-                self.r.set('{}_avgEntryPrice'.format(self.symbol), avgEntryPrice)
-                self.r.set('{}_current_pos'.format(self.symbol), current_pos)
-                self.r.set('{}_pos_size'.format(self.symbol), amount)
+                self.r.set('{}_avgEntryPrice'.format(self.subaccount), avgEntryPrice)
+                self.r.set('{}_current_pos'.format(self.subaccount), current_pos)
+                self.r.set('{}_pos_size'.format(self.subaccount), amount)
 
                 balance = self.get_balance()
 
-                self.r.set('{}_balance'.format(self.symbol), balance)
+                self.r.set('{}_balance'.format(self.subaccount), balance)
 
                 break
 
-            except ccxt.BaseError as e:
+            except Exception as e:
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-
+                
                 print(e)
                 time.sleep(1)
                 pass
@@ -261,7 +272,7 @@ class liveTrading():
         Performs market trade detecting exchange for the given amount
         '''
 
-        print("Sending market {} order for {} of size {} in {}".format(order_type, self.symbol, amount, datetime.datetime.now()))
+        print("Sending market {} order for {} on {} of size {} in {}".format(order_type, self.symbol, self.subaccount, amount, datetime.datetime.now()))
         order = self.exchange.create_order(self.symbol, 'market', order_type.lower(), amount, None)
         return order
 
@@ -321,7 +332,6 @@ class liveTrading():
 
         '''
         method = self.method
-
         self.set_position()
         print("Time at filling order is: {}".format(datetime.datetime.now()))
 
@@ -336,7 +346,7 @@ class liveTrading():
 
 
         for lp in range(self.attempts):         
-            curr_pos = self.r.get('{}_current_pos'.format(self.symbol)).decode()
+            curr_pos = self.r.get('{}_current_pos'.format(self.subaccount)).decode()
 
             if curr_pos == "NONE" and type=='close': #to fix issue caused by backtrader verification idk why tho.
                 print("Had to manually prevent close order")
@@ -387,8 +397,6 @@ class liveTrading():
                             self.close_open_orders()
                             self.set_position()
                             return
-
-                    
 
                 except ccxt.BaseError as e:
                     print(e)

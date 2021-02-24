@@ -15,7 +15,6 @@ from algos.altcoin.live_trader import liveTrading, round_down
 from algos.altcoin.trade_analysis import save_ftx_trades
 from utils import print
 
-
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 async def altcoin_book(feed, pair, book, timestamp, receipt_timestamp):
@@ -34,12 +33,13 @@ def perform_move_free():
 
     lt = liveTrading('BTC-PERP')
     initial_balance = lt.get_subaccount_balance('main')
+    print("Moving {} USD".format(initial_balance))
 
     for idx, row in config.iterrows():
-        lt = liveTrading(row['name'])
+        lt = liveTrading(row['name'], row['subalgo'])
         amount = round_down(initial_balance * row['allocation'], 2)
-        print("Moving {} to {}".format(amount, row['name']))
-        lt.transfer_to_subaccount(amount, row['name'])
+        print("Moving {} to {}".format(amount, row['subalgo'] + "-" + row['name']))
+        lt.transfer_to_subaccount(amount, row['subalgo'] + "-" + row['name'])
 
 async def altcoin_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass
@@ -50,11 +50,12 @@ def get_positions():
     details_df = pd.DataFrame()
 
     for idx, row in config.iterrows():
-        asset = row['name']
+        asset = row['subalgo'] + "-" + row['name']
 
         curr_detail = pd.Series()
-        curr_detail['name'] = asset
-        backtest = pd.read_csv("data/trades_{}.csv".format(asset))
+        curr_detail['name'] = row['name']
+        curr_detail['subalgo'] = row['subalgo']
+        backtest = pd.read_csv("data/trades_{}.csv".format(row['name']))
 
         try:
             curr_detail['position'] = r.get('{}_current_pos'.format(asset)).decode()
@@ -72,10 +73,9 @@ def get_positions():
             curr_detail['pos_size'] = 0
 
         try:
-            curr_detail['live_price'] = round(float(r.get('{}_best_ask'.format(asset)).decode()), 3)
+            curr_detail['live_price'] = round(float(r.get('{}_best_ask'.format(row['name'])).decode()), 3)
         except:
             curr_detail['live_price'] = 0
-
 
         curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
         curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
@@ -112,10 +112,11 @@ def get_positions():
     return details_df
 
 def close_thread(row):
-    lt = liveTrading(symbol=row['name'])
+    lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
     lt.fill_order('close', row['position'].lower())
 
 def open_thread(row, force):
+    print(row)
     if row['to_trade'] == 1:
         if force == 0:
             try:
@@ -124,19 +125,19 @@ def open_thread(row, force):
                     pass
                 elif row['target_pos'] * row['curr_pos'] == -1:
                     print("Closing and opening for {}".format(row['name']))
-                    lt = liveTrading(symbol=row['name'])
+                    lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
                     lt.fill_order('close', row['position'].lower())
                     lt.fill_order('open', row['backtest_position'].lower())
                 else:
                     print("Opening for {}".format(row['name']))
-                    lt = liveTrading(symbol=row['name'])
+                    lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
                     lt.fill_order('open', row['backtest_position'].lower())
             except Exception as e:
                 print(str(e))
         else:
             try:
                 print("Opening for {}".format(row['name']))
-                lt = liveTrading(symbol=row['name'])
+                lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
                 lt.fill_order('open', row['backtest_position'].lower())
             except Exception as e:
                 print(str(e))
@@ -144,16 +145,15 @@ def open_thread(row, force):
 def daily_tasks(force=0):
     print("Time: {}".format(datetime.datetime.utcnow()))
 
-    perform_backtests()
+    # perform_backtests()
     
     print("\n")
 
     config = pd.read_csv('algos/altcoin/config.csv')
 
-    for pair in config['name']:
-        lt = liveTrading(pair)
+    for idx, row in config.iterrows():
+        lt = liveTrading(row['name'], row['subalgo'])
         lt.set_position()
-
 
     enabled = 1
 
@@ -162,7 +162,6 @@ def daily_tasks(force=0):
     except:
         pass
 
-    
     if enabled == 1:
         details_df = get_positions()
         
@@ -186,7 +185,7 @@ def daily_tasks(force=0):
         to_open = details_df[details_df['target_pos'] != 0]
 
         open_threads = {}
-        
+
         for idx, row in to_open.iterrows():
             open_threads[row['name']] = threading.Thread(target=open_thread, args=(row,force,))
             open_threads[row['name']].start()
@@ -205,11 +204,11 @@ def start_schedlued():
 def hourly_tasks():
     details_df = get_positions()
     for idx, row in details_df.iterrows():
-        lt = liveTrading(row['name'])
+        lt = liveTrading(row['name'], row['subalgo'])
         lt.set_position()
 
 def close_thread_perform(row):
-    lt = liveTrading(row['name'])
+    lt = liveTrading(row['name'], row['subalgo'])
     pos, _, _ = lt.get_position()
 
     if pos != "NONE":
@@ -218,7 +217,7 @@ def close_thread_perform(row):
     amount = lt.get_balance()
 
     if amount > 0:
-        lt.transfer_to_subaccount(amount, 'main', source=row['name'])
+        lt.transfer_to_subaccount(amount, 'main', source=row['subalgo'] + "-" + row['name'])
 
 def perform_close_and_main():
     config = pd.read_csv('algos/altcoin/config.csv')
@@ -235,12 +234,12 @@ def perform_close_and_main():
 def get_balances():
     while True:
         config = pd.read_csv('algos/altcoin/config.csv')
-        lt = liveTrading("ETH-PERP")
+        lt = liveTrading("BTC-PERP")
 
         try:
             for idx, row in config.iterrows():
-                balance = lt.get_subaccount_balance(row['name'], type='total')
-                r.set('{}_net_worth'.format(row['name']), balance)
+                balance = lt.get_subaccount_balance(row['subalgo'] + "-" + row['name'], type='total')
+                r.set('{}_net_worth'.format(row['subalgo'] + "-" + row['name']), balance)
         except Exception as e:
             print("Error getting balance on {}".format(datetime.datetime.utcnow()))
 
@@ -254,15 +253,14 @@ def save_trades():
         except Exception as e:
             print(str(e))
 
-
 def alt_bot():
-    perform_backtests()
-    pairs = pd.read_csv('algos/altcoin/config.csv')['name']
+    # perform_backtests()
+    config = pd.read_csv('algos/altcoin/config.csv')
 
-    for pair in pairs:
-        lt = liveTrading(pair)
+    for idx, row in config.iterrows():
+        lt = liveTrading(row['name'], row['subalgo'])
         lt.set_position()
-
+    
     schedule.every().day.at("00:01").do(daily_tasks)
     schedule.every().hour.do(hourly_tasks)
 
@@ -313,11 +311,11 @@ def alt_bot():
             if sub_account == 1:
                 r.set('sub_account', 0)
                 lt = liveTrading('BTC-PERP')
-                
+
                 config = pd.read_csv('algos/altcoin/config.csv')
 
                 for idx, row in config.iterrows():
-                    lt.create_subaccount(row['name'])
+                    lt.create_subaccount(row['subalgo'] + "-" + row['name'])
 
             if move_free == 1:
                 r.set('move_free', 0)

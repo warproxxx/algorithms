@@ -4,11 +4,9 @@ import csv
 import re
 import json
 
-
 import os
 import io
 from glob import glob
-
 
 import backtrader as bt
 
@@ -483,7 +481,7 @@ def plot(df, portfolio, name):
 def perform_backtests():
     if not os.path.isdir("data/"):
         os.makedirs("data/")
-    
+
     config = pd.read_csv('algos/altcoin/config.csv')
     config['vol_day'] = config['vol_day'].astype(int)
     config['prev_day'] = config['prev_day'].astype(int)
@@ -520,7 +518,7 @@ def perform_backtests():
             cerebro.addanalyzer(bt.analyzers.TimeReturn)
             cerebro.addanalyzer(bt.analyzers.PyFolio)
             cerebro.addanalyzer(bt.analyzers.PositionsValue)
-            
+
             cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
             run = cerebro.run()
             portfolio, trades, operations = run[0].get_logs()
@@ -563,7 +561,6 @@ def perform_backtests():
 
             portfolio, trades, operations = run[0].get_logs()
 
-
             curr = portfolio[portfolio['Value'] < 0]
 
             if len(curr) > 0:
@@ -574,7 +571,7 @@ def perform_backtests():
                 portfolio = portfolio.fillna(0)
 
             portfolio[row['name']] = portfolio['Value']
-            
+
             portfolio = portfolio[['Date', row['name']]]
 
             if len(porfolios) == 0:

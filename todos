@@ -1,8 +1,6 @@
-Need to fix update too now
+I need to send it subaccount name too. FIx balance too.
 
-I will make new_altcoin and test.
-Fix those errors in FTX excutioners.
-
+Fix the live side.
 
 Before Feb 28:
 Rename BTC-PERP to BTC-PERP-MANUAL and keep that with this set of parameters trading it add it to vol_bot. Remove that from alt.
