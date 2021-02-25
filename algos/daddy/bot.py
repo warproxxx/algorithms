@@ -526,8 +526,7 @@ def delayed_price_from_rest():
     update_price_from_rest() 
 
 def update_price_from_rest():
-    single_price_from_rest('bitmex', 'BTC/USD')    
-
+    single_price_from_rest('bitmex', 'BTC/USD')
 
 def start_schedlued():
     while True:

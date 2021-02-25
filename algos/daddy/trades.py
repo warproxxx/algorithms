@@ -423,12 +423,14 @@ def run_backtest():
     
     try:
         r = redis.Redis(host='localhost', port=6379, db=0)
-        trend_start_date = r.get('trend_start_date').decode()
+        trend_start_date = pd.to_datetime(r.get('trend_start_date').decode())
         features = features[features['timestamp'] >= trend_start_date]
-    except:
+    except Exception as e:
+        print(str(e))
         curr_group =pd.to_datetime(curr_group)
         features = features[features['timestamp'] >= curr_group]
     
+    print("Features start from {}".format(features.iloc[0]['timestamp']))
     
     dupe = features.iloc[-1]
     dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
