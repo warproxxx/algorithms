@@ -1,11 +1,6 @@
-I will make new_altcoin and test.
-Fix those errors in FTX excutioners.
+Verify all good.
 
-
-Before Feb 28:
-Rename BTC-PERP to BTC-PERP-MANUAL and keep that with this set of parameters trading it add it to vol_bot. Remove that from alt.
-
-At 
+At March 1:
 Close all current positions 1min_average.
 Then remaining = ~16k.
 

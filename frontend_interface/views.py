@@ -107,31 +107,33 @@ def altcoin_interface(request):
 
         if request.POST:
             dic = request.POST.dict()
-            if 'BTC-PERP[allocation]' in dic:
+
+            if '0[gaussian]' in dic:
                 dic.pop('csrfmiddlewaretoken', None)
+                
                 curr_df = pd.DataFrame()
 
                 for idx, value in dic.items():
                     splitted = idx.split("[")
                     exchange = splitted[0]
                     column = splitted[1].replace("]", "")
-                    
-                    curr_df = curr_df.append(pd.Series({'name': exchange, 'column': column, 'value': value}), ignore_index=True)
+                    curr_df = curr_df.append(pd.Series({'col_name': exchange, 'column': column, 'value': value}), ignore_index=True)
 
                 new_exchanges = {}
 
-                for exchange, exchange_values in curr_df.groupby('name'):
+                for exchange, exchange_values in curr_df.groupby('col_name'):
                     new_exchanges[exchange] = {}
                     
                     for idx, row in exchange_values.iterrows():
                         new_exchanges[exchange][row['column']] = row['value']
 
+                
+
                 new_exchanges = pd.DataFrame(new_exchanges)
-                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
-                old_exchanges = pd.read_csv(config_file)
-                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
-                final_exchanges = final_exchanges[old_exchanges.columns]
-                final_exchanges.to_csv(config_file, index=None)
+
+                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': '0'})
+                new_exchanges = new_exchanges.drop(columns=['0'])
+                new_exchanges.to_csv(config_file, index=None)
 
             elif 'csv_file' in dic:
                 open(config_file, 'w').write(dic['csv_file'])
@@ -164,11 +166,12 @@ def altcoin_interface(request):
                     r.set('sub_account', 0)
             elif 'alt_starting_capital' in dic:
                 r.set('alt_starting_capital', dic['alt_starting_capital'])
+                r.set('altcoin_close', dic['altcoin_close'])
         
         config_df = pd.read_csv(config_file)
         config_df = config_df.round(4)
 
-        config = config_df.set_index('name').T.to_dict()
+        config = config_df.T.to_dict()
 
         csv_file = open(config_file, 'r').read()
 
@@ -210,6 +213,11 @@ def altcoin_interface(request):
         except:
             alt_starting_capital = 0
 
+        try:
+            altcoin_close = r.get('altcoin_close').decode()
+        except:
+            altcoin_close = ""
+
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         
 
@@ -219,22 +227,20 @@ def altcoin_interface(request):
 
         live_pnl = round(round((total_balance-alt_starting_capital)/alt_starting_capital, 4) * 100, 2)
 
-        porfolios = pd.read_csv("data/altcoin_port.csv")
+        
         check_days=[3,5,10,15,20,25]
 
-        porfolios = porfolios.set_index('Date')
-        ret = porfolios.sum(axis=1)
-
+        config_df = pd.read_csv(config_file)
         backtest_details = {}
+        
+        for subalgo, rows in config_df.groupby('subalgo'):
+            porfolios = pd.read_csv("data/altcoin_port_{}.csv".format(subalgo))
+            porfolios = porfolios.set_index('Date')
+            ret = porfolios.sum(axis=1)            
+            backtest_details['{} EOD Backtest Return'.format(subalgo)] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
-        for d in check_days:
-            if len(ret) > d:
-                backtest_details['{} Day Return'.format(d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
-        backtest_details['EOD Backtest Return'] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
-
-
-        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance, 'alt_starting_capital': alt_starting_capital})
+        return render(request, "frontend_interface/altcoin_index.html", {'details_df': details_df.T.to_dict(), 'backtest_details': backtest_details, 'altcoin_close': altcoin_close,'backtest_pnl': backtest_pnl, 'live_pnl': live_pnl, 'config': config, 'trade_methods': altcoin_methods, 'csv_file': csv_file, 'run_log': run_log, 'move_free': move_free, 'close_and_rebalance': close_and_rebalance, 'close_and_main': close_and_main, 'enter_now': enter_now, 'sub_account': sub_account, 'details': details, 'total_balance': total_balance, 'alt_starting_capital': alt_starting_capital})
     else:
         return HttpResponseRedirect('/login')
 
@@ -348,11 +354,8 @@ def ratio_interface(request):
         except:
             ratio_starting_capital = 0
 
-        
-
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         
-
         details = get_long_short_details(details_df)
         
         btc_balance = round(details_df['binance_balance'].sum(), 4)
