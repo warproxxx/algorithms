@@ -429,9 +429,7 @@ def run_backtest():
         print(str(e))
         curr_group =pd.to_datetime(curr_group)
         features = features[features['timestamp'] >= curr_group]
-    
-    print("Features start from {}".format(features.iloc[0]['timestamp']))
-    
+        
     dupe = features.iloc[-1]
     dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
     features = features.append(dupe, ignore_index=True)

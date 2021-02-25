@@ -192,10 +192,10 @@ class tradingStrategy(bt.Strategy):
                 stop_target = self.close_price * self.stop_percentage_par
                 self.sl_ord = self.sell(size=stop_size, exectype=bt.Order.Stop, price=stop_target)
                 self.sl_ord.addinfo(name='STOP LOSS')
+
                 if self.print == True:
                     print("STOP set at {}".format(stop_target))
 
-                
                 self.position_since = self.position_since + 1
         
 def perform_backtest(df, parameters, print=False):
