@@ -208,7 +208,7 @@ def perform_backtest(df, parameters, print=False):
     cerebro.addstrategy(tradingStrategy, parameters=parameters)
     cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
     initial_cash = 500
-    cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.015/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult, interest=(20/100)*mult, interest_long=True), slip_open=True, slip_out=True)  # 0.5%
+    cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.015/100, commission = CommInfoFractional(commission=0.075/100, leverage=mult, interest=(20/100), interest_long=True), slip_open=True, slip_out=True)  # 0.5%
 
     run = cerebro.run()
     return run
