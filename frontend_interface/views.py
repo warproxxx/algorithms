@@ -227,26 +227,16 @@ def altcoin_interface(request):
 
         live_pnl = round(round((total_balance-alt_starting_capital)/alt_starting_capital, 4) * 100, 2)
 
-        porfolios = pd.read_csv("data/altcoin_port.csv")
+        
         check_days=[3,5,10,15,20,25]
 
-        porfolios = porfolios.set_index('Date')
-
-
         config_df = pd.read_csv(config_file)
-
+        backtest_details = {}
+        
         for subalgo, rows in config_df.groupby('subalgo'):
-
-            names = list(rows['name'].values)
-            porfolios = porfolios[names]
-            ret = porfolios.sum(axis=1)
-
-            backtest_details = {}
-
-            for d in check_days:
-                if len(ret) > d:
-                    backtest_details['{} {} Day Return'.format(subalgo, d)] = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
-
+            porfolios = pd.read_csv("data/altcoin_port_{}.csv".format(subalgo))
+            porfolios = porfolios.set_index('Date')
+            ret = porfolios.sum(axis=1)            
             backtest_details['{} EOD Backtest Return'.format(subalgo)] = round(((ret.iloc[-1] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
 
@@ -364,11 +354,8 @@ def ratio_interface(request):
         except:
             ratio_starting_capital = 0
 
-        
-
         backtest_pnl = round((details_df['backtest_pnl'] * details_df['allocation']).sum(), 2)
         
-
         details = get_long_short_details(details_df)
         
         btc_balance = round(details_df['binance_balance'].sum(), 4)

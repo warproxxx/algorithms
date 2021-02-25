@@ -490,95 +490,96 @@ def perform_backtests():
 
     for idx, row in config.iterrows():
         try:
-            print(row['name'])
-            mult = 1
-            initial_cash = 1000
+            if row['name'] not in porfolios.columns:
+                print(row['name'])
+                mult = 1
+                initial_cash = 1000
 
-            pair = row['name']
-            gaussian = row['gaussian']
-            days = row['vol_day']
-            number_days = row['prev_day']
-            allocation = row['allocation']
+                pair = row['name']
+                gaussian = row['gaussian']
+                days = row['vol_day']
+                number_days = row['prev_day']
+                allocation = row['allocation']
 
-            price_df = get_df(pair)
-            price_df = add_volatility(price_df, days=days, gaussian=gaussian)
-            price_df['curr_group'] = pd.to_datetime(price_df['curr_group']).astype(int)
-            price_df['startTime'] = pd.to_datetime(price_df['startTime'])
+                price_df = get_df(pair)
+                price_df = add_volatility(price_df, days=days, gaussian=gaussian)
+                price_df['curr_group'] = pd.to_datetime(price_df['curr_group']).astype(int)
+                price_df['startTime'] = pd.to_datetime(price_df['startTime'])
 
-            price_data = Custom_Data(dataname=price_df)
+                price_data = Custom_Data(dataname=price_df)
 
-            cerebro = bt.Cerebro()
+                cerebro = bt.Cerebro()
 
-            cerebro.adddata(price_data, name='data')
-            cerebro.addstrategy(priceStrategy, number_days=number_days)
-            cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
-            cerebro.addanalyzer(bt.analyzers.Calmar)
-            cerebro.addanalyzer(bt.analyzers.DrawDown)
-            cerebro.addanalyzer(bt.analyzers.Returns)
-            cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
-            cerebro.addanalyzer(bt.analyzers.TimeReturn)
-            cerebro.addanalyzer(bt.analyzers.PyFolio)
-            cerebro.addanalyzer(bt.analyzers.PositionsValue)
+                cerebro.adddata(price_data, name='data')
+                cerebro.addstrategy(priceStrategy, number_days=number_days)
+                cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
+                cerebro.addanalyzer(bt.analyzers.Calmar)
+                cerebro.addanalyzer(bt.analyzers.DrawDown)
+                cerebro.addanalyzer(bt.analyzers.Returns)
+                cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
+                cerebro.addanalyzer(bt.analyzers.TimeReturn)
+                cerebro.addanalyzer(bt.analyzers.PyFolio)
+                cerebro.addanalyzer(bt.analyzers.PositionsValue)
 
-            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
-            run = cerebro.run()
-            portfolio, trades, operations = run[0].get_logs()
+                cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
+                run = cerebro.run()
+                portfolio, trades, operations = run[0].get_logs()
 
-            trades.to_csv("data/trades_{}.csv".format(pair), index=None)
-            plot(price_df, portfolio, pair)
+                trades.to_csv("data/trades_{}.csv".format(pair), index=None)
+                plot(price_df, portfolio, pair)
 
-            now = pd.Timestamp.utcnow().date()
-            now = pd.to_datetime(now.replace(day=1))
+                now = pd.Timestamp.utcnow().date()
+                now = pd.to_datetime(now.replace(day=1))
 
-            start = pd.to_datetime(price_df['curr_group'].iloc[-1])
-            start = start.replace(day=1)
-            first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
+                start = pd.to_datetime(price_df['curr_group'].iloc[-1])
+                start = start.replace(day=1)
+                first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
 
-            start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
-            # start_from = now - pd.Timedelta(days=20)
-            start_month = price_df['startTime'].iloc[-1].month
+                start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+                # start_from = now - pd.Timedelta(days=20)
+                start_month = price_df['startTime'].iloc[-1].month
 
-            price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
-            price_data = Custom_Data(dataname=price_df)
-            initial_cash = 1000
+                price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
+                price_data = Custom_Data(dataname=price_df)
+                initial_cash = 1000
 
-            cerebro = bt.Cerebro()
+                cerebro = bt.Cerebro()
 
-            cerebro.adddata(price_data, name='data')
+                cerebro.adddata(price_data, name='data')
 
-            details = {'number_days': int(row['prev_day']), 'start_month': start_month, 'lag': 0}
-            cerebro.addstrategy(unbiasedTest, number_days=details)
-            cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
-            cerebro.addanalyzer(bt.analyzers.Calmar)
-            cerebro.addanalyzer(bt.analyzers.DrawDown)
-            cerebro.addanalyzer(bt.analyzers.Returns)
-            cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
-            cerebro.addanalyzer(bt.analyzers.TimeReturn)
-            cerebro.addanalyzer(bt.analyzers.PyFolio)
-            cerebro.addanalyzer(bt.analyzers.PositionsValue)
+                details = {'number_days': int(row['prev_day']), 'start_month': start_month, 'lag': 0}
+                cerebro.addstrategy(unbiasedTest, number_days=details)
+                cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
+                cerebro.addanalyzer(bt.analyzers.Calmar)
+                cerebro.addanalyzer(bt.analyzers.DrawDown)
+                cerebro.addanalyzer(bt.analyzers.Returns)
+                cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
+                cerebro.addanalyzer(bt.analyzers.TimeReturn)
+                cerebro.addanalyzer(bt.analyzers.PyFolio)
+                cerebro.addanalyzer(bt.analyzers.PositionsValue)
 
-            cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075)/100, leverage=row['mult']), slip_open=True, slip_out=True)  # 0.5%
-            run = cerebro.run()
+                cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075)/100, leverage=row['mult']), slip_open=True, slip_out=True)  # 0.5%
+                run = cerebro.run()
 
-            portfolio, trades, operations = run[0].get_logs()
+                portfolio, trades, operations = run[0].get_logs()
 
-            curr = portfolio[portfolio['Value'] < 0]
+                curr = portfolio[portfolio['Value'] < 0]
 
-            if len(curr) > 0:
-                old = portfolio[curr.index[0]:]
-                portfolio = portfolio[:curr.index[0]]
-                old['Value'] = 0
-                portfolio = portfolio.append(old)
-                portfolio = portfolio.fillna(0)
+                if len(curr) > 0:
+                    old = portfolio[curr.index[0]:]
+                    portfolio = portfolio[:curr.index[0]]
+                    old['Value'] = 0
+                    portfolio = portfolio.append(old)
+                    portfolio = portfolio.fillna(0)
 
-            portfolio[row['name']] = portfolio['Value']
+                portfolio[row['name']] = portfolio['Value']
 
-            portfolio = portfolio[['Date', row['name']]]
+                portfolio = portfolio[['Date', row['name']]]
 
-            if len(porfolios) == 0:
-                porfolios = portfolio
-            else:
-                porfolios = porfolios.merge(portfolio, on='Date', how='left')
+                if len(porfolios) == 0:
+                    porfolios = portfolio
+                else:
+                    porfolios = porfolios.merge(portfolio, on='Date', how='left')
         except Exception as e:
             print(str(e))
 
@@ -588,11 +589,11 @@ def perform_backtests():
 
     for subalgo, rows in config.groupby('subalgo'):
         stop_threshold = rows.iloc[0]['stop_threshold']
-        names = list(rows['name'].values)
+        names = [name for name in list(rows['name'].values) if name in porfolios.columns]
 
         porfolios = porfolios[names]
 
-        porfolios.to_csv("data/altcoin_port_{}.csv".format(subalgo), index=None)
+        porfolios.to_csv("data/altcoin_port_{}.csv".format(subalgo))
 
         check_days=[3,5,10,15,20,25]        
         ret = porfolios.sum(axis=1)
@@ -604,17 +605,19 @@ def perform_backtests():
                 if curr_ret < stop_threshold:
                     r = redis.Redis(host='localhost', port=6379, db=0)
                     
-                    
                     try:
-                        altcoin_close = r.get('altcoin_close').decode()
-                        altcoin_close = altcoin_close.split(",")
+                        altcoin_close_str = r.get('altcoin_close').decode()
+                        altcoin_close = altcoin_close_str.split(",")
 
                         if subalgo not in altcoin_close:
-                            r.set('altcoin_close', r.get('altcoin_close').decode() + "," + subalgo)
+                            if altcoin_close_str == "":
+                                new = subalgo
+                            else:
+                                new = altcoin_close_str + "," + subalgo
+                            
+                            r.set('altcoin_close', new)
                     except:
                         r.set('altcoin_close', subalgo)
-
-
 
 if __name__ == "__main__":
     perform_backtests()

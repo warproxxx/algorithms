@@ -1,8 +1,4 @@
-Ability to clear, show and add to altcoin_close in interface
-
-
-
-Rename BTC-PERP to BTC-PERP-MANUAL and keep that with this set of parameters trading it add it to vol_bot. Remove that from alt.
+Verify all good.
 
 At March 1:
 Close all current positions 1min_average.
