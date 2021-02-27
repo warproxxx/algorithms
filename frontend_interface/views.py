@@ -578,7 +578,7 @@ def chadlor_interface(request):
             details['pos_size'] = 0
 
         try:
-            details['balance'] = round(float(r.get('chadlor_balance').decode()), 2)
+            details['balance'] = round(float(r.get('chadlor_balance').decode()), 4)
         except:
             details['balance'] = 0
 
