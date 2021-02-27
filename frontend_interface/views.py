@@ -534,7 +534,85 @@ def vol_trend_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
+def chadlor_interface(request):
 
+    r = redis.Redis(host='localhost', port=6379, db=0)
+
+    
+    if request.user.is_authenticated:
+        if request.POST:
+            dic = request.POST.dict()
+
+            if 'mult' in dic:
+                parameters = json.load(open('algos/chadlor/parameters.json'))
+                new_pars = pd.Series(dic)[parameters.keys()].to_dict()
+
+                new_pars['mult'] = float(new_pars['mult'])
+                new_pars['position_since'] = float(new_pars['position_since'])
+                new_pars['bigger_than'] = float(new_pars['bigger_than'])
+                new_pars['check_from'] = float(new_pars['check_from'])
+                new_pars['loss_cap'] = float(new_pars['loss_cap'])
+                new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
+
+                with open('algos/chadlor/parameters.json', 'w') as f:
+                    json.dump(new_pars, f)
+        
+        
+        parameters = json.load(open('algos/chadlor/parameters.json'))
+
+        details = {}
+
+        try:
+            details['position_since'] = int(r.get('chadlor_position_since').decode())
+        except:
+            details['position_since'] = 0
+
+        try:
+            details['avgEntryPrice'] = round(float(r.get('chadlor_avgEntryPrice').decode()), 2)
+        except:
+            details['avgEntryPrice'] = 0
+
+        try:
+            details['pos_size'] = round(float(r.get('chadlor_pos_size').decode()), 2)
+        except:
+            details['pos_size'] = 0
+
+        try:
+            details['balance'] = round(float(r.get('chadlor_balance').decode()), 2)
+        except:
+            details['balance'] = 0
+
+        try:
+            details['coinbase_price'] = round(float(r.get('coinbase_price').decode()), 2)
+        except:
+            details['coinbase_price'] = 0
+
+        try:
+            details['bitmex_price'] = round(float(r.get('bitmex_price').decode()), 2)
+        except:
+            details['bitmex_price'] = 0
+
+        try:
+            details['price_diff'] = round(details['coinbase_price']/details['bitmex_price'], 4)
+        except:
+            details['price_diff'] = 0
+
+        try:
+            details['pnl_percentage'] = round(((details['bitmex_price'] - details['avgEntryPrice'])/details['avgEntryPrice']) * 100 * parameters['mult'], 2)
+        except:
+            details['pnl_percentage'] = 0
+        
+        print(details)
+
+        try:
+            run_log = open("logs/chadlor_bot.log").read()
+        except:
+            run_log = ""
+        
+        return render(request, "frontend_interface/chadlor_index.html", {'parameters': parameters, 'details': details, 'run_log': run_log})
+
+    else:
+        return HttpResponseRedirect('/login')
 
 def daddy_interface(request):
 

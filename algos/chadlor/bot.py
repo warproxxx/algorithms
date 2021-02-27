@@ -63,7 +63,7 @@ def get_prices(endTime):
     try:
         coinbase = get_coinbase_api()
         coinbase_api = coinbase.iloc[0]
-        print("Current Time: {}\nExchange: {}\nREST Time: {}\nRest Price: {}\nWSS Time: {}\nWSS Price: {}".format(datetime.datetime.utcnow(), "COINBASE", coinbase_api['timestamp'], coinbase_api['close'], coinbase_at, coinbase_price))
+        print("Current Time: {}\nExchange: {} REST Time: {} Rest Price: {} WSS Time: {} WSS Price: {}".format(datetime.datetime.utcnow(), "COINBASE", coinbase_api['timestamp'], coinbase_api['close'], coinbase_at, coinbase_price))
 
         if coinbase_api['timestamp'] == of_timestamp:
             print("Using REST price for coinbase")
@@ -76,7 +76,7 @@ def get_prices(endTime):
     try:
         bitmex = get_bitmex_api()
         bitmex_api = bitmex.iloc[0]
-        print("Current Time: {}\nExchange: {}\nREST Time: {}\nRest Price: {}\nWSS Time: {}\nWSS Price: {}".format(datetime.datetime.utcnow(), "BITMEX", bitmex_api['timestamp'], bitmex_api['close'], bitmex_at, bitmex_price))
+        print("Current Time: {}\nExchange: {} REST Time: {} Rest Price: {} WSS Time: {} WSS Price: {}".format(datetime.datetime.utcnow(), "BITMEX", bitmex_api['timestamp'], bitmex_api['close'], bitmex_at, bitmex_price))
 
         if bitmex_api['timestamp'] == of_timestamp:
             print("Using REST price for bitmex")
@@ -85,7 +85,8 @@ def get_prices(endTime):
 
     except Exception as e:
         print("Error in bitmex API: {}".format(str(e)))
-
+    
+    print("\n")
     #if either is too old, use merged API.
     if (bitmex_at < of_timestamp) or (coinbase_at < of_timestamp):
         try:
@@ -103,6 +104,10 @@ def get_prices(endTime):
 def process_thread(endTime):
     time.sleep(1)
     coinbase_price, bitmex_price = get_prices(endTime)
+
+    r.set('coinbase_price', coinbase_price)
+    r.set('bitmex_price', bitmex_price)
+
     parameters = json.load(open('algos/chadlor/parameters.json'))
     lt = liveTrading()
     current_pos, avgEntryPrice, pos_size = lt.get_position()
