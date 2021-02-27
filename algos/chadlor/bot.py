@@ -12,6 +12,8 @@ from arctic.date import DateRange
 
 import threading
 
+from algos.chadlor.live_trader import liveTrading
+
 store = Arctic('localhost')
 
 if store.library_exists('chadlor') == False:
@@ -21,6 +23,11 @@ library = store['chadlor']
 library._chunk_size = 500
 
 r = redis.Redis(host='localhost', port=6379, db=0)
+
+try:
+    r.get('chadlor_position_since').decode()
+except:
+    r.set('chadlor_position_since', 0)
 
 def get_coinbase_api():
     cbase = pd.DataFrame(json.loads(requests.get("https://api.pro.coinbase.com/products/BTC-USD/candles?granularity=60").text))
@@ -94,9 +101,33 @@ def get_prices(endTime):
 def process_thread(endTime):
     time.sleep(1)
     coinbase_price, bitmex_price = get_prices(endTime)
+    parameters = json.load(open('algos/chadlor/parameters.json'))
+    lt = liveTrading()
+    current_pos, avgEntryPrice, pos_size = lt.get_position()
+    position_since = int(r.get('chadlor_position_since').decode())
+
+    if current_pos == "NONE":
+        if coinbase_price > (parameters['bigger_than'] * bitmex_price):
+            lt.fill_order('buy')
+    else:
+        if position_since > parameters['position_since']:
+            position_since = int(r.get('chadlor_position_since').decode())
+            pnl_percentage = ((bitmex_price-avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+
+            if pnl_percentage < parameters['loss_cap']:
+                lt.fill_order('sell')
+
+        if coinbase_price > (parameters['bigger_than'] * bitmex_price):
+            r.set('chadlor_position_since', 0)
+
+        if position_since >= parameters['position_since']:
+            lt.fill_order('sell')
     
-   
-    
+    if current_pos == "NONE":
+        r.set('chadlor_position_since', 0)
+    else:
+        position_since = position_since + 1
+        r.set('chadlor_position_since', position_since)
 
 async def chadlor_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price, order_type=None):
     start_time = time.time()
@@ -115,9 +146,18 @@ async def chadlor_trade(feed, pair, order_id, timestamp, receipt_timestamp, side
     df = df.set_index('timestamp')
     df = df.tz_localize(tz='UTC')    
 
-
     library.write(feed, df)  
 
+def delete_thread():
+    startTime = pd.to_datetime(datetime.datetime.utcnow()) - pd.Timedelta(days=10)
+    startTime = startTime.tz_localize(tz='UTC')
+
+    endTime = pd.to_datetime(datetime.datetime.utcnow()) - pd.Timedelta(minutes=60)
+    endTime = endTime.tz_localize(tz='UTC')
+
+    library.delete('BITMEX', date_range = DateRange(start=startTime, end=endTime))
+    library.delete('COINBASE', date_range = DateRange(start=startTime, end=endTime))
+    
 def chadlor_bot():
     old_min = datetime.datetime.utcnow().minute
 
@@ -132,4 +172,6 @@ def chadlor_bot():
 
         time.sleep(60.0 - ((time.time() - starttime) % 60.0))
 
-    #clear older than 60 mins every 60 mins
+        del_t = threading.Thread(target=delete_thread, )
+        del_t.start()
+        
