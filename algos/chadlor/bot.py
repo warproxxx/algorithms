@@ -14,6 +14,8 @@ import threading
 
 from algos.chadlor.live_trader import liveTrading
 
+from utils import print
+
 store = Arctic('localhost')
 
 if store.library_exists('chadlor') == False:
@@ -128,6 +130,8 @@ def process_thread(endTime):
     else:
         position_since = position_since + 1
         r.set('chadlor_position_since', position_since)
+    
+    lt.set_position()
 
 async def chadlor_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price, order_type=None):
     start_time = time.time()
