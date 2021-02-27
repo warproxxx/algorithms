@@ -30,7 +30,7 @@ class liveTrading():
         self.symbol = symbol
         self.attempts = 5
         self.increment = 0.5
-        self.name = "CHADLOR"
+        self.name = "chadlor"
 
         apiKey = os.getenv('BITMEX_CHADLOR_ID')
         apiSecret = os.getenv('BITMEX_CHADLOR_SECRET')

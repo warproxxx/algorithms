@@ -48,7 +48,7 @@ pause
 
 sudo service nginx stop
 sudo apt-get install certbot python3-certbot-nginx -y
-sudo certbot --nginx --preferred-challenges http -d daddy.scfund.io --redirect --email daniel@scfund.io --agree-tos --no-eff-email
+sudo certbot --nginx --preferred-challenges http -d chadlor.scfund.io --redirect --email daniel@scfund.io --agree-tos --no-eff-email
 
 
 wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
