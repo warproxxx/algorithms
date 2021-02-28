@@ -64,9 +64,9 @@ def get_prices(endTime):
     bitmex_at = pd.to_datetime(bitmex_close['index']).tz_localize(None)
     coinbase_at = pd.to_datetime(coinbase_close['index']).tz_localize(None)
 
-    print("\nOf:{} Coinbase WSS Time: {} Coinbase WSS Price: {} Bitmex WSS Time: {} Bitmex WSS Price: {}".format(endTime, coinbase_at, coinbase_price, bitmex_at, bitmex_price))
+    print("\nTimestamp: {} Coinbase WSS Time: {} Coinbase WSS Price: {} Bitmex WSS Time: {} Bitmex WSS Price: {}".format(of_timestamp, coinbase_at, coinbase_price, bitmex_at, bitmex_price))
 
-    if (bitmex_at < of_timestamp) or (coinbase_at < of_timestamp):
+    if ((bitmex_at < of_timestamp) or (coinbase_at < of_timestamp)) or (abs((bitmex_at-coinbase_at).seconds) > 5):
         try:
             time.sleep(20)
             coinbase = get_coinbase_api()
