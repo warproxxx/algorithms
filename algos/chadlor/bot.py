@@ -70,10 +70,10 @@ def get_prices(endTime):
         try:
             time.sleep(20)
             coinbase = get_coinbase_api()
-            coinbase_api = coinbase.iloc[0]
+            coinbase_api = coinbase[coinbase['timestamp'] == of_timestamp]
 
             bitmex = get_bitmex_api()
-            bitmex_api = bitmex.iloc[0]
+            bitmex_api = bitmex[bitmex['timestamp'] == of_timestamp]
 
             df = coinbase.merge(bitmex, on='timestamp', suffixes=('_coinbase', '_bitmex'))
             df = df[['timestamp', 'close_coinbase', 'close_bitmex']]
