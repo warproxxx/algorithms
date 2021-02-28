@@ -39,7 +39,7 @@ def get_coinbase_api():
     return cbase
 
 def get_bitmex_api():
-    bmex = pd.DataFrame(json.loads(requests.get("https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBTUSD&count=500&reverse=true").text))
+    bmex = pd.DataFrame(json.loads(requests.get("https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBTUSD&count=500&reverse=true&columns=close").text))
     bmex['timestamp'] = pd.to_datetime(bmex['timestamp'])
     bmex['timestamp'] = bmex['timestamp'].dt.tz_localize(None)
     bmex = bmex[['timestamp', 'close']]
