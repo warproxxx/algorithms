@@ -66,7 +66,7 @@ def get_prices(endTime):
 
     print("\nTimestamp: {} Coinbase WSS Time: {} Coinbase WSS Price: {} Bitmex WSS Time: {} Bitmex WSS Price: {}".format(of_timestamp, coinbase_at, coinbase_price, bitmex_at, bitmex_price))
 
-    if ((bitmex_at < of_timestamp) or (coinbase_at < of_timestamp)) or (abs((bitmex_at-coinbase_at).seconds) > 5):
+    if ((bitmex_at < of_timestamp) or (coinbase_at < of_timestamp)) or (min((bitmex_at-coinbase_at).seconds, (coinbase_at-bitmex_at).seconds) > 5):
         try:
             time.sleep(20)
             coinbase = get_coinbase_api()
