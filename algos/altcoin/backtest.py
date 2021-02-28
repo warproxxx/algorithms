@@ -366,6 +366,7 @@ class unbiasedTest(bt.Strategy):
                 pos_direction = 1 if price_pos > 0 else -1
 
                 if pos_direction != price_direction:
+                    print("Going {}".format(price_direction))
                     order=self.order_target_percent(target=0.99*price_direction)
                     order.addinfo(name=price_data._name)
 
