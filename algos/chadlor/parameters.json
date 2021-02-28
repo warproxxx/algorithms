@@ -1,1 +1,1 @@
-{"mult": 20.0, "position_since": 60.0, "bigger_than": 1.003, "check_from": 10.0, "loss_cap": -100.0, "stop_percentage": 0.5}
+{"mult": 1.0, "position_since": 60.0, "bigger_than": 1.003, "check_from": 10.0, "loss_cap": -100.0, "stop_percentage": 0.5}

@@ -39,7 +39,10 @@ def get_coinbase_api():
     return cbase
 
 def get_bitmex_api():
-    bmex = pd.DataFrame(json.loads(requests.get("https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBTUSD&count=500&reverse=true&columns=close").text))
+    url = "https://www.bitmex.com/api/v1/trade/bucketed?binSize=1m&symbol=XBTUSD&count=500&reverse=true&columns=close"
+    resp = requests.get(url).text
+    json_resp = json.loads(resp)
+    bmex = pd.DataFrame(json_resp)
     bmex['timestamp'] = pd.to_datetime(bmex['timestamp'])
     bmex['timestamp'] = bmex['timestamp'].dt.tz_localize(None)
     bmex = bmex[['timestamp', 'close']]
@@ -61,41 +64,23 @@ def get_prices(endTime):
     bitmex_at = pd.to_datetime(bitmex_close['index']).tz_localize(None)
     coinbase_at = pd.to_datetime(coinbase_close['index']).tz_localize(None)
 
-    try:
-        coinbase = get_coinbase_api()
-        coinbase_api = coinbase.iloc[0]
-        print("Current Time: {}\nExchange: {} REST Time: {} Rest Price: {} WSS Time: {} WSS Price: {}".format(datetime.datetime.utcnow(), "COINBASE", coinbase_api['timestamp'], coinbase_api['close'], coinbase_at, coinbase_price))
+    print("\nOf:{} Coinbase WSS Time: {} Coinbase WSS Price: {} Bitmex WSS Time: {} Bitmex WSS Price: {}".format(endTime, coinbase_at, coinbase_price, bitmex_at, bitmex_price))
 
-        if coinbase_api['timestamp'] == of_timestamp:
-            print("Using REST price for coinbase")
-            coinbase_price = coinbase_api['close']
-            coinbase_at = of_timestamp
-
-    except Exception as e:
-        print("Error in coinbase API: {}".format(str(e)))
-    
-    try:
-        bitmex = get_bitmex_api()
-        bitmex_api = bitmex.iloc[0]
-        print("Current Time: {}\nExchange: {} REST Time: {} Rest Price: {} WSS Time: {} WSS Price: {}".format(datetime.datetime.utcnow(), "BITMEX", bitmex_api['timestamp'], bitmex_api['close'], bitmex_at, bitmex_price))
-
-        if bitmex_api['timestamp'] == of_timestamp:
-            print("Using REST price for bitmex")
-            coinbase_price = bitmex_api['close']
-            bitmex_at = of_timestamp
-
-    except Exception as e:
-        print("Error in bitmex API: {}".format(str(e)))
-    
-    print("\n")
-    #if either is too old, use merged API.
     if (bitmex_at < of_timestamp) or (coinbase_at < of_timestamp):
         try:
+            time.sleep(20)
+            coinbase = get_coinbase_api()
+            coinbase_api = coinbase.iloc[0]
+
+            bitmex = get_bitmex_api()
+            bitmex_api = bitmex.iloc[0]
+
             df = coinbase.merge(bitmex, on='timestamp', suffixes=('_coinbase', '_bitmex'))
             df = df[['timestamp', 'close_coinbase', 'close_bitmex']]
             data = df.iloc[0]
             coinbase_price = data['close_coinbase']
             bitmex_price = data['close_bitmex']
+            print("Using REST API. Time: {} Coinbase Price: {} Bitmex Price: {}".format(datetime.datetime.utcnow(), coinbase_price, bitmex_price))
         except Exception as e: #if there is no data too, return same for both
             print("Couldn't get merged either. Using same for both Error: {}".format(str(e)))
             coinbase_price = bitmex_price
