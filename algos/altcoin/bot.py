@@ -229,13 +229,18 @@ def close_thread_perform(row):
     if amount > 0:
         lt.transfer_to_subaccount(amount, 'main', source=row['subalgo'] + "-" + row['name'])
 
-def perform_close_and_main():
+def perform_close_and_main(subalgo=None):
     config = pd.read_csv('algos/altcoin/config.csv')
     threads =  {}
 
     for idx, row in config.iterrows():
-        threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row,))
-        threads[row['name']].start()
+        if subalgo is not None:
+            if subalgo == row['subalgo']: 
+                threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row,))
+                threads[row['name']].start()
+        else:
+            threads[row['name']] = threading.Thread(target=close_thread_perform, args=(row,))
+            threads[row['name']].start()
 
     #wait till completion
     for key, value in threads.items():
@@ -264,7 +269,6 @@ def save_trades():
             print(str(e))
 
 def alt_bot():
-    perform_backtests()
     config = pd.read_csv('algos/altcoin/config.csv')
 
     for idx, row in config.iterrows():
