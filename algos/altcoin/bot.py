@@ -296,6 +296,7 @@ def alt_bot():
             enter_now = 0
             sub_account = 0
             close_and_main = 0
+            perform_close_and_main_set = ""
 
             try:
                 sub_account = float(r.get('sub_account').decode())
@@ -319,6 +320,11 @@ def alt_bot():
 
             try:
                 enter_now = float(r.get('enter_now').decode())
+            except:
+                pass
+
+            try:
+                perform_close_and_main_set = float(r.get('perform_close_and_main_set').decode())
             except:
                 pass
 
@@ -348,3 +354,7 @@ def alt_bot():
             if enter_now == 1:
                 r.set('enter_now', 0)
                 daily_tasks(force=1)
+
+            if perform_close_and_main_set != "":
+                r.set("perform_close_and_main_set", "")
+                perform_close_and_main(perform_close_and_main_set)

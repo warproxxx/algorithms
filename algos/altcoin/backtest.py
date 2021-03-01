@@ -21,7 +21,6 @@ from utils import print
 import time
 
 import redis
-from algos.altcoin.bot import perform_close_and_main
 
 def create_multiple_plot(df, variable_names, time='Time', verbose=False):        
     fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
@@ -621,5 +620,4 @@ def perform_backtests():
                     except:
                         r.set('altcoin_close', subalgo)
 
-                    
-                    perform_close_and_main(subalgo)
+                    r.set('perform_close_and_main_set', subalgo)
