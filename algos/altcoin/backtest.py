@@ -268,7 +268,7 @@ class unbiasedTest(bt.Strategy):
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.datetime(0)
-#         print("Datetime: {} Message: {}".format(dt, txt))
+        print("Datetime: {} Message: {}".format(dt, txt))
     
     def notify_order(self, order):
             
@@ -341,7 +341,6 @@ class unbiasedTest(bt.Strategy):
             else:
                 price_direction = -1
             
-            print("Going {}".format(price_direction))
             pos_direction = 1 if price_pos > 0 else -1
 
             order=self.order_target_percent(target=0.99*price_direction)
@@ -366,7 +365,6 @@ class unbiasedTest(bt.Strategy):
                 pos_direction = 1 if price_pos > 0 else -1
 
                 if pos_direction != price_direction:
-                    print("Going {}".format(price_direction))
                     order=self.order_target_percent(target=0.99*price_direction)
                     order.addinfo(name=price_data._name)
 
@@ -389,7 +387,7 @@ class priceStrategy(bt.Strategy):
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.datetime(0)
-#         print("Datetime: {} Message: {}".format(dt, txt))
+        # print("Datetime: {} Message: {}".format(dt, txt))
     
     def notify_order(self, order):
             
@@ -479,8 +477,7 @@ def plot(df, portfolio, name):
     with open('frontend_interface/static/{}_price.html'.format(name), 'w') as file:
         file.write(price_html)
 
-#add return and all for both.
-def perform_backtests():
+def perform_backtests(skip_setting=False):
     if not os.path.isdir("data/"):
         os.makedirs("data/")
 
@@ -596,28 +593,33 @@ def perform_backtests():
 
         porfolios.to_csv("data/altcoin_port_{}.csv".format(subalgo))
 
-        check_days=[3,5,10,15,20,25]        
-        ret = porfolios.sum(axis=1)
+        if skip_setting == False:
+            check_days=[3,5,10,15,20,25]        
+            ret = porfolios.sum(axis=1)
 
-        for d in check_days:
-            if len(ret) > d:
-                curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
+            for d in check_days:
+                if len(ret) > d:
+                    curr_ret = round(((ret.iloc[d] - ret.iloc[0])/ret.iloc[0]) * 100, 2)
 
-                if curr_ret < stop_threshold:
-                    r = redis.Redis(host='localhost', port=6379, db=0)
-                    
-                    try:
-                        altcoin_close_str = r.get('altcoin_close').decode()
-                        altcoin_close = altcoin_close_str.split(",")
+                    if curr_ret < stop_threshold:
+                        r = redis.Redis(host='localhost', port=6379, db=0)
+                        
+                        try:
+                            altcoin_close_str = r.get('altcoin_close').decode()
+                            altcoin_close = altcoin_close_str.split(",")
 
-                        if subalgo not in altcoin_close:
-                            if altcoin_close_str == "":
-                                new = subalgo
-                            else:
-                                new = altcoin_close_str + "," + subalgo
-                            
-                            r.set('altcoin_close', new)
-                    except:
-                        r.set('altcoin_close', subalgo)
+                            if subalgo not in altcoin_close:
+                                if altcoin_close_str == "":
+                                    new = subalgo
+                                else:
+                                    new = altcoin_close_str + "," + subalgo
+                                
+                                r.set('altcoin_close', new)
+                        except:
+                            r.set('altcoin_close', subalgo)
 
-                    r.set('perform_close_and_main_set', subalgo)
+                        r.set('perform_close_and_main_set', subalgo)
+
+
+if __name__ == "__main__":
+    perform_backtests(skip_setting=True)

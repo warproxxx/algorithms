@@ -701,6 +701,12 @@ def daddy_interface(request):
                     r.set('backtest_disabled', 1)
                 else:
                     r.set('backtest_disabled', 0)
+
+                if 'trend_stop_disable' in dic:
+                    r.set('trend_stop_disable', 1)
+                else:
+                    r.set('trend_stop_disable', 0)
+                    
             elif 'trend_start_date' in dic:
                 r.set('trend_start_date', dic['trend_start_date'])
 
@@ -802,8 +808,13 @@ def daddy_interface(request):
             backtest_disabled = float(r.get('backtest_disabled').decode())
         except:
             backtest_disabled = 0
+
+        try:
+            trend_stop_disable = float(r.get('trend_stop_disable').decode())
+        except:
+            trend_stop_disable = 0
         
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable})
 
     else:
         return HttpResponseRedirect('/login')
