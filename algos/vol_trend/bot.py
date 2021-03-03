@@ -284,8 +284,11 @@ def start_schedlued():
 def hourly_tasks():
     details_df, balances = get_position_balance()
     for idx, row in details_df.iterrows():
-        lt = liveTrading(row['name'])
-        lt.set_position()
+        try:
+            lt = liveTrading(row['name'])
+            lt.set_position()
+        except Exception as e:
+            print("Error in hourly task: {}".format(str(e)))
 
 def vol_bot():
     perform_backtests()
