@@ -428,6 +428,13 @@ def show_trades(request):
         trades.to_csv(path_or_buf=response,index=None)
         return response
 
+def interface(request):
+    if request.user.is_authenticated:
+        return render(request, "frontend_interface/interface.html")
+    else:
+        return HttpResponseRedirect('/login')
+
+
 def vol_trend_interface(request):
     if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)

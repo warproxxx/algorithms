@@ -24,6 +24,8 @@ from algos.daddy.trade_analysis import get_trades, process_data, get_details
 from algos.daddy.historic import single_price_from_rest
 from algos.daddy.plot import create_chart
 from algos.daddy.trades import update_trades, run_backtest
+
+from algos.interface.bot import daily_task
 from utils import print
 
 TESTNET = False
@@ -549,6 +551,8 @@ def daddy_bot():
         shutil.rmtree('data/stream')
 
     update_price_from_rest()
+
+    schedule.every().day.at("00:05").do(daily_task)
     schedule.every().day.at("00:30").do(create_chart)
 
     schedule_thread = threading.Thread(target=start_schedlued)

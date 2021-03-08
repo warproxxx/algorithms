@@ -8,6 +8,8 @@ from cryptofeed import exchanges
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
+from algos.interface.bot import perform
+
 from main import initial_tasks
 
 from utils import print

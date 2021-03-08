@@ -10,6 +10,7 @@ urlpatterns = [
     path('altcoin/', views.altcoin_interface, name='altcoin_interface'),
     path('ratio/', views.ratio_interface, name='ratio_interface'),
     path('chadlor/', views.chadlor_interface, name='chadlor_interface'),
+    path('interface/', views.interface, name='interface'),
     path('add_parms/', views.addParms, name='addParms'),
     path('clear_log/', views.clearLog, name='clearLog'),
     path('reverse_status/', views.reverse_status, name='reverse_status'),
