@@ -6,7 +6,6 @@ import os
 from scipy.ndimage import gaussian_filter
 import plotly.graph_objects as go
 import time
-from utils import print
 from algos.daddy.trades import get_trends
 import redis
 
@@ -113,7 +112,6 @@ def create_plot(biased=True):
         ranges.to_csv('data/ranges_unbiased.csv', index=None)
 
 def create_chart():
-    
     trends = get_trends()
 
     if trends.iloc[-2]['curr_group'] != trends.iloc[-1]['curr_group']:
