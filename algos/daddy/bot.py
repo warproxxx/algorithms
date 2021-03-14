@@ -186,19 +186,22 @@ def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, perce
             if position_since > parameters['position_since']:
                 if pnl_percentage > (parameters['pnl_percentage'] - 7.5):
                     if (macd < parameters['profit_macd'])  or (rsi > parameters['rsi']):
-                        lt.close_stop_order()
-                        lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        r.set('{}_position_since'.format(name), 0)
+                        pass
+                        # lt.close_stop_order()
+                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
+                        # r.set('{}_position_since'.format(name), 0)
                     
                     if (pnl_percentage - 7.5 > parameters['profit_cap']):
-                        lt.close_stop_order()
-                        lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        r.set('{}_position_since'.format(name), 0)
+                        pass
+                        # lt.close_stop_order()
+                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
+                        # r.set('{}_position_since'.format(name), 0)
                 else:
                     if (macd < parameters['macd'] + 5)  or (rsi - 5 > parameters['rsi']):
-                        lt.close_stop_order()
-                        lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        r.set('{}_position_since'.format(name), 0)
+                        pass
+                        # lt.close_stop_order()
+                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
+                        # r.set('{}_position_since'.format(name), 0)
 
         elif current_pos == "NONE":
             if (sum(changes < parameters['change']) >= (parameters['previous_days'] - parameters['position_since_diff'])) and (macd > parameters['macd']) and (rsi < parameters['rsi']):
