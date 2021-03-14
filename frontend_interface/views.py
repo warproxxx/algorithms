@@ -715,8 +715,10 @@ def daddy_interface(request):
                 else:
                     r.set('trend_stop_disable', 0)
                     
-            elif 'trend_start_date' in dic:
+            elif 'trend_start_date' in dic or 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
                 r.set('trend_start_date', dic['trend_start_date'])
+                r.set('backtest_buy_method', dic['backtest_buy_method'])
+                r.set('backtest_sell_method', dic['backtest_sell_method'])
 
         
         parameters = json.load(open('algos/daddy/parameters.json'))
@@ -751,10 +753,6 @@ def daddy_interface(request):
             except:
                 free_balance = 0
 
-            try:
-                trend_start_date = r.get('trend_start_date').decode()
-            except:
-                trend_start_date = ""
             
             row['position_since'] = position_since
             row['avgEntryPrice'] = avgEntryPrice
@@ -822,6 +820,21 @@ def daddy_interface(request):
         except:
             trend_stop_disable = 0
 
+        try:
+            trend_start_date = r.get('trend_start_date').decode()
+        except:
+            trend_start_date = ""
+        
+        try:
+            backtest_buy_method = r.get('backtest_buy_method').decode()
+        except:
+            backtest_buy_method = ""
+
+        try:
+            backtest_sell_method = r.get('backtest_sell_method').decode()
+        except:
+            backtest_sell_method = ""
+
 
         trades = pd.read_csv('data/XBTUSD_trades.csv')[['Date', 'Type', 'Price']]
 
@@ -829,7 +842,7 @@ def daddy_interface(request):
         trades[-6:].to_csv(s, index=None)
         trade_logs = s.getvalue()
 
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable})
+        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method})
 
     else:
         return HttpResponseRedirect('/login')

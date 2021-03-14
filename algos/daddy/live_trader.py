@@ -843,10 +843,6 @@ class liveTrading():
 
         '''
 
-        if method not in trade_methods:
-            print("Method not implemented yet")
-            return
-
         print("Time at filling order is: {}".format(datetime.datetime.now()))
         # self.close_open_orders()
 
@@ -959,6 +955,9 @@ class liveTrading():
                     pass
             elif method == "5sec_average":
                 self.second_average(12, 4.8, order_type)
+                break
+            elif method == "8sec_average":
+                self.second_average(12, 7.8, order_type)
                 break
             elif method == "10sec_average":
                 self.second_average(12, 9.8, order_type)

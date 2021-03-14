@@ -229,6 +229,37 @@ def after_stuffs(exchange_name):
     else:
         lt.update_stop()
 
+def perform_backtrade_verification(details, analysis):
+    global lts
+
+    try:
+        buy_method = r.get('backtest_buy_method').decode()
+    except:
+        buy_method = '8sec_average'
+
+    try:
+        sell_method = r.get('backtest_sell_method').decode()
+    except:
+        sell_method = '8sec_average'
+
+    if details['trade'] == 1:
+        lt = lts[details['name']]
+        current_pos, _, _ = lt.get_position()
+        
+        if 'open' in analysis['total']:
+            if analysis['total']['open'] == 1 and current_pos == "NONE":
+                print("Opened position from backtest_verification for {}".format(details['name']))
+                lt.fill_order('buy', method=buy_method)
+            elif analysis['total']['open'] == 0 and current_pos != "NONE":
+                print("Closed long position from backtest_verification for {}".format(details['name']))
+                lt.fill_order('sell', method=sell_method)
+            else:
+                print("As required for {}".format(details['name']))
+        else:
+            print("As required for {}".format(details['name']))
+
+        after_stuffs(details['name'])
+
 def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentage_large, manual_call=False):
     global lts
     global EXCHANGES
@@ -279,29 +310,13 @@ def trade_caller(parameters, macd, rsi, changes, percentage_large, buy_percentag
         backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
         save_file_name = pd.to_datetime(save_file_name)
 
+        backtest_thread = {}
+
         print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
         if backtest_date == save_file_name:
             for idx, details in EXCHANGES.iterrows():
-                if details['trade'] == 1:
-                    lt = lts[details['name']]
-                    current_pos, _, _ = lt.get_position()
-                    
-                    if 'open' in analysis['total']:
-                        if analysis['total']['open'] == 1 and current_pos == "NONE":
-                            print("Opened position from backtest_verification for {}".format(details['name']))
-                            lt.fill_order('buy', method='ASAP')
-                        elif analysis['total']['open'] == 0 and current_pos != "NONE":
-                            print("Closed long position from backtest_verification for {}".format(details['name']))
-                            lt.fill_order('sell', method='ASAP')
-                        else:
-                            print("As required for {}".format(details['name']))
-                    else:
-                        print("As required for {}".format(details['name']))
-        
-            #set position again
-            for idx, details in EXCHANGES.iterrows():
-                if details['trade'] == 1:
-                    after_stuffs(details['name'])
+                backtest_thread[details['name']] = threading.Thread(target=perform_backtrade_verification, args=(details, analysis, ))
+                backtest_thread[details['name']].start()
 
 def spaced_print(str, target_length=15):
     str_len =len(str)
