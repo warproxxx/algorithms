@@ -99,30 +99,39 @@ def process_thread(endTime):
     current_pos, avgEntryPrice, pos_size = lt.get_position()
     position_since = int(r.get('chadlor_position_since').decode())
 
-    if current_pos == "NONE":
-        if coinbase_price > (parameters['bigger_than'] * bitmex_price):
-            lt.fill_order('buy')
-    else:
-        if position_since > parameters['position_since']:
-            position_since = int(r.get('chadlor_position_since').decode())
-            pnl_percentage = ((bitmex_price-avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+    try:
+        daddy_position = int(r.get('daddy_position').decode())
+    except:
+        daddy_position = 0
+    
+    if daddy_position == 0:
+        if current_pos == "NONE":
+            if coinbase_price > (parameters['bigger_than'] * bitmex_price):
+                r.set('chadlor_position', 1)
+                lt.fill_order('buy')
+        else:
+            if position_since > parameters['position_since']:
+                position_since = int(r.get('chadlor_position_since').decode())
+                pnl_percentage = ((bitmex_price-avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
 
-            if pnl_percentage < parameters['loss_cap']:
+                if pnl_percentage < parameters['loss_cap']:
+                    r.set('chadlor_position', 1)
+                    lt.fill_order('sell')
+
+            if coinbase_price > (parameters['bigger_than'] * bitmex_price):
+                r.set('chadlor_position_since', 0)
+
+            if position_since >= parameters['position_since']:
+                r.set('chadlor_position', 1)
                 lt.fill_order('sell')
-
-        if coinbase_price > (parameters['bigger_than'] * bitmex_price):
+        
+        if current_pos == "NONE":
             r.set('chadlor_position_since', 0)
-
-        if position_since >= parameters['position_since']:
-            lt.fill_order('sell')
-    
-    if current_pos == "NONE":
-        r.set('chadlor_position_since', 0)
-    else:
-        position_since = position_since + 1
-        r.set('chadlor_position_since', position_since)
-    
-    lt.set_position()
+        else:
+            position_since = position_since + 1
+            r.set('chadlor_position_since', position_since)
+        
+        lt.set_position()
 
 async def chadlor_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price, order_type=None):
     start_time = time.time()

@@ -187,29 +187,17 @@ def perform_trade(exchange_name, name, lt, parameters, macd, rsi, changes, perce
                 if pnl_percentage > (parameters['pnl_percentage'] - 7.5):
                     if (macd < parameters['profit_macd'])  or (rsi > parameters['rsi']):
                         pass
-                        # lt.close_stop_order()
-                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        # r.set('{}_position_since'.format(name), 0)
                     
                     if (pnl_percentage - 7.5 > parameters['profit_cap']):
                         pass
-                        # lt.close_stop_order()
-                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        # r.set('{}_position_since'.format(name), 0)
                 else:
                     if (macd < parameters['macd'] + 5)  or (rsi - 5 > parameters['rsi']):
                         pass
-                        # lt.close_stop_order()
-                        # lt.fill_order('sell', method=curr_exchange['sell_method'])
-                        # r.set('{}_position_since'.format(name), 0)
 
         elif current_pos == "NONE":
             if (sum(changes < parameters['change']) >= (parameters['previous_days'] - parameters['position_since_diff'])) and (macd > parameters['macd']) and (rsi < parameters['rsi']):
                 if ((percentage_large > parameters['percentage_large']) and (buy_percentage_large > parameters['buy_percentage_large'])):
                     pass
-                    # lt.fill_order('buy', method=curr_exchange['buy_method'])
-                    # r.set('{}_position_since'.format(name), 1)
-                    # lt.add_stop_loss()
 
     position_since = float(r.get('{}_position_since'.format(exchange_name)).decode())
     avgEntryPrice = float(r.get('{}_avgEntryPrice'.format(exchange_name)).decode())
@@ -245,6 +233,11 @@ def perform_backtrade_verification(details, analysis):
     except:
         sell_method = '8sec_average'
 
+    try:
+        chadlor_position = int(r.get('chadlor_position').decode())
+    except:
+        chadlor_position = 0
+
     if details['trade'] == 1:
         lt = lts[details['name']]
         current_pos, _, _ = lt.get_position()
@@ -252,10 +245,15 @@ def perform_backtrade_verification(details, analysis):
         if 'open' in analysis['total']:
             if analysis['total']['open'] == 1 and current_pos == "NONE":
                 print("Opened position from backtest_verification for {}".format(details['name']))
+                r.set('daddy_position', 1)
                 lt.fill_order('buy', method=buy_method)
             elif analysis['total']['open'] == 0 and current_pos != "NONE":
-                print("Closed long position from backtest_verification for {}".format(details['name']))
-                lt.fill_order('sell', method=sell_method)
+                if chadlor_position == 0:
+                    print("Closed long position from backtest_verification for {}".format(details['name']))
+                    r.set('daddy_position', 0)
+                    lt.fill_order('sell', method=sell_method)
+                else:
+                    print("Daddy isn't in position but chadlor is long so not closing")
             else:
                 print("As required for {}".format(details['name']))
         else:
