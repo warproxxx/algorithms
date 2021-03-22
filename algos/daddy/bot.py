@@ -238,6 +238,8 @@ def perform_backtrade_verification(details, analysis):
     except:
         chadlor_position = 0
 
+    chadlor_position = 0
+
     if details['trade'] == 1:
         lt = lts[details['name']]
         current_pos, _, _ = lt.get_position()
