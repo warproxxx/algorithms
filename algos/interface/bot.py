@@ -149,8 +149,11 @@ def create_charts():
         file.write(html)
 
 def daily_task():
-   perform()
-   create_charts()
+    try:
+        perform()
+        create_charts()
+    except Exception as e:
+        print(str(e))
 
 if __name__ == "__main__":
     create_charts()
