@@ -140,7 +140,6 @@ def bot():
 
     while True:
         try:            
-            #altcoin
             if float(r.get('altcoin_enabled').decode()) != 1:
                 if altcoin_thread.is_alive():
                     print("Altcoin bot terminated")
