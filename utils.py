@@ -11,6 +11,9 @@ def print(to_print):
     module = inspect.getmodule(frame[0])
     dirs = module.__file__.split("/")
 
+    # caller = inspect.getframeinfo(inspect.stack()[1][0])
+    # sys.stdout.write("%s:%d - %s" % (caller.filename, caller.lineno)) 
+
     if len(dirs) > 1:
         filename = dirs[-2] + "_" + dirs[-1].split(".")[0]
     else:

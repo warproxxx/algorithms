@@ -104,14 +104,14 @@ def save_ftx_trades():
         altcoin_trades = altcoin_trades.append(trades, ignore_index=True)
         altcoin_fundings = altcoin_fundings.append(fundings, ignore_index=True)
 
-    perp_trades, perp_funding = get_trades('PERP')
-    move_trades, move_funding = get_trades('MOVE')
+    # perp_trades, perp_funding = get_trades('PERP')
+    # move_trades, move_funding = get_trades('MOVE')
 
-    vol_trades = perp_trades.append(move_trades, ignore_index=True)
-    vol_fundings = perp_funding.append(move_funding, ignore_index=True)
+    # vol_trades = perp_trades.append(move_trades, ignore_index=True)
+    # vol_fundings = perp_funding.append(move_funding, ignore_index=True)
 
     altcoin_trades.to_csv("data/altcoin_trades.csv", index=None)
     altcoin_fundings.to_csv("data/altcoin_funding.csv", index=None)
 
-    vol_trades.to_csv("data/vol_trades.csv", index=None)
-    vol_fundings.to_csv("data/vol_funding.csv", index=None)
+    # vol_trades.to_csv("data/vol_trades.csv", index=None)
+    # vol_fundings.to_csv("data/vol_funding.csv", index=None)
