@@ -11,6 +11,7 @@ import decimal
 import inspect
 import sys
 from utils import print
+from random import randint
 
 def round_down(value, decimals):
     with decimal.localcontext() as ctx:
@@ -295,6 +296,7 @@ class liveTrading():
 
     
     def second_average(self, intervals, sleep_time, type, direction, trade_direction):
+        time.sleep(randint(1,12))
         self.close_open_orders()
         self.threshold_tiggered = False
 
