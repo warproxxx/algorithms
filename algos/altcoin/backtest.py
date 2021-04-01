@@ -588,7 +588,10 @@ def perform_backtests(skip_setting=False):
             print(traceback.format_exc())
 
     porfolios = porfolios[porfolios['Date'] >= now]
-    porfolios = porfolios[:-1]
+
+    if len(porfolios) > 1:
+        porfolios = porfolios[:-1]
+        
     porfolios = porfolios.set_index('Date')
 
     for subalgo, rows in config.groupby('subalgo'):
