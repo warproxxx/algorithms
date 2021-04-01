@@ -22,7 +22,6 @@ from algos.ratio.bot import ratio_bot
 import ccxt
 from algos.daddy.huobi.HuobiDMService import HuobiDM
 
-
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 def initial_tasks():
@@ -63,7 +62,6 @@ def get_pairs_df():
     binance['ccxt_symbol'] = binance['name']
     binance['cryptofeed_symbol'] = binance['name']
     binance['feed'] = 'ratio'
-    
     
     binance['ccxt_symbol'] = binance['ccxt_symbol'].apply(lambda x: x[:-3] + "/BTC")
     
@@ -134,32 +132,14 @@ def obook_process():
         time.sleep(20)
 
 def bot():
-    vol_thread = multiprocessing.Process(target=vol_bot, args=())
-    vol_thread.start()
-
     altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
     altcoin_thread.start()
-
-    ratio_thread = multiprocessing.Process(target=ratio_bot, args=())
-    ratio_thread.start()
 
     obook_thread = multiprocessing.Process(target=obook_process, args=())
     obook_thread.start()
 
     while True:
         try:            
-            #vol
-            if float(r.get('vol_trend_enabled').decode()) != 1:
-                if vol_thread.is_alive():
-                    print("Volatility Bot terminated")
-                    vol_thread.terminate()
-
-            if vol_thread.is_alive() == False:
-                if float(r.get('vol_trend_enabled').decode()) == 1:
-                    print("Vol Bot started")
-                    vol_thread = multiprocessing.Process(target=vol_bot, args=())
-                    vol_thread.start()
-
             #altcoin
             if float(r.get('altcoin_enabled').decode()) != 1:
                 if altcoin_thread.is_alive():
@@ -172,17 +152,6 @@ def bot():
                     altcoin_thread = multiprocessing.Process(target=alt_bot, args=())
                     altcoin_thread.start()
 
-            #ratio
-            if float(r.get('ratio_enabled').decode()) != 1:
-                if ratio_thread.is_alive():
-                    print("Ratio bot terminated")
-                    ratio_thread.terminate()
-
-            if ratio_thread.is_alive() == False:
-                if float(r.get('ratio_enabled').decode()) == 1:
-                    print("Ratio Bot started")
-                    ratio_thread = multiprocessing.Process(target=ratio_bot, args=())
-                    ratio_thread.start()
 
             time.sleep(1)  
         except:
