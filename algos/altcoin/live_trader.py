@@ -418,6 +418,10 @@ class liveTrading():
                 self.second_average(12, 600, type, direction, trade_direction)
                 self.set_position()
                 return
+            elif method == "30min_average":
+                self.second_average(12, 30 * 60, type, direction, trade_direction)
+                self.set_position()
+                return
             elif method == "now":
                 amount, price = self.get_max_amount(type)
                 order = self.market_trade(trade_direction, amount)
