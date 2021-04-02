@@ -533,16 +533,13 @@ def perform_backtests(skip_setting=False):
                 start = pd.to_datetime(price_df['curr_group'].iloc[-1])
                 start = start.replace(day=1)
 
-                try:
-                    first_group = price_df[price_df['startTime'] == start].iloc[0]['curr_group']
+                first_group = price_df[price_df['startTime'] >= start].iloc[0]['curr_group']
 
-                    start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
-                    # start_from = now - pd.Timedelta(days=20)
-                    start_month = price_df['startTime'].iloc[-1].month
+                start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
+                # start_from = now - pd.Timedelta(days=20)
+                start_month = price_df['startTime'].iloc[-1].month
 
-                    price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
-                except Exception as e:
-                    print(str(e))
+                price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
                     
                 price_data = Custom_Data(dataname=price_df)
                 initial_cash = 1000
