@@ -117,6 +117,12 @@ class liveTrading():
                     
             if symbol == "BTC-PERP":
                 self.symbol_here = "BTC-PERP"
+            elif symbol == "ETH-PERP":
+                self.symbol_here = "ETH-PERP"
+
+            self.exchange.headers = {
+                                        'FTX-SUBACCOUNT': "daddy_" + self.symbol_here.split("-")[0],
+                                    }
 
             self.increment = 0.5
         elif exchange == 'okex':
