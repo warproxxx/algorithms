@@ -23,9 +23,11 @@ def round_down(value, decimals):
 
         
 class liveTrading():
-    def __init__(self, exchange, name, symbol='BTC/USD', testnet=True):
+    def __init__(self, exchange, name, symbol='BTC/USD', testnet=True, parameter_file="algos/daddy/parameters.json"):
         self.symbol = symbol
-        self.parameters = json.load(open('algos/daddy/parameters.json'))
+        self.parameter_file = parameter_file
+
+        self.parameters = json.load(open(parameter_file))
         self.lev = self.parameters['mult']
         self.symbol_here = ""
         self.exchange_name = exchange
@@ -168,7 +170,7 @@ class liveTrading():
         self.update_parameters()
     
     def update_parameters(self):
-        self.parameters = json.load(open('algos/daddy/parameters.json'))
+        self.parameters = json.load(open(self.parameter_file))
         self.lev = self.parameters['mult']
         count = 0
         
