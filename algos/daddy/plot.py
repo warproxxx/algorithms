@@ -113,19 +113,7 @@ def create_plot(biased=True):
 
 def create_chart():
     trends = get_trends()
-
-    if trends.iloc[-2]['curr_group'] != trends.iloc[-1]['curr_group']:
-        r = redis.Redis(host='localhost', port=6379, db=0)
-        
-        try:
-            trend_stop_disable = int(r.get("trend_stop_disable").decode())
-        except:
-            trend_stop_disable = 0
-
-        
-        if trend_stop_disable == 0:
-            r.set('stop_trading', 1)
-
+    
     create_plot(biased=True)
     create_plot(biased=False)
 

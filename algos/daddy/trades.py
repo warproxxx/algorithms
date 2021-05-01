@@ -23,6 +23,8 @@ from scipy.ndimage import gaussian_filter
 import requests
 import redis
 
+import uuid
+
 from algos.daddy.backtest import perform_backtest
 
 store = Arctic('localhost')
@@ -48,16 +50,16 @@ def get_data(url, index, proxy):
     
     results[index] = pd.DataFrame(json.loads(res.text))
 
-def get_df(start_time, proxy=None, total_range=30):
+def get_df(start_time, symbol, proxy=None, total_range=30):
     global threads
     global results
     
     start_time = pd.to_datetime(start_time).tz_localize(None)
     
     if start_time.date() == datetime.datetime.utcnow().date():
-        urls = ["https://www.bitmex.com/api/v1/trade?symbol=XBTUSD&count={}&start={}&reverse=false&startTime={}".format(1000, i * 1000, start_time) for i in range(total_range)]
+        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}USD&count={}&start={}&reverse=false&startTime={}".format(symbol, 1000, i * 1000, start_time) for i in range(total_range)]
     else:
-        urls = ["https://www.bitmex.com/api/v1/trade?symbol=XBTUSD&count={}&start={}&reverse=false&startTime={}&endTime={}".format(1000, i * 1000, start_time, pd.to_datetime(start_time.date() + pd.Timedelta(days=1))) for i in range(total_range)]
+        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}USD&count={}&start={}&reverse=false&startTime={}&endTime={}".format(symbol, 1000, i * 1000, start_time, pd.to_datetime(start_time.date() + pd.Timedelta(days=1))) for i in range(total_range)]
     
     threads = [None] * len(urls)
     results = [None] * len(urls)
@@ -76,9 +78,9 @@ def get_df(start_time, proxy=None, total_range=30):
                     
     return df
 
-def manual_scrape(scrape_from, sleep=True):
+def manual_scrape(scrape_from, symbol, sleep=True):
     print("Manual scrape for {}".format(scrape_from))
-    proxy_df = pd.read_csv('proxies', sep=':', header=None)
+    proxy_df = pd.read_csv('proxies_{}'.format(symbol), sep=':', header=None)
     proxy_df.columns = ['proxy', 'port', 'username', 'password']
 
     proxy_df['proxy_string'] =  proxy_df['username'] + ":" + proxy_df['password'] + "@" + proxy_df['proxy'] + ":" + proxy_df['port'].astype(str)
@@ -92,9 +94,9 @@ def manual_scrape(scrape_from, sleep=True):
         
         for i in range(at_once):
             if i == 0:
-                curr_df = get_df(scrape_from)
+                curr_df = get_df(scrape_from, symbol)
             else:
-                curr_df = get_df(scrape_from, proxy=proxy_list[i-1])
+                curr_df = get_df(scrape_from, symbol, proxy=proxy_list[i-1])
                 
             all_df = all_df.append(curr_df, ignore_index=True)
             all_df = all_df.dropna(subset=['timestamp'], how='all')
@@ -127,49 +129,48 @@ def manual_scrape(scrape_from, sleep=True):
             
     return all_df
 
-def aws_scrape(name):
+def aws_scrape(name, symbol):
     print("AWS Scrape for {}".format(name))
     url = "https://s3-eu-west-1.amazonaws.com/public.bitmex.com/data/trade/{}".format(name)
     r = requests.get(url)
+    uid = uuid.uuid4()
+    temp = uid.hex[:8]
     
-    with open('temp', 'wb') as f:
+    with open(temp, 'wb') as f:
         f.write(r.content)
         
-    df = pd.read_csv('temp', compression='gzip')
-    os.remove('temp')
-    aws_df = df[df['symbol'] == 'XBTUSD']
+    df = pd.read_csv(temp, compression='gzip')
+    os.remove(temp)
+    aws_df = df[df['symbol'] == '{}USD'.format(symbol)]
     aws_df['timestamp'] = pd.to_datetime(aws_df['timestamp'], format="%Y-%m-%dD%H:%M:%S.%f")
     aws_df = aws_df.sort_values('timestamp').reset_index(drop=True)
     return aws_df
 
-def get_bitmex_data(start, end, sleep=True):
+def get_bitmex_data(start, end, symbol, sleep=True):
     all_df = []
 
     for scrape_date in pd.date_range(start, end):
         if scrape_date.date() == datetime.datetime.utcnow().date() - pd.Timedelta(days=1):
             curr_time = datetime.datetime.utcnow()
             if curr_time.time() > datetime.time(5,41):
-                df = aws_scrape(scrape_date.strftime("%Y%m%d.csv.gz"))
+                df = aws_scrape(scrape_date.strftime("%Y%m%d.csv.gz"), symbol)
             else:
-                df = manual_scrape(scrape_date, sleep=sleep)
+                df = manual_scrape(scrape_date, symbol, sleep=sleep)
         elif scrape_date.date() == datetime.datetime.utcnow().date():
-            df = manual_scrape(scrape_date,  sleep=sleep)
+            df = manual_scrape(scrape_date, symbol, sleep=sleep)
         else:
-            df = aws_scrape(scrape_date.strftime("%Y%m%d.csv.gz"))
-
+            df = aws_scrape(scrape_date.strftime("%Y%m%d.csv.gz"), symbol)
 
         all_df.append(df)
     
     return pd.concat(all_df, axis=0)
 
-def update_trades():
-
-
+def update_trades(symbol='XBT'):
     end = pd.to_datetime(datetime.datetime.utcnow()).date()
     original_start = end - pd.Timedelta(days=20)
     
     try:
-        start = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
+        start = pd.to_datetime(library.max_date('{}_trades'.format(symbol)).astimezone(pytz.UTC)).tz_localize(None)
         
         if start.hour == 23 and start.minute >= 58:
             start = pd.to_datetime(start.date() + pd.Timedelta(days=1))
@@ -181,12 +182,12 @@ def update_trades():
             end = pd.to_datetime(datetime.datetime.utcnow())
 
             print("{} to {}".format(start, end))
-            df = get_bitmex_data(start, end)
+            df = get_bitmex_data(start, end, symbol=symbol)
             df = df[['timestamp', 'symbol', 'side', 'size', 'price', 'homeNotional', 'foreignNotional']]
             df['timestamp'] = pd.to_datetime(df['timestamp'])
             df = df.set_index('timestamp')
             df = df.tz_localize(tz='UTC')
-            library.write('trades', df)               
+            library.write('{}_trades'.format(symbol), df)               
             break
         except Exception as e:
             error_mess = str(e)
@@ -202,7 +203,7 @@ def update_trades():
                     print("This timeframe already exists")
                 else:
                     print("Writing from middle")
-                    library.write('trades', new_df)               
+                    library.write('{}_trades'.format(symbol), new_df)               
                 
                 break
             elif 'timestamp' in str(e):
@@ -286,37 +287,37 @@ def get_intervaled_date(startTime):
     time_df = pd.DataFrame(pd.Series({'Time': startTime})).T
     return time_df.groupby(pd.Grouper(key='Time', freq="10Min", label='left')).sum().index[0]
 
-def update_price():
+def update_price(symbol='XBT'):
     start_time = "2020-01-01"
 
-    if os.path.isfile("data/XBTUSD_daily.csv"):
-        start_time = pd.read_csv('data/XBTUSD_daily.csv').iloc[-1]['timestamp']
+    if os.path.isfile("data/{}USD_daily.csv".format(symbol)):
+        start_time = pd.read_csv('data/{}USD_daily.csv'.format(symbol)).iloc[-1]['timestamp']
 
     if (pd.to_datetime(start_time).date() < pd.Timestamp.utcnow().date()):
         try:
-            new_url = 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=1d&partial=false&symbol=XBTUSD&count=500&reverse=false&startTime={}'.format(start_time)
+            new_url = 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=1d&partial=false&symbol={}USD&count=500&reverse=false&startTime={}'.format(symbol, start_time)
             res = requests.get(new_url)
             price_df = pd.DataFrame(json.loads(res.text))
             price_df['timestamp'] = pd.to_datetime(price_df['timestamp'])
             price_df = price_df.set_index('timestamp').tz_localize(None).reset_index()
 
 
-            if os.path.isfile("data/XBTUSD_daily.csv"):
-                old_df = pd.read_csv("data/XBTUSD_daily.csv")
+            if os.path.isfile("data/{}USD_daily.csv".format(symbol)):
+                old_df = pd.read_csv("data/{}USD_daily.csv".format(symbol))
                 old_df['timestamp'] = pd.to_datetime(old_df['timestamp'])
                 df = pd.concat([old_df, price_df])
                 df = df.drop_duplicates(subset=['timestamp'])
-                df.to_csv('data/XBTUSD_daily.csv', index=None)
+                df.to_csv('data/{}USD_daily.csv'.format(symbol), index=None)
             else:
-                price_df.to_csv('data/XBTUSD_daily.csv', index=None)
+                price_df.to_csv('data/{}USD_daily.csv'.format(symbol), index=None)
         except Exception as e:
             print("Exception in parameter performer: {}".format(str(e)))
     else:
         pass
 
-def get_trends():
-    update_price()
-    df = pd.read_csv("data/XBTUSD_daily.csv")
+def get_trends(symbol='XBT'):
+    update_price(symbol=symbol)
+    df = pd.read_csv("data/{}USD_daily.csv".format(symbol))
     df = df[['timestamp', 'close']]
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df["30D_volatility"] = df['close'].rolling(30).std()/10
@@ -354,12 +355,12 @@ def get_trends():
             
     return new_price_df
 
-def save_features(features):
-    features.to_csv('data/features.csv', index=None)
+def save_features(features, symbol):
+    features.to_csv('data/{}_features.csv'.format(symbol), index=None)
 
-def run_backtest():
-    update_trades()
-    last_date = pd.to_datetime(library.max_date('trades').astimezone(pytz.UTC)).tz_localize(None)
+def run_backtest(symbol='XBT'):
+    update_trades(symbol=symbol)
+    last_date = pd.to_datetime(library.max_date('{}_trades'.format(symbol)).astimezone(pytz.UTC)).tz_localize(None)
 
     minute = str(last_date.time().minute)
 
@@ -377,17 +378,17 @@ def run_backtest():
     have_till = get_intervaled_date(have_till_calc)
 
 
-    min_date = pd.to_datetime(library.min_date('trades').astimezone(pytz.UTC)).tz_localize(None)
+    min_date = pd.to_datetime(library.min_date('{}_trades'.format(symbol)).astimezone(pytz.UTC)).tz_localize(None)
     startTime = get_intervaled_date(min_date)
 
-    if os.path.isfile('data/features.csv'):
-        startTime = pd.to_datetime(subprocess.check_output(["tail", "-1", "data/features.csv"]).decode().split(",")[0])
+    if os.path.isfile('data/{}_features.csv'.format(symbol)):
+        startTime = pd.to_datetime(subprocess.check_output(["tail", "-1", "data/{}_features.csv".format(symbol)]).decode().split(",")[0])
     
     have_till = have_till.tz_localize(tz='UTC')
     startTime = startTime.tz_localize(tz='UTC')
 
     if have_till + pd.Timedelta(minutes=10) != startTime:
-        df = library.read('trades', date_range = DateRange(start=startTime, end=have_till + pd.Timedelta(minutes=10)))
+        df = library.read('{}_trades'.format(symbol), date_range = DateRange(start=startTime, end=have_till + pd.Timedelta(minutes=10)))
         df = df.tz_convert('UTC').tz_localize(None)
         df = df.reset_index()
 
@@ -400,8 +401,8 @@ def run_backtest():
         features['change'] = ((features['close'] - features['open'])/features['open']) * 100
         features = features[['timestamp', 'open', 'high', 'low', 'close', 'volume', 'change', 'percentage_large', 'buy_percentage_large']]
         
-        if os.path.isfile('data/features.csv'):
-            old_features = pd.read_csv('data/features.csv')
+        if os.path.isfile('data/{}_features.csv'.format(symbol)):
+            old_features = pd.read_csv('data/{}_features.csv'.format(symbol))
             old_features['timestamp'] = pd.to_datetime(old_features['timestamp'])
             features = pd.concat([old_features, features])
             features = features.drop_duplicates(subset=['timestamp']).reset_index(drop=True)
@@ -409,10 +410,10 @@ def run_backtest():
         features['macd'] = ta.trend.macd_signal(features['close'])
         features['rsi'] = ta.momentum.rsi(features['close'])
         
-        save_fe_thread = threading.Thread(target=save_features, args=(features,))
+        save_fe_thread = threading.Thread(target=save_features, args=(features,symbol))
         save_fe_thread.start()
     
-    # features = pd.read_csv('data/features.csv')
+    # features = pd.read_csv('data/{}_features.csv'.format(symbol))
     features['timestamp'] = pd.to_datetime(features['timestamp'])
     trends = get_trends()
     curr_group = trends.iloc[-1]['curr_group'].date()
@@ -439,5 +440,5 @@ def run_backtest():
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
     portfolio, trades, operations, stops_triggered = run[0].get_logs()
     
-    trades.to_csv("data/XBTUSD_trades.csv", index=None)
+    trades.to_csv("data/{}USD_trades.csv".format(symbol), index=None)
     return analysis, portfolio.iloc[-1]['Date']
