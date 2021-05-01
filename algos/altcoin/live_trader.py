@@ -62,7 +62,7 @@ class liveTrading():
             self.subaccount = self.subalgo + "-" + symbol
         
         self.exchange.headers = {
-                                        'FTX-SUBACCOUNT': self.subaccount,
+                                        'FTX-SUBACCOUNT': self.subaccount.replace("-", "_"),
                                 }
 
         self.increment = 0.5
@@ -70,7 +70,7 @@ class liveTrading():
         
     def create_subaccount(self, name, to_print = True):
         try:
-            self.neutral_exchange.private_post_subaccounts({'nickname': name})
+            self.neutral_exchange.private_post_subaccounts({'nickname': name.replace("-", "_")})
             return 1
         except Exception as e:
             if to_print == True:
@@ -84,6 +84,10 @@ class liveTrading():
         self.create_subaccount(destination, to_print=False)
         if amount > 0:
             print("Moving {} {} from {} to {}".format(amount, coin, source, destination))
+
+            source = source.replace("-", "_")
+            destination = destination.replace("-", "_")
+
             try:
                 self.neutral_exchange.private_post_subaccounts_transfer({'coin': coin, 'size': amount, 'source': source, 'destination': destination})
             except:

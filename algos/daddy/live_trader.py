@@ -101,6 +101,10 @@ class liveTrading():
 
             self.increment = .5
         elif exchange == 'ftx':
+            config = pd.read_csv('algos/daddy/exchanges.csv')
+            subaccount = config[(config['name'] == self.name)].iloc[0]['subaccount']
+
+
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
             else:
@@ -121,7 +125,7 @@ class liveTrading():
                 self.symbol_here = "ETH-PERP"
 
             self.exchange.headers = {
-                                        'FTX-SUBACCOUNT': "daddy_" + self.symbol_here.split("-")[0],
+                                        'FTX-SUBACCOUNT': subaccount,
                                     }
 
             self.increment = 0.5

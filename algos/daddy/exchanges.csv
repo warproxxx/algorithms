@@ -1,8 +1,8 @@
-name,exchange,types,name_type,cryptofeed_name,ccxt_symbol,symbol,cryptofeed_symbol,trade,collateral,max_trade,buy_method,sell_method,html_color
-bitmex,bitmex,stream;book,fund,Bitmex,BTC/USD,XBTUSD,XBTUSD,1,BTC,0.5,10sec_average,10sec_average,danger
-bitmex_1,bitmex,,fund,Bitmex,BTC/USD,XBTUSD,XBTUSD,0,BTC,0.5,10sec_average,10sec_average,danger
-bybit,bybit,book,fund,Bybit,BTC/USD,BTCUSD,BTC-USD,0,BTC,0.0,10sec_average,10sec_average,dark
-ftx,ftx,book,fund,FTX,BTC-PERP,BTCUSDT,BTC-PERP,0,USD,0.0,10sec_average,10sec_average,info
-okex,okex,book,fund,OKEx,BTC-USD-SWAP,BTCUSD,BTC-USD-SWAP,1,BTC,0.0,10sec_average,10sec_average,secondary
-huobi_swap,huobi_swap,book,fund,HuobiSwap,BTC-USD,BTCUSD,BTC-USD,0,BTC,0.0,10sec_average,10sec_average,primary
-binance_futures,binance_futures,book,fund,BinanceFutures,BTC/USDT,BTCUSDT,BTC-USDT,0,USDT,0.0,10sec_average,10sec_average,warning
+name,exchange,types,name_type,cryptofeed_name,ccxt_symbol,symbol,cryptofeed_symbol,subaccount,trade,collateral,max_trade,buy_method,sell_method,html_color
+bitmex,bitmex,stream;book,fund,Bitmex,BTC/USD,XBTUSD,XBTUSD,,1,BTC,0.5,10sec_average,10sec_average,danger
+bitmex_1,bitmex,,fund,Bitmex,BTC/USD,XBTUSD,XBTUSD,,0,BTC,0.5,10sec_average,10sec_average,danger
+bybit,bybit,book,fund,Bybit,BTC/USD,BTCUSD,BTC-USD,,0,BTC,0.0,10sec_average,10sec_average,dark
+ftx,ftx,book,fund,FTX,BTC-PERP,BTCUSDT,BTC-PERP,daddy_BTC,0,USD,0.0,10sec_average,10sec_average,info
+okex,okex,book,fund,OKEx,BTC-USD-SWAP,BTCUSD,BTC-USD-SWAP,,1,BTC,0.0,10sec_average,10sec_average,secondary
+huobi_swap,huobi_swap,book,fund,HuobiSwap,BTC-USD,BTCUSD,BTC-USD,,0,BTC,0.0,10sec_average,10sec_average,primary
+binance_futures,binance_futures,book,fund,BinanceFutures,BTC/USDT,BTCUSDT,BTC-USDT,,0,USDT,0.0,10sec_average,10sec_average,warning

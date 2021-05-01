@@ -10,7 +10,7 @@ from algos.daddy.trades import get_trends
 import redis
 
 def create_plot(biased=True):
-    df = pd.read_csv("data/btc_daily.csv")
+    df = pd.read_csv("data/XBTUSD_daily.csv")
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df["30D_volatility"] = df['close'].rolling(30).std()/10
     df['30D_volatility'] = df['30D_volatility'].fillna(method='bfill').fillna(method='ffill')

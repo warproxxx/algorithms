@@ -289,8 +289,8 @@ def get_intervaled_date(startTime):
 def update_price():
     start_time = "2020-01-01"
 
-    if os.path.isfile("data/btc_daily.csv"):
-        start_time = pd.read_csv('data/btc_daily.csv').iloc[-1]['timestamp']
+    if os.path.isfile("data/XBTUSD_daily.csv"):
+        start_time = pd.read_csv('data/XBTUSD_daily.csv').iloc[-1]['timestamp']
 
     if (pd.to_datetime(start_time).date() < pd.Timestamp.utcnow().date()):
         try:
@@ -301,14 +301,14 @@ def update_price():
             price_df = price_df.set_index('timestamp').tz_localize(None).reset_index()
 
 
-            if os.path.isfile("data/btc_daily.csv"):
-                old_df = pd.read_csv("data/btc_daily.csv")
+            if os.path.isfile("data/XBTUSD_daily.csv"):
+                old_df = pd.read_csv("data/XBTUSD_daily.csv")
                 old_df['timestamp'] = pd.to_datetime(old_df['timestamp'])
                 df = pd.concat([old_df, price_df])
                 df = df.drop_duplicates(subset=['timestamp'])
-                df.to_csv('data/btc_daily.csv', index=None)
+                df.to_csv('data/XBTUSD_daily.csv', index=None)
             else:
-                price_df.to_csv('data/btc_daily.csv', index=None)
+                price_df.to_csv('data/XBTUSD_daily.csv', index=None)
         except Exception as e:
             print("Exception in parameter performer: {}".format(str(e)))
     else:
@@ -316,7 +316,7 @@ def update_price():
 
 def get_trends():
     update_price()
-    df = pd.read_csv("data/btc_daily.csv")
+    df = pd.read_csv("data/XBTUSD_daily.csv")
     df = df[['timestamp', 'close']]
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df["30D_volatility"] = df['close'].rolling(30).std()/10
