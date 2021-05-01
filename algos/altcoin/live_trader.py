@@ -218,7 +218,7 @@ class liveTrading():
         return balance
 
     def get_subaccount_balance(self, name, type='free'):
-        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name})['result'])
+        balance = pd.DataFrame(self.neutral_exchange.private_get_subaccounts_nickname_balances({'nickname': name.replace("-", "_")})['result'])
 
         try:
             return balance[balance['coin'] == 'USD'].iloc[0][type]
