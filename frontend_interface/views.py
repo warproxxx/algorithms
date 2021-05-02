@@ -712,8 +712,9 @@ def daddy_core(request, symbol, pars_file, config_file):
         except:
             pos_size = 0
 
+        
         try:
-            pnl_percentage = round(((float(r.get('{}_best_ask'.format(row['exchange'])).decode()) - float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
+            pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
         except:
             pnl_percentage = 0
 

@@ -328,7 +328,7 @@ class liveTrading():
 
                         #try catch because bitmex return old position
                         try:
-                            if pos['currentQty'] < 0:
+                            if float(pos['currentQty']) < 0:
                                 current_pos = "SHORT"
                             else:
                                 current_pos = "LONG"

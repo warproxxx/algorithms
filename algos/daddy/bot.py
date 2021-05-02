@@ -62,7 +62,7 @@ class daddyBot():
             exchange_name = details['exchange']
             name = details['name']
 
-            if details['trade'] == 1 or exchange_name == 'bitmex':       
+            if details['trade'] == 1:       
                 self.lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET, parameter_file=parameter_file) 
                 self.lts[name].set_position()
 
@@ -98,10 +98,10 @@ class daddyBot():
             lt = lts[details['name']]
             
             current_pos, avgEntryPrice, _ = lt.get_position()
-            best_bid, best_ask = lt.get_orderbook()
-
+            obook = lt.get_orderbook()
             position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
-            pnl_percentage = ((best_bid - avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+           
+            pnl_percentage = ((obook['best_bid'] - avgEntryPrice)/avgEntryPrice) * 100 * float(lt.parameters['mult'])
             print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
             
             if 'open' in analysis['total']:
@@ -140,8 +140,9 @@ class daddyBot():
         print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
         if backtest_date == save_file_name:
             for idx, details in EXCHANGES.iterrows():
-                backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
-                backtest_thread[details['name']].start()
+                if details['trade'] == 1:
+                    backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
+                    backtest_thread[details['name']].start()
 
     def call_every(self):
         while True:
