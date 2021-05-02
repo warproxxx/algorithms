@@ -6,6 +6,7 @@ from . import views
 urlpatterns = [
     path('', views.index, name='index'),
     path('daddy/', views.daddy_interface, name='daddy_interface'),
+    path('eth_daddy', views.eth_daddy_interface, name='eth_daddy_interface'),
     path('vol_trend/', views.vol_trend_interface, name='vol_trend'),
     path('altcoin/', views.altcoin_interface, name='altcoin_interface'),
     path('ratio/', views.ratio_interface, name='ratio_interface'),

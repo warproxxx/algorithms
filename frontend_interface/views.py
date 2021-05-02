@@ -783,7 +783,14 @@ def daddy_core(request, symbol, pars_file, config_file):
 
     return {'all_parameters': all_parameters, 'symbol': symbol, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'features_log': features_log, "trend_start_date": trend_start_date}
     
-    
+
+def eth_daddy_interface(request):
+    if request.user.is_authenticated:
+        pars = daddy_core(request, 'ETH', 'algos/eth_daddy/parameters.json', 'algos/eth_daddy/exchanges.csv')
+        return render(request, "frontend_interface/daddy_index.html", pars)
+    else:
+        return HttpResponseRedirect('/login')
+
 def daddy_interface(request):
     if request.user.is_authenticated:
         pars = daddy_core(request, 'XBT', 'algos/daddy/parameters.json', 'algos/daddy/exchanges.csv')

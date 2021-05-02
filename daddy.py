@@ -8,6 +8,8 @@ from cryptofeed import exchanges
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 
 from algos.daddy.bot import daddy_bot, daddy_trade, daddy_book, daddy_ticker
+from algos.eth_daddy.bot import eth_daddy_bot
+
 from algos.interface.bot import perform
 
 from main import initial_tasks
@@ -16,8 +18,8 @@ from utils import print
 
 f = FeedHandler(retries=100000)
 
-EXCHANGES = pd.read_csv('algos/daddy/exchanges.csv')
-EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange'])
+EXCHANGES = pd.concat([pd.read_csv('algos/daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv')])
+EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
 
 r = redis.Redis(host='localhost', port=6379, db=0)
@@ -26,6 +28,9 @@ r.set('update_running', 0)
 def bot():
     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
     daddy_thread.start()
+    
+    eth_daddy_thread = multiprocessing.Process(target=eth_daddy_bot, args=())
+    eth_daddy_thread.start()
 
     while True:
         try:
@@ -39,6 +44,19 @@ def bot():
                     print("Daddy Bot started")
                     daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
                     daddy_thread.start()
+
+            if float(r.get('eth_daddy_enabled').decode()) != 1:
+                if eth_daddy_thread.is_alive():
+                    print("ETH Daddy Bot terminated")
+                    eth_daddy_thread.terminate()
+
+            if eth_daddy_thread.is_alive() == False:
+                if float(r.get('eth_daddy_enabled').decode()) == 1:
+                    print("ETH Daddy Bot started")
+                    eth_daddy_thread = multiprocessing.Process(target=eth_daddy_thread, args=())
+                    eth_daddy_thread.start()
+
+
         except Exception as e:
             print(str(e))
 
@@ -49,7 +67,7 @@ if __name__ == "__main__":
     bot_thread.start()
 
     for idx, row in EXCHANGES.iterrows():
-        if row['trade'] == 1 or row['name'] == 'bitmex':
+        if row['trade'] == 1:
             exchange = row['cryptofeed_name']
             b = getattr(exchanges, exchange)
 

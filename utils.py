@@ -24,7 +24,8 @@ def print(to_print):
         if "eth_daddy" in filename:
             filename = "ETH_daddy_bot"
         else:
-            filename = "BTC_daddy_bot"
+            filename = "XBT_daddy_bot"
+            
     if "vol_trend_" in filename:
         filename = "vol_trend_bot"
     if "altcoin_" in filename:
