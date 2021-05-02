@@ -77,9 +77,20 @@ def get_positions():
         except:
             curr_detail['live_price'] = 0
 
-        curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
-        curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
-        curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
+        try:
+            curr_detail['backtest_position'] = 'SHORT' if backtest.iloc[-1]['Type'] == 'SELL' else 'LONG'
+        except:
+            curr_detail['backtest_position'] = "LONG"
+
+        try:
+            curr_detail['backtest_date'] = backtest.iloc[-1]['Date']
+        except:
+            curr_detail['backtest_date'] = ""
+        
+        try:
+            curr_detail['entry_price'] = round(backtest.iloc[-1]['Price'], 2)
+        except:
+            curr_detail['entry_price'] = ""
         curr_detail['to_trade'] = row['to_trade']
         curr_detail['live_lev'] = int(row['mult'])
 

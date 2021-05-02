@@ -27,6 +27,8 @@ from algos.daddy.trades import update_trades, run_backtest
 
 from utils import print
 
+r = redis.Redis(host='localhost', port=6379, db=0)
+
 async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass           
 
@@ -35,8 +37,8 @@ async def daddy_book(feed, pair, book, timestamp, receipt_timestamp):
         bid = float(list(book[BID].keys())[-1])
         ask = float(list(book[ASK].keys())[0])
 
-        r.set('{}_best_bid'.format(feed.lower()), bid)
-        r.set('{}_best_ask'.format(feed.lower()), ask)
+        r.set('{}_{}_best_bid'.format(feed.lower(), pair.lower()), bid)
+        r.set('{}_{}_best_ask'.format(feed.lower(), pair.lower()), ask)
 
 async def daddy_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
     pass
@@ -74,7 +76,7 @@ class daddyBot():
             
         lt.update_parameters()
 
-        current_pos = r.get('{}_current_pos'.format(exchange_name)).decode()
+        current_pos = self.r.get('{}_current_pos'.format(exchange_name)).decode()
 
         if current_pos == 'NONE':
             lt.close_stop_order()
@@ -85,17 +87,17 @@ class daddyBot():
         lts = self.lts
 
         try:
-            buy_method = r.get('backtest_buy_method').decode()
+            buy_method = self.r.get('backtest_buy_method').decode()
         except:
             buy_method = '8sec_average'
 
         try:
-            sell_method = r.get('backtest_sell_method').decode()
+            sell_method = self.r.get('backtest_sell_method').decode()
         except:
             sell_method = '8sec_average'
 
         try:
-            chadlor_position = int(r.get('chadlor_position').decode())
+            chadlor_position = int(self.r.get('chadlor_position').decode())
         except:
             chadlor_position = 0
 
@@ -108,12 +110,12 @@ class daddyBot():
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
                     print("Opened position from backtest_verification for {}".format(details['name']))
-                    r.set('daddy_position', 1)
+                    self.r.set('daddy_position', 1)
                     lt.fill_order('buy', method=buy_method)
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
                     if chadlor_position == 0:
                         print("Closed long position from backtest_verification for {}".format(details['name']))
-                        r.set('daddy_position', 0)
+                        self.r.set('daddy_position', 0)
                         lt.fill_order('sell', method=sell_method)
                     else:
                         print("Daddy isn't in position but chadlor is long so not closing")
@@ -131,13 +133,13 @@ class daddyBot():
         EXCHANGES = self.EXCHANGES 
         
         try:
-            stop_trading = float(r.get('stop_trading').decode())
+            stop_trading = float(self.r.get('stop_trading').decode())
         except:
             stop_trading = 0
 
         if stop_trading == 0:
             analysis, backtest_date = run_backtest()
-            save_file_name = r.get('save_file_name').decode()
+            save_file_name = self.r.get('save_file_name').decode()
             backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
             save_file_name = pd.to_datetime(save_file_name)
 
@@ -146,7 +148,7 @@ class daddyBot():
             print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
             if backtest_date == save_file_name:
                 for idx, details in EXCHANGES.iterrows():
-                    backtest_thread[details['name']] = threading.Thread(target=perform_backtrade_verification, args=(details, analysis, ))
+                    backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
                     backtest_thread[details['name']].start()
 
     def call_every(self):
@@ -163,9 +165,9 @@ class daddyBot():
             current_time_check = current_full_time[1:]
 
             if current_full_time == '8' or current_time_check == '8':
-                r.set('save_file_name', save_file)
-                if (r.get(save_file) == None):
-                    r.set(save_file, 1)
+                self.r.set('save_file_name', save_file)
+                if (self.r.get(save_file) == None):
+                    self.r.set(save_file, 1)
                     print("\n\033[1m" + str(datetime.datetime.utcnow()) + "\033[0;0m:")
                     self.process_trades() 
         

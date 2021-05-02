@@ -622,230 +622,234 @@ def chadlor_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
-def daddy_interface(request):
-
+def daddy_core(request, symbol, pars_file, config_file):
     r = redis.Redis(host='localhost', port=6379, db=0)
 
+    if request.POST:
+        dic = request.POST.dict()
+
+        if 'mult' in dic:
+            parameters = json.load(open(pars_file))
+            new_pars = pd.Series(dic)[parameters.keys()].to_dict()
+
+            new_pars['mult'] = float(new_pars['mult'])
+            new_pars['percentage_large'] = float(new_pars['percentage_large'])
+            new_pars['buy_percentage_large'] = float(new_pars['buy_percentage_large'])
+            new_pars['macd'] = float(new_pars['macd'])
+            new_pars['rsi'] = float(new_pars['rsi'])
+            new_pars['previous_days'] = float(new_pars['previous_days'])
+            new_pars['position_since'] = float(new_pars['position_since'])
+            new_pars['position_since_diff'] = float(new_pars['position_since_diff'])
+            new_pars['change'] = float(new_pars['change'])
+            new_pars['pnl_percentage'] = float(new_pars['pnl_percentage'])
+            new_pars['close_percentage'] = float(new_pars['close_percentage'])
+            new_pars['profit_macd'] = float(new_pars['profit_macd'])
+            new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
+            new_pars['profit_cap'] = float(new_pars['profit_cap'])
+            new_pars['name'] = dic['pars_name']
+
+            with open(pars_file, 'w') as f:
+                json.dump(new_pars, f)
+
+            with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
+                json.dump(new_pars, f)
+
+        elif 'bitmex[trade]' in dic:
+            dic.pop('csrfmiddlewaretoken', None)
+            curr_df = pd.DataFrame()
+
+            for idx, value in dic.items():
+                splitted = idx.split("[")
+                name = splitted[0]
+                column = splitted[1].replace("]", "")
+                
+                curr_df = curr_df.append(pd.Series({'name': name, 'column': column, 'value': value}), ignore_index=True)
+
+            new_exchanges = {}
+
+            for exchange, exchange_values in curr_df.groupby('name'):
+                new_exchanges[exchange] = {}
+                
+                for idx, row in exchange_values.iterrows():
+                    new_exchanges[exchange][row['column']] = row['value']
+
+            new_exchanges = pd.DataFrame(new_exchanges)
+            new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
+            old_exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+            final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
+            final_exchanges = final_exchanges[old_exchanges.columns]
+            final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
+
+
+        elif 'csv_file' in dic:
+            open('algos/daddy/exchanges.csv', 'w').write(dic['csv_file'])
+        elif 'buy_missed_form' in dic:
+            if 'buy_missed' in dic:
+                r.set('buy_missed', 1)
+                r.set('buy_at', dic['buy_at'])
+            else:
+                r.set('buy_missed', 0)
+                r.set('buy_at', 0)
+
+        elif 'enable_close_and_stop_form' in dic:
+            if 'close_and_stop' in dic:
+                r.set('close_and_stop', 1)
+            else:
+                r.set('close_and_stop', 0)
+        elif 'stop_trading_form' in dic:
+            if 'stop_trading' in dic:
+                r.set('stop_trading', 1)
+            else:
+                r.set('stop_trading', 0)
+        elif 'backtest_disabled_form' in dic:
+            if 'backtest_disabled' in dic:
+                r.set('backtest_disabled', 1)
+            else:
+                r.set('backtest_disabled', 0)
+
+            if 'trend_stop_disable' in dic:
+                r.set('trend_stop_disable', 1)
+            else:
+                r.set('trend_stop_disable', 0)
+                
+        elif 'trend_start_date' in dic or 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
+            r.set('trend_start_date', dic['trend_start_date'])
+            r.set('backtest_buy_method', dic['backtest_buy_method'])
+            r.set('backtest_sell_method', dic['backtest_sell_method'])
+
     
+    parameters = json.load(open('algos/daddy/parameters.json'))
+
+    exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+
+    new_df = []
+
+    for idx, row in exchanges.iterrows():                
+        try:
+            position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
+        except:
+            position_since = 0
+        
+        try:
+            avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
+        except:
+            avgEntryPrice = 0
+
+        try:
+            pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
+        except:
+            pos_size = 0
+
+        try:
+            pnl_percentage = round(((float(r.get('{}_best_ask'.format(row['exchange'])).decode()) - float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
+        except:
+            pnl_percentage = 0
+
+        try:
+            free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
+        except:
+            free_balance = 0
+
+        
+        row['position_since'] = position_since
+        row['avgEntryPrice'] = avgEntryPrice
+        row['pnl_percentage'] = pnl_percentage
+        row['pos_size'] = pos_size
+
+        row['balance'] = free_balance
+        
+        to_append = 1
+
+        if str(request.user) != "warproxxx":
+            if "bitmex_" in row['name']:
+                to_append = 0
+
+        if to_append == 1:
+            new_df.append(row.to_dict())
+
+
+    exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+    exchanges = exchanges[['exchange', 'name', 'ccxt_symbol', 'symbol', 'cryptofeed_symbol', 'trade', 'max_trade', 'buy_method', 'sell_method']]
+
+    exchanges = exchanges.set_index('name').T.to_dict()
+    new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
+    csv_file = open('algos/daddy/exchanges.csv', 'r').read()
+    try:
+        run_log = open("logs/daddy_bot.log").read()
+    except:
+        run_log = ""
+
+
+    all_parameters = {}
+
+    for f in glob("algos/daddy/parameters/*"):
+        all_parameters[f.split("/")[-1].replace(".json", "")] = json.load(open(f))
+
+    all_parameters_json = json.dumps(all_parameters)
+
+    try:
+        buy_missed = float(r.get('buy_missed').decode())
+    except:
+        buy_missed = 0
+
+    try:
+        buy_at = float(r.get('buy_at').decode())
+    except:
+        buy_at = 0
+    
+    try:
+        close_and_stop = float(r.get('close_and_stop').decode())
+    except:
+        close_and_stop = 0
+
+    try:
+        stop_trading = float(r.get('stop_trading').decode())
+    except:
+        stop_trading = 0
+
+    try:
+        backtest_disabled = float(r.get('backtest_disabled').decode())
+    except:
+        backtest_disabled = 0
+
+    try:
+        trend_stop_disable = float(r.get('trend_stop_disable').decode())
+    except:
+        trend_stop_disable = 0
+
+    try:
+        trend_start_date = r.get('trend_start_date').decode()
+    except:
+        trend_start_date = ""
+    
+    try:
+        backtest_buy_method = r.get('backtest_buy_method').decode()
+    except:
+        backtest_buy_method = ""
+
+    try:
+        backtest_sell_method = r.get('backtest_sell_method').decode()
+    except:
+        backtest_sell_method = ""
+
+
+    trades = pd.read_csv('data/XBTUSD_trades.csv')[['Date', 'Type', 'Price']]
+
+    s = io.StringIO()
+    trades[-6:].to_csv(s, index=None)
+    trade_logs = s.getvalue()
+
+    return {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method}
+    
+    
+def daddy_interface(request):
     if request.user.is_authenticated:
-        if request.POST:
-            dic = request.POST.dict()
-
-            if 'mult' in dic:
-                parameters = json.load(open('algos/daddy/parameters.json'))
-                new_pars = pd.Series(dic)[parameters.keys()].to_dict()
-
-                new_pars['mult'] = float(new_pars['mult'])
-                new_pars['percentage_large'] = float(new_pars['percentage_large'])
-                new_pars['buy_percentage_large'] = float(new_pars['buy_percentage_large'])
-                new_pars['macd'] = float(new_pars['macd'])
-                new_pars['rsi'] = float(new_pars['rsi'])
-                new_pars['previous_days'] = float(new_pars['previous_days'])
-                new_pars['position_since'] = float(new_pars['position_since'])
-                new_pars['position_since_diff'] = float(new_pars['position_since_diff'])
-                new_pars['change'] = float(new_pars['change'])
-                new_pars['pnl_percentage'] = float(new_pars['pnl_percentage'])
-                new_pars['close_percentage'] = float(new_pars['close_percentage'])
-                new_pars['profit_macd'] = float(new_pars['profit_macd'])
-                new_pars['stop_percentage'] = float(new_pars['stop_percentage'])
-                new_pars['profit_cap'] = float(new_pars['profit_cap'])
-                new_pars['name'] = dic['pars_name']
-
-                with open('algos/daddy/parameters.json', 'w') as f:
-                    json.dump(new_pars, f)
-
-                with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
-                    json.dump(new_pars, f)
-
-            elif 'bitmex[trade]' in dic:
-                dic.pop('csrfmiddlewaretoken', None)
-                curr_df = pd.DataFrame()
-
-                for idx, value in dic.items():
-                    splitted = idx.split("[")
-                    name = splitted[0]
-                    column = splitted[1].replace("]", "")
-                    
-                    curr_df = curr_df.append(pd.Series({'name': name, 'column': column, 'value': value}), ignore_index=True)
-
-                new_exchanges = {}
-
-                for exchange, exchange_values in curr_df.groupby('name'):
-                    new_exchanges[exchange] = {}
-                    
-                    for idx, row in exchange_values.iterrows():
-                        new_exchanges[exchange][row['column']] = row['value']
-
-                new_exchanges = pd.DataFrame(new_exchanges)
-                new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
-                old_exchanges = pd.read_csv('algos/daddy/exchanges.csv')
-                final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
-                final_exchanges = final_exchanges[old_exchanges.columns]
-                final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
-
-
-            elif 'csv_file' in dic:
-                open('algos/daddy/exchanges.csv', 'w').write(dic['csv_file'])
-            elif 'buy_missed_form' in dic:
-                if 'buy_missed' in dic:
-                    r.set('buy_missed', 1)
-                    r.set('buy_at', dic['buy_at'])
-                else:
-                    r.set('buy_missed', 0)
-                    r.set('buy_at', 0)
-
-            elif 'enable_close_and_stop_form' in dic:
-                if 'close_and_stop' in dic:
-                    r.set('close_and_stop', 1)
-                else:
-                    r.set('close_and_stop', 0)
-            elif 'stop_trading_form' in dic:
-                if 'stop_trading' in dic:
-                    r.set('stop_trading', 1)
-                else:
-                    r.set('stop_trading', 0)
-            elif 'backtest_disabled_form' in dic:
-                if 'backtest_disabled' in dic:
-                    r.set('backtest_disabled', 1)
-                else:
-                    r.set('backtest_disabled', 0)
-
-                if 'trend_stop_disable' in dic:
-                    r.set('trend_stop_disable', 1)
-                else:
-                    r.set('trend_stop_disable', 0)
-                    
-            elif 'trend_start_date' in dic or 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
-                r.set('trend_start_date', dic['trend_start_date'])
-                r.set('backtest_buy_method', dic['backtest_buy_method'])
-                r.set('backtest_sell_method', dic['backtest_sell_method'])
-
-        
-        parameters = json.load(open('algos/daddy/parameters.json'))
-
-        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
-
-        new_df = []
-
-        for idx, row in exchanges.iterrows():                
-            try:
-                position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
-            except:
-                position_since = 0
-            
-            try:
-                avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
-            except:
-                avgEntryPrice = 0
-
-            try:
-                pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
-            except:
-                pos_size = 0
-
-            try:
-                pnl_percentage = round(((float(r.get('{}_best_ask'.format(row['exchange'])).decode()) - float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
-            except:
-                pnl_percentage = 0
-
-            try:
-                free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
-            except:
-                free_balance = 0
-
-            
-            row['position_since'] = position_since
-            row['avgEntryPrice'] = avgEntryPrice
-            row['pnl_percentage'] = pnl_percentage
-            row['pos_size'] = pos_size
-
-            row['balance'] = free_balance
-            
-            to_append = 1
-
-            if str(request.user) != "warproxxx":
-                if "bitmex_" in row['name']:
-                    to_append = 0
-
-            if to_append == 1:
-                new_df.append(row.to_dict())
-
-
-        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
-        exchanges = exchanges[['exchange', 'name', 'ccxt_symbol', 'symbol', 'cryptofeed_symbol', 'trade', 'max_trade', 'buy_method', 'sell_method']]
-
-        exchanges = exchanges.set_index('name').T.to_dict()
-        new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
-        csv_file = open('algos/daddy/exchanges.csv', 'r').read()
-        try:
-            run_log = open("logs/daddy_bot.log").read()
-        except:
-            run_log = ""
-
-
-        all_parameters = {}
-
-        for f in glob("algos/daddy/parameters/*"):
-            all_parameters[f.split("/")[-1].replace(".json", "")] = json.load(open(f))
-
-        all_parameters_json = json.dumps(all_parameters)
-
-        try:
-            buy_missed = float(r.get('buy_missed').decode())
-        except:
-            buy_missed = 0
-
-        try:
-            buy_at = float(r.get('buy_at').decode())
-        except:
-            buy_at = 0
-        
-        try:
-            close_and_stop = float(r.get('close_and_stop').decode())
-        except:
-            close_and_stop = 0
-
-        try:
-            stop_trading = float(r.get('stop_trading').decode())
-        except:
-            stop_trading = 0
-
-        try:
-            backtest_disabled = float(r.get('backtest_disabled').decode())
-        except:
-            backtest_disabled = 0
-
-        try:
-            trend_stop_disable = float(r.get('trend_stop_disable').decode())
-        except:
-            trend_stop_disable = 0
-
-        try:
-            trend_start_date = r.get('trend_start_date').decode()
-        except:
-            trend_start_date = ""
-        
-        try:
-            backtest_buy_method = r.get('backtest_buy_method').decode()
-        except:
-            backtest_buy_method = ""
-
-        try:
-            backtest_sell_method = r.get('backtest_sell_method').decode()
-        except:
-            backtest_sell_method = ""
-
-
-        trades = pd.read_csv('data/XBTUSD_trades.csv')[['Date', 'Type', 'Price']]
-
-        s = io.StringIO()
-        trades[-6:].to_csv(s, index=None)
-        trade_logs = s.getvalue()
-
-        return render(request, "frontend_interface/daddy_index.html", {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method})
-
+        pars = daddy_core(request, 'XBT', 'algos/daddy/parameters.json', 'algos/daddy/exchanges.csv')
+        return render(request, "frontend_interface/daddy_index.html", pars)
     else:
         return HttpResponseRedirect('/login')
+
+    
 
 def delete(request):
     req = request.GET.dict()

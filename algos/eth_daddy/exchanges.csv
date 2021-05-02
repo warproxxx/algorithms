@@ -1,2 +1,2 @@
 name,exchange,types,name_type,cryptofeed_name,ccxt_symbol,symbol,cryptofeed_symbol,subaccount,trade,collateral,max_trade,buy_method,sell_method,html_color
-ftx,ftx,book,fund,FTX,ETH-PERP,ETHUSDT,ETH-PERP,daddy_ETH,0,USD,0.0,10sec_average,10sec_average,info
+eth_ftx,ftx,book,fund,FTX,ETH-PERP,ETHUSDT,ETH-PERP,daddy_ETH,0,USD,0.0,10sec_average,10sec_average,info

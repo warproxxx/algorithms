@@ -305,8 +305,9 @@ class liveTrading():
     
     def get_orderbook(self):
         orderbook = {}
-        orderbook['best_ask'] = float(self.r.get('{}_best_ask'.format(self.exchange_name)).decode())
-        orderbook['best_bid'] = float(self.r.get('{}_best_bid'.format(self.exchange_name)).decode())
+
+        orderbook['best_ask'] = float(self.r.get('{}_{}_best_ask'.format(self.exchange_name, self.symbol_here.lower())).decode())
+        orderbook['best_bid'] = float(self.r.get('{}_{}_best_bid'.format(self.exchange_name, self.symbol_here.lower())).decode())
 
         return orderbook
 
@@ -534,7 +535,7 @@ class liveTrading():
                 pass
 
     def update_stop(self):
-        current_pos = self.r.get('{}_current_pos'.format(self.exchange_name)).decode()
+        current_pos = self.r.get('{}_current_pos'.format(self.name)).decode()
 
         if current_pos == "LONG":
             stop = self.get_stop()
@@ -852,7 +853,6 @@ class liveTrading():
         5sec_average: Divides into 24 parts and makes market order of that every 5 second
         now: Market buy instantly
         take_biggest: Takes the biggest. If not filled, waits 30 second and takes it again. If not filled by end, takes at market.
-
         '''
 
         print("Time at filling order is: {}".format(datetime.datetime.now()))
@@ -860,7 +860,7 @@ class liveTrading():
 
         for lp in range(self.attempts):         
             
-            curr_pos = self.r.get('{}_current_pos'.format(self.exchange_name)).decode()
+            curr_pos = self.r.get('{}_current_pos'.format(self.name)).decode()
 
             if curr_pos == "NONE" and order_type=='sell': #to fix issue caused by backtrader verification idk why tho.
                 print("Had to manually prevent sell order")
