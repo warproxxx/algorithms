@@ -624,6 +624,7 @@ def chadlor_interface(request):
 
 def daddy_core(request, symbol, pars_file, config_file):
     r = redis.Redis(host='localhost', port=6379, db=0)
+    pars_folder = pars_file.replace(".json", "")
 
     if request.POST:
         dic = request.POST.dict()
@@ -651,7 +652,7 @@ def daddy_core(request, symbol, pars_file, config_file):
             with open(pars_file, 'w') as f:
                 json.dump(new_pars, f)
 
-            with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
+            with open('{}/{}.json'.format(pars_folder, new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
 
         elif 'bitmex[trade]' in dic:
@@ -675,52 +676,24 @@ def daddy_core(request, symbol, pars_file, config_file):
 
             new_exchanges = pd.DataFrame(new_exchanges)
             new_exchanges = new_exchanges.T.reset_index().rename(columns={'index': 'name'})
-            old_exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+            old_exchanges = pd.read_csv(config_file)
             final_exchanges = old_exchanges[list(set(old_exchanges.columns) - set(new_exchanges.columns)) + ['name']].merge(new_exchanges, on='name')
             final_exchanges = final_exchanges[old_exchanges.columns]
-            final_exchanges.to_csv('algos/daddy/exchanges.csv', index=None)
+            final_exchanges.to_csv(config_file, index=None)
 
 
         elif 'csv_file' in dic:
-            open('algos/daddy/exchanges.csv', 'w').write(dic['csv_file'])
-        elif 'buy_missed_form' in dic:
-            if 'buy_missed' in dic:
-                r.set('buy_missed', 1)
-                r.set('buy_at', dic['buy_at'])
-            else:
-                r.set('buy_missed', 0)
-                r.set('buy_at', 0)
-
-        elif 'enable_close_and_stop_form' in dic:
-            if 'close_and_stop' in dic:
-                r.set('close_and_stop', 1)
-            else:
-                r.set('close_and_stop', 0)
-        elif 'stop_trading_form' in dic:
-            if 'stop_trading' in dic:
-                r.set('stop_trading', 1)
-            else:
-                r.set('stop_trading', 0)
-        elif 'backtest_disabled_form' in dic:
-            if 'backtest_disabled' in dic:
-                r.set('backtest_disabled', 1)
-            else:
-                r.set('backtest_disabled', 0)
-
-            if 'trend_stop_disable' in dic:
-                r.set('trend_stop_disable', 1)
-            else:
-                r.set('trend_stop_disable', 0)
-                
-        elif 'trend_start_date' in dic or 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
+            open(config_file, 'w').write(dic['csv_file'])
+        elif 'trend_start_date' in dic:
             r.set('trend_start_date', dic['trend_start_date'])
+        elif 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
             r.set('backtest_buy_method', dic['backtest_buy_method'])
             r.set('backtest_sell_method', dic['backtest_sell_method'])
 
     
-    parameters = json.load(open('algos/daddy/parameters.json'))
+    parameters = json.load(open(pars_file))
 
-    exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+    exchanges = pd.read_csv(config_file)
 
     new_df = []
 
@@ -768,12 +741,12 @@ def daddy_core(request, symbol, pars_file, config_file):
             new_df.append(row.to_dict())
 
 
-    exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+    exchanges = pd.read_csv(config_file)
     exchanges = exchanges[['exchange', 'name', 'ccxt_symbol', 'symbol', 'cryptofeed_symbol', 'trade', 'max_trade', 'buy_method', 'sell_method']]
 
     exchanges = exchanges.set_index('name').T.to_dict()
     new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
-    csv_file = open('algos/daddy/exchanges.csv', 'r').read()
+    csv_file = open(config_file, 'r').read()
     try:
         run_log = open("logs/daddy_bot.log").read()
     except:
@@ -782,45 +755,20 @@ def daddy_core(request, symbol, pars_file, config_file):
 
     all_parameters = {}
 
-    for f in glob("algos/daddy/parameters/*"):
+    for f in glob("{}/*".format(pars_folder)):
         all_parameters[f.split("/")[-1].replace(".json", "")] = json.load(open(f))
 
     all_parameters_json = json.dumps(all_parameters)
 
     try:
-        buy_missed = float(r.get('buy_missed').decode())
-    except:
-        buy_missed = 0
-
-    try:
-        buy_at = float(r.get('buy_at').decode())
-    except:
-        buy_at = 0
-    
-    try:
-        close_and_stop = float(r.get('close_and_stop').decode())
-    except:
-        close_and_stop = 0
-
-    try:
-        stop_trading = float(r.get('stop_trading').decode())
-    except:
-        stop_trading = 0
-
-    try:
-        backtest_disabled = float(r.get('backtest_disabled').decode())
-    except:
-        backtest_disabled = 0
-
-    try:
-        trend_stop_disable = float(r.get('trend_stop_disable').decode())
-    except:
-        trend_stop_disable = 0
-
-    try:
         trend_start_date = r.get('trend_start_date').decode()
     except:
         trend_start_date = ""
+
+    try:
+        trend_stop_disable = r.get('trend_stop_disable').decode()
+    except:
+        trend_stop_disable = ""
     
     try:
         backtest_buy_method = r.get('backtest_buy_method').decode()
@@ -833,13 +781,13 @@ def daddy_core(request, symbol, pars_file, config_file):
         backtest_sell_method = ""
 
 
-    trades = pd.read_csv('data/XBTUSD_trades.csv')[['Date', 'Type', 'Price']]
+    trades = pd.read_csv('data/{}USD_trades.csv'.format(symbol))[['Date', 'Type', 'Price']]
 
     s = io.StringIO()
     trades[-6:].to_csv(s, index=None)
     trade_logs = s.getvalue()
 
-    return {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'buy_missed': buy_missed, 'buy_at': buy_at, 'close_and_stop': close_and_stop, 'stop_trading': stop_trading, 'backtest_disabled': backtest_disabled, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method}
+    return {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method}
     
     
 def daddy_interface(request):

@@ -131,25 +131,20 @@ class daddyBot():
         lts = self.lts
         self.EXCHANGES = pd.read_csv(self.config_file) #update exchanges
         EXCHANGES = self.EXCHANGES 
-        
-        try:
-            stop_trading = float(self.r.get('stop_trading').decode())
-        except:
-            stop_trading = 0
 
-        if stop_trading == 0:
-            analysis, backtest_date = run_backtest()
-            save_file_name = self.r.get('save_file_name').decode()
-            backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
-            save_file_name = pd.to_datetime(save_file_name)
+        analysis, backtest_date = run_backtest()
+        save_file_name = self.r.get('save_file_name').decode()
+        backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
+        save_file_name = pd.to_datetime(save_file_name)
 
-            backtest_thread = {}
+        backtest_thread = {}
 
-            print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
-            if backtest_date == save_file_name:
-                for idx, details in EXCHANGES.iterrows():
-                    backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
-                    backtest_thread[details['name']].start()
+        #so this isn't same for some reason
+        print("Backtest Date: {} Save file name: {}".format(backtest_date, save_file_name))
+        if backtest_date == save_file_name:
+            for idx, details in EXCHANGES.iterrows():
+                backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
+                backtest_thread[details['name']].start()
 
     def call_every(self):
         while True:

@@ -177,48 +177,54 @@
             <div class="card-body">
                 <table>
                   <tr>
-                    <td style="width: 25vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="buy_missed_form">
-                        <input type="checkbox" name="buy_missed" value="enable_missed" {% if buy_missed == 1 %} checked {% endif %}> <b>Buy missed</b>                           
-                        <br/><br/>
-                      
-                        Price:  <input type="number" name="buy_at" style="width: 100px" value="{{buy_at}}">
-                        <br/><br/>
-                        <input type="submit" value="Update">
-                        
-                      </form>
-                    </td>
-                    <td style="width: 25vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="enable_close_and_stop_form">
-                        <input type="checkbox" name="close_and_stop" value="enable_close_and_stop" {% if close_and_stop == 1 %} checked {% endif %}> <b>Close All Positions and Stop</b>
-
-                        <br/><br/><br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
-                    <td style="width: 25vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="stop_trading_form">
-                        <input type="checkbox" name="stop_trading" value="enable_stop" {% if stop_trading == 1 %} checked {% endif %}> <b>Stop Trading</b>
-                        <br/><br/><br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
+                    
 
                     <td style="width: 25vw; text-align:center;">
                       <form method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="backtest_disabled_form">
-                        <input type="checkbox" name="backtest_disabled" value="backtest_disabled" {% if backtest_disabled == 1 %} checked {% endif %}> <b>Disable Backtest</b><br/><br/>
                         <input type="checkbox" name="trend_stop_disable" value="trend_stop_disable" {% if trend_stop_disable == 1 %} checked {% endif %}> <b>Disable Trend Stop</b>
 
                         <br/><br/><br/><br/>
                           <input type="submit" value="Update">
+                      </form>
+                    </td>
+
+                    <td style="width: 25vw; text-align:center;">
+                      <form method="POST">
+                        {% csrf_token %}
+                        <b>Trend Start Date:</b> <br/><input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;"><br/>
+
+                        <br/><br/>
+                          <input type="submit" value="Update">
+                      </form>
+                    </td>
+
+                    <td style="width: 50vw; text-align:center;">
+                      <form method="POST">
+                        {% csrf_token %}
+          
+                        Backtest Buy Method: <select name="backtest_buy_method" id="backtest_buy_method">
+                                                {% for trade_method in trade_methods %}
+                                                  <option value="{{trade_method}}">{{trade_method}}</option>
+                                                {% endfor %}
+                                              </select>
+                        
+                        <script>
+                          document.getElementById("backtest_buy_method").value = "{{backtest_buy_method}}"; 
+                        </script>
+                        
+                        Backtest Sell method: <select name="backtest_sell_method" id="backtest_sell_method">
+                                                {% for trade_method in trade_methods %}
+                                                  <option value="{{trade_method}}">{{trade_method}}</option>
+                                                {% endfor %}
+                                              </select>
+          
+                                <script>
+                                  document.getElementById("backtest_sell_method").value = "{{backtest_sell_method}}"; 
+                                </script>
+                        <br/><br/>
+                        <input type="submit" value="Update">
                       </form>
                     </td>
 
@@ -231,34 +237,7 @@
 
           </div>
 
-          <center>
-            <form method="POST">
-              {% csrf_token %}
-              Trend Start Date: <input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;">
 
-              Backtest Buy Method: <select name="backtest_buy_method" id="backtest_buy_method">
-                                      {% for trade_method in trade_methods %}
-                                        <option value="{{trade_method}}">{{trade_method}}</option>
-                                      {% endfor %}
-                                    </select>
-              
-              <script>
-                document.getElementById("backtest_buy_method").value = "{{backtest_buy_method}}"; 
-              </script>
-              
-              Backtest Sell method: <select name="backtest_sell_method" id="backtest_sell_method">
-                                      {% for trade_method in trade_methods %}
-                                        <option value="{{trade_method}}">{{trade_method}}</option>
-                                      {% endfor %}
-                                    </select>
-
-                      <script>
-                        document.getElementById("backtest_sell_method").value = "{{backtest_sell_method}}"; 
-                      </script>
-
-              <input type="submit" value="Update">
-            </form>
-          </center>
           
           <b>Run Log:</b><br/>
           <textarea rows="18" style="width:100%;" id="logs" name="logs" readonly>{{run_log}}</textarea>
