@@ -9,7 +9,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
 
-  <title>Daddy Bot</title>
+  <title>Daddy Bot - {{symbol}}</title>
   {% load staticfiles %}
 
 
@@ -131,7 +131,7 @@
 
           <!-- Page Heading -->
           <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Daddy Bot</h1> <h1><a href="/">←</a></h1>
+            <h1 class="h3 mb-0 text-gray-800">{{symbol}} Daddy Bot</h1> <h1><a href="/">←</a></h1>
           </div>
 
           <div class="row">
@@ -166,76 +166,15 @@
 
           
 
-          <div class="row">
+          <center>
+            <form method="POST">
+              {% csrf_token %}
+              Trend Start Date: <input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;">
+              &nbsp; 
+              <input type="submit" value="Update">
 
-            <!-- Page Heading -->
-            <h4>Manual Interference</h4>
-            <div class="col-lg-12 mb-4">
-            
-
-            
-            <div class="card-body">
-                <table>
-                  <tr>
-                    
-
-                    <td style="width: 25vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <input type="hidden" name="backtest_disabled_form">
-                        <input type="checkbox" name="trend_stop_disable" value="trend_stop_disable" {% if trend_stop_disable == 1 %} checked {% endif %}> <b>Disable Trend Stop</b>
-
-                        <br/><br/><br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
-
-                    <td style="width: 25vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-                        <b>Trend Start Date:</b> <br/><input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;"><br/>
-
-                        <br/><br/>
-                          <input type="submit" value="Update">
-                      </form>
-                    </td>
-
-                    <td style="width: 50vw; text-align:center;">
-                      <form method="POST">
-                        {% csrf_token %}
-          
-                        Backtest Buy Method: <select name="backtest_buy_method" id="backtest_buy_method">
-                                                {% for trade_method in trade_methods %}
-                                                  <option value="{{trade_method}}">{{trade_method}}</option>
-                                                {% endfor %}
-                                              </select>
-                        
-                        <script>
-                          document.getElementById("backtest_buy_method").value = "{{backtest_buy_method}}"; 
-                        </script>
-                        
-                        Backtest Sell method: <select name="backtest_sell_method" id="backtest_sell_method">
-                                                {% for trade_method in trade_methods %}
-                                                  <option value="{{trade_method}}">{{trade_method}}</option>
-                                                {% endfor %}
-                                              </select>
-          
-                                <script>
-                                  document.getElementById("backtest_sell_method").value = "{{backtest_sell_method}}"; 
-                                </script>
-                        <br/><br/>
-                        <input type="submit" value="Update">
-                      </form>
-                    </td>
-
-                  </tr>
-                                      
-                  </table>
-            </div>
-              
-          </div>
-
-          </div>
+            </form>
+          </center>
 
 
           
@@ -244,10 +183,19 @@
           <a href="/clear_log?from=daddy">Clear</a>
           <br/><br/>
 
-          <b>Backtest Logs:</b><br/>
-          <textarea rows="7" style="width:100%;" id="logs" name="trade_logs" readonly>{{trade_logs}}</textarea>
-          <br/><br/>
-
+          <div>
+            <div style = "float:left; width:49%; margin-right:2%;">
+              <b>Backtest Logs:</b><br/>
+              <textarea rows="8" style="width:100%;" id="logs" name="trade_logs" readonly>{{trade_logs}}</textarea>
+              <br/><br/>
+            </div>
+            
+            <div>
+              <b>Features:</b><br/>
+              <textarea rows="8" style="width:49%;" id="logs" name="trade_logs" readonly>{{features_log}}</textarea>
+              <br/><br/>
+            </div>
+          </div>
 
           <div class="row">
             <div class="col-lg-12 mb-4">
@@ -426,10 +374,10 @@
 
               </div>
               <div style="float: left;">
-                <iframe frameborder='0' scrolling='no' src='/static/plotly.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
+                <iframe frameborder='0' scrolling='no' src='/static/plotly_{{symbol}}.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
             </div>
             <div style="float: right;">
-                <iframe frameborder='0' scrolling='no' src='/static/plot_unbiased.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
+                <iframe frameborder='0' scrolling='no' src='/static/plot_unbiased_{{symbol}}.html' class="embed-responsive-item" style="border:none; height: 605px; width: 48vw;" ></iframe> 
             </div>
             </div>
         </div>

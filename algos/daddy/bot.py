@@ -49,8 +49,9 @@ def start_schedlued():
         time.sleep(1)
 
 class daddyBot():
-    def __init__(self, config_file, parameter_file, TESTNET):
+    def __init__(self, symbol, config_file, parameter_file, TESTNET):
         self.config_file = config_file
+        self.symbol = symbol
 
         self.EXCHANGES = pd.read_csv(config_file)
         self.r = redis.Redis(host='localhost', port=6379, db=0)
@@ -87,16 +88,6 @@ class daddyBot():
         lts = self.lts
 
         try:
-            buy_method = self.r.get('backtest_buy_method').decode()
-        except:
-            buy_method = '8sec_average'
-
-        try:
-            sell_method = self.r.get('backtest_sell_method').decode()
-        except:
-            sell_method = '8sec_average'
-
-        try:
             chadlor_position = int(self.r.get('chadlor_position').decode())
         except:
             chadlor_position = 0
@@ -105,18 +96,24 @@ class daddyBot():
 
         if details['trade'] == 1:
             lt = lts[details['name']]
-            current_pos, _, _ = lt.get_position()
+            
+            current_pos, avgEntryPrice, _ = lt.get_position()
+            best_bid, best_ask = lt.get_orderbook()
+
+            position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
+            pnl_percentage = ((best_bid - avgEntryPrice)/avgEntryPrice) * 100 * parameters['mult']
+            print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
             
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
                     print("Opened position from backtest_verification for {}".format(details['name']))
                     self.r.set('daddy_position', 1)
-                    lt.fill_order('buy', method=buy_method)
+                    lt.fill_order('buy', method=details['buy_method'])
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
                     if chadlor_position == 0:
                         print("Closed long position from backtest_verification for {}".format(details['name']))
                         self.r.set('daddy_position', 0)
-                        lt.fill_order('sell', method=sell_method)
+                        lt.fill_order('sell', method=details['sell_method'])
                     else:
                         print("Daddy isn't in position but chadlor is long so not closing")
                 else:
@@ -171,13 +168,13 @@ class daddyBot():
 def start_bot(symbol, TESTNET, config_file, parameter_file):
     update_trades(symbol=symbol)
 
-    bot = daddyBot(config_file=config_file, parameter_file=parameter_file, TESTNET=TESTNET)
+    bot = daddyBot(symbol=symbol, config_file=config_file, parameter_file=parameter_file, TESTNET=TESTNET)
 
     call_every_thread = threading.Thread(target=bot.call_every())
     call_every_thread.start()
 
 def daddy_bot():
-    schedule.every().day.at("00:30").do(create_chart)
+    schedule.every().day.at("00:30").do(create_chart, symbol='XBT')
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()

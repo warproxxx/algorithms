@@ -19,8 +19,12 @@ def print(to_print):
     else:
         filename = dirs[-1].split(".")[0]
 
+
     if "daddy_" in filename:
-        filename = "daddy_bot"
+        if "eth_daddy" in filename:
+            filename = "ETH_daddy_bot"
+        else:
+            filename = "BTC_daddy_bot"
     if "vol_trend_" in filename:
         filename = "vol_trend_bot"
     if "altcoin_" in filename:

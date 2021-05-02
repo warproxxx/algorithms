@@ -684,11 +684,10 @@ def daddy_core(request, symbol, pars_file, config_file):
 
         elif 'csv_file' in dic:
             open(config_file, 'w').write(dic['csv_file'])
+
+        #this needs to be diff now
         elif 'trend_start_date' in dic:
-            r.set('trend_start_date', dic['trend_start_date'])
-        elif 'backtest_sell_method' in dic or 'backtest_sell_method' in dic:
-            r.set('backtest_buy_method', dic['backtest_buy_method'])
-            r.set('backtest_sell_method', dic['backtest_sell_method'])
+            r.set('trend_start_date_{}'.format(symbol), dic['trend_start_date'])
 
     
     parameters = json.load(open(pars_file))
@@ -747,8 +746,9 @@ def daddy_core(request, symbol, pars_file, config_file):
     exchanges = exchanges.set_index('name').T.to_dict()
     new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
     csv_file = open(config_file, 'r').read()
+
     try:
-        run_log = open("logs/daddy_bot.log").read()
+        run_log = open("logs/{}_daddy_bot.log".format(symbol)).read()
     except:
         run_log = ""
 
@@ -761,33 +761,26 @@ def daddy_core(request, symbol, pars_file, config_file):
     all_parameters_json = json.dumps(all_parameters)
 
     try:
-        trend_start_date = r.get('trend_start_date').decode()
+        trend_start_date = r.get('trend_start_date_{}'.format(symbol)).decode()
     except:
         trend_start_date = ""
 
-    try:
-        trend_stop_disable = r.get('trend_stop_disable').decode()
-    except:
-        trend_stop_disable = ""
-    
-    try:
-        backtest_buy_method = r.get('backtest_buy_method').decode()
-    except:
-        backtest_buy_method = ""
-
-    try:
-        backtest_sell_method = r.get('backtest_sell_method').decode()
-    except:
-        backtest_sell_method = ""
-
 
     trades = pd.read_csv('data/{}USD_trades.csv'.format(symbol))[['Date', 'Type', 'Price']]
-
+    trades = trades[-6:]
+    trades = trades.round(2)
     s = io.StringIO()
     trades[-6:].to_csv(s, index=None)
     trade_logs = s.getvalue()
 
-    return {'all_parameters': all_parameters, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, "trend_start_date": trend_start_date, "trend_stop_disable": trend_stop_disable, "backtest_buy_method": backtest_buy_method, "backtest_sell_method": backtest_sell_method}
+    features = pd.read_csv('data/{}_features.csv'.format(symbol))[['percentage_large', 'buy_percentage_large', 'macd', 'rsi']]
+    features = features[-6:]
+    features = features.round(2)
+    s = io.StringIO()
+    features.to_csv(s, index=None)
+    features_log = s.getvalue()
+
+    return {'all_parameters': all_parameters, 'symbol': symbol, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'features_log': features_log, "trend_start_date": trend_start_date}
     
     
 def daddy_interface(request):
@@ -797,7 +790,8 @@ def daddy_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
-    
+def eth_interface(request):
+    pass
 
 def delete(request):
     req = request.GET.dict()

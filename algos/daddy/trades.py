@@ -40,13 +40,13 @@ def get_data(url, index, proxy):
     global threads
         
     if proxy == None:
-        res = requests.get(url, timeout=2)
+        res = requests.get(url)
     else:
         proxies = {
           "http": "http://" + proxy,
           "https": "https://" + proxy,
         }
-        res = requests.get(url, proxies=proxies, timeout=2)
+        res = requests.get(url, proxies=proxies)
     
     results[index] = pd.DataFrame(json.loads(res.text))
 
@@ -369,7 +369,7 @@ def run_backtest(symbol='XBT'):
     else:
         minute_only = int(minute[1:])
         
-    if (minute_only < 8):
+    if (minute_only < 6):
         have_till_calc = last_date - pd.Timedelta(minutes=10)
     else:
         have_till_calc = last_date
@@ -415,7 +415,7 @@ def run_backtest(symbol='XBT'):
     
     # features = pd.read_csv('data/{}_features.csv'.format(symbol))
     features['timestamp'] = pd.to_datetime(features['timestamp'])
-    trends = get_trends()
+    trends = get_trends(symbol=symbol)
     curr_group = trends.iloc[-1]['curr_group'].date()
     last_date = features.iloc[-1]['timestamp'].date()
 
@@ -424,7 +424,7 @@ def run_backtest(symbol='XBT'):
     
     try:
         r = redis.Redis(host='localhost', port=6379, db=0)
-        trend_start_date = pd.to_datetime(r.get('trend_start_date').decode())
+        trend_start_date = pd.to_datetime(r.get('trend_start_date_{}'.format(symbol)).decode())
         features = features[features['timestamp'] >= trend_start_date]
     except Exception as e:
         print(str(e))

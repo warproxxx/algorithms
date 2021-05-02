@@ -9,8 +9,8 @@ import time
 from algos.daddy.trades import get_trends
 import redis
 
-def create_plot(biased=True):
-    df = pd.read_csv("data/XBTUSD_daily.csv")
+def create_plot(symbol='XBT', biased=True):
+    df = pd.read_csv("data/{}USD_daily.csv".format(symbol))
     df['timestamp'] = pd.to_datetime(df['timestamp'])
     df["30D_volatility"] = df['close'].rolling(30).std()/10
     df['30D_volatility'] = df['30D_volatility'].fillna(method='bfill').fillna(method='ffill')
@@ -81,10 +81,10 @@ def create_plot(biased=True):
     html = fig.to_html()
 
     if biased == True:
-        with open('frontend_interface/static/plotly.html', 'w') as file:
+        with open('frontend_interface/static/plotly_{}.html'.format(symbol), 'w') as file:
             file.write(html)
     elif biased == False:
-        with open('frontend_interface/static/plot_unbiased.html', 'w') as file:
+        with open('frontend_interface/static/plot_unbiased_{}.html'.format(symbol), 'w') as file:
             file.write(html)
 
     date_ranges = list(decrease_to_increase) + list(increase_to_decrease)
@@ -107,15 +107,15 @@ def create_plot(biased=True):
     ranges = pd.DataFrame(ranges)
 
     if biased == True:
-        ranges.to_csv('data/ranges.csv', index=None)
+        ranges.to_csv('data/ranges_{}.csv'.format(symbol), index=None)
     elif biased == False:
-        ranges.to_csv('data/ranges_unbiased.csv', index=None)
+        ranges.to_csv('data/ranges_unbiased_{}.csv'.format(symbol), index=None)
 
-def create_chart():
-    trends = get_trends()
+def create_chart(symbol='XBT'):
+    trends = get_trends(symbol=symbol)
     
-    create_plot(biased=True)
-    create_plot(biased=False)
+    create_plot(symbol=symbol, biased=True)
+    create_plot(symbol=symbol, biased=False)
 
 if __name__ == '__main__':
     create_chart()
