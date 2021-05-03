@@ -711,7 +711,6 @@ def daddy_core(request, symbol, pars_file, config_file):
             pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
         except:
             pos_size = 0
-
         
         try:
             pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
@@ -722,7 +721,6 @@ def daddy_core(request, symbol, pars_file, config_file):
             free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
         except:
             free_balance = 0
-
         
         row['position_since'] = position_since
         row['avgEntryPrice'] = avgEntryPrice
@@ -765,7 +763,6 @@ def daddy_core(request, symbol, pars_file, config_file):
         trend_start_date = r.get('trend_start_date_{}'.format(symbol)).decode()
     except:
         trend_start_date = ""
-
 
     trades = pd.read_csv('data/{}USD_trades.csv'.format(symbol))[['Date', 'Type', 'Price']]
     trades = trades[-6:]
@@ -825,7 +822,12 @@ def addParms(request):
 
     if 'key' in req:
         if req['key'] == 'cQyv3TuVGc9m7KTQ66q33hcjtyjvMD9RsPBogkYc4idhMDQhpcNUfZHRBMrepCRR7XdAPD9TYbMMU5Dr':
-            parameters = json.load(open('algos/daddy/parameters.json'))
+            try:
+                folder = req['folder']
+            except:
+                folder = 'daddy'
+
+            parameters = json.load(open('algos/{}/parameters.json'.format(folder)))
             new_pars = {}
             new_pars['mult'] = float(req['mult'])
             new_pars['percentage_large'] = float(req['p_large'])
@@ -843,10 +845,6 @@ def addParms(request):
             new_pars['profit_cap'] = float(req['profit_cap'])
             new_pars['name'] = req['name']
             
-            try:
-                folder = req['folder']
-            except:
-                folder = 'daddy'
 
             with open('algos/{}/parameters/{}.json'.format(folder, new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
