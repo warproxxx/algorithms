@@ -1,5 +1,7 @@
 import schedule
 from algos.daddy.bot import start_bot, create_chart
+import threading
+import time
 
 def start_schedlued():
     while True:

@@ -23,9 +23,10 @@ def round_down(value, decimals):
 
         
 class liveTrading():
-    def __init__(self, exchange, name, symbol='BTC/USD', testnet=True, parameter_file="algos/daddy/parameters.json"):
+    def __init__(self, exchange, name, symbol='BTC/USD', testnet=True, parameter_file="algos/daddy/parameters.json", config_file='algos/daddy/exchanges.csv'):
         self.symbol = symbol
         self.parameter_file = parameter_file
+        self.config_file = config_file
 
         self.parameters = json.load(open(parameter_file))
         self.lev = self.parameters['mult']
@@ -103,7 +104,7 @@ class liveTrading():
 
             self.increment = .5
         elif exchange == 'ftx':
-            config = pd.read_csv('algos/daddy/exchanges.csv')
+            config = pd.read_csv(self.config_file)
             subaccount = config[(config['name'] == self.name)].iloc[0]['subaccount']
 
 
@@ -365,6 +366,10 @@ class liveTrading():
                     return current_pos, float(pos['entry_price']), float(pos['size'])
                 elif self.exchange_name == 'ftx':
                     pos = pd.DataFrame(self.exchange.private_get_positions(params={'showAvgPrice': True})['result'])
+
+                    if len(pos) == 0:
+                        return 'NONE', 0, 0
+                        
                     pos = pos[pos['future'] == self.symbol_here].iloc[0]
 
                     if float(pos['openSize']) == 0:
@@ -578,7 +583,7 @@ class liveTrading():
 
 
     def get_balance(self):
-        exchanges = pd.read_csv('algos/daddy/exchanges.csv')
+        exchanges = pd.read_csv(self.config_file)
         balance_threshold = float(exchanges[exchanges['exchange'] == self.exchange_name].iloc[0]['max_trade'])
         actual_balance = self.actually_get_balance()
 

@@ -79,7 +79,7 @@ def get_df(start_time, symbol, proxy=None, total_range=30):
     return df
 
 def manual_scrape(scrape_from, symbol, sleep=True):
-    print("Manual scrape for {}".format(scrape_from))
+    print("Manual scrape for {} from {}".format(symbol, scrape_from))
     proxy_df = pd.read_csv('proxies_{}'.format(symbol), sep=':', header=None)
     proxy_df.columns = ['proxy', 'port', 'username', 'password']
 
@@ -102,7 +102,7 @@ def manual_scrape(scrape_from, symbol, sleep=True):
             all_df = all_df.dropna(subset=['timestamp'], how='all')
             
             scrape_from = all_df.iloc[-1]['timestamp']
-            print("Got {} data till {}".format(len(curr_df), scrape_from))
+            print("Got {} {} data till {}".format(len(curr_df), symbol, scrape_from))
             
             if len(curr_df) < 1000:
                 completed = True

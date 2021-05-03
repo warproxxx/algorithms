@@ -61,7 +61,7 @@ class daddyBot():
             name = details['name']
 
             if details['trade'] == 1:       
-                self.lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET, parameter_file=parameter_file) 
+                self.lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET, parameter_file=parameter_file, config_file=config_file) 
                 self.lts[name].set_position()
 
 
