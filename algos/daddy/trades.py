@@ -220,7 +220,7 @@ def get_significant_traders(df):
     df = df.drop_duplicates()
     return df
 
-def get_features(curr_df):
+def get_features(curr_df, coin):
     ser = {}
     curr_df = curr_df.sort_values('timestamp')
     
@@ -251,7 +251,10 @@ def get_features(curr_df):
     readable_bins = []
     
 
-    readable_bins = [0, 2, 10, np.inf]
+    if coin == 'ETH':
+        readable_bins = [0, 40, 200, np.inf]
+    elif coin == 'XBT':
+        readable_bins = [0, 2, 10, np.inf]
         
     readable_labels = ['small', 'medium', 'large']
     curr_df['new_range'] = pd.cut(curr_df['homeNotional'], readable_bins, include_lowest=True, labels=readable_labels).astype(str)
@@ -265,14 +268,14 @@ def get_features(curr_df):
 
     return pd.Series(ser)
 
-def get_features_from_sig(df):
+def get_features_from_sig(df, symbol):
     df['timestamp'] = pd.to_datetime(df['timestamp'])
 
     minute_only = df['timestamp'].dt.minute.astype(str)
     minute_only_two = minute_only.apply(lambda x: str(x)[1:]) #there is a mistake here.
     df = df[~((minute_only == '9') | (minute_only_two == '9') | (minute_only == '8')  | (minute_only_two == '8'))]
 
-    features = df.groupby(pd.Grouper(key='timestamp', freq="10Min", label='left')).apply(get_features)
+    features = df.groupby(pd.Grouper(key='timestamp', freq="10Min", label='left')).apply(get_features, coin=symbol)
     features = features.reset_index()
 
     features['timestamp'] = pd.to_datetime(features['timestamp'])
@@ -393,7 +396,7 @@ def run_backtest(symbol='XBT', parameter_file='algos/daddy/parameters.json'):
         
         #calculate and save features
         df = get_significant_traders(df)
-        features = get_features_from_sig(df)
+        features = get_features_from_sig(df, symbol=symbol)
 
         features['change'] = ((features['close'] - features['open'])/features['open']) * 100
         features = features[['timestamp', 'open', 'high', 'low', 'close', 'volume', 'change', 'percentage_large', 'buy_percentage_large']]
