@@ -842,17 +842,22 @@ def addParms(request):
             new_pars['stop_percentage'] = float(req['stop'])
             new_pars['profit_cap'] = float(req['profit_cap'])
             new_pars['name'] = req['name']
+            
+            try:
+                folder = req['folder']
+            except:
+                folder = 'daddy'
 
-            with open('algos/daddy/parameters/{}.json'.format(new_pars['name']), 'w') as f:
+            with open('algos/{}/parameters/{}.json'.format(folder, new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
 
-            parameters = json.load(open('algos/daddy/parameters.json'))
+            parameters = json.load(open('algos/{}/parameters.json'.format(folder)))
             
             if parameters['name'] == req['name']:
-                with open('algos/daddy/parameters.json', 'w') as f:
+                with open('algos/{}/parameters.json'.format(folder), 'w') as f:
                     json.dump(new_pars, f)
 
-            return HttpResponseRedirect('/daddy')
+            return HttpResponseRedirect('/{}'.format(folder))
         else:
             return HttpResponse("Fuck Off")
 

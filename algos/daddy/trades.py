@@ -85,7 +85,7 @@ def manual_scrape(scrape_from, symbol, sleep=True):
 
     proxy_df['proxy_string'] =  proxy_df['username'] + ":" + proxy_df['password'] + "@" + proxy_df['proxy'] + ":" + proxy_df['port'].astype(str)
     proxy_list = list(proxy_df['proxy_string'])
-    at_once = len(proxy_list) + 1
+    at_once = len(proxy_list)
     all_df = pd.DataFrame()
     completed = False
     
@@ -93,10 +93,7 @@ def manual_scrape(scrape_from, symbol, sleep=True):
         start_time = time.time()
         
         for i in range(at_once):
-            if i == 0:
-                curr_df = get_df(scrape_from, symbol)
-            else:
-                curr_df = get_df(scrape_from, symbol, proxy=proxy_list[i-1])
+            curr_df = get_df(scrape_from, symbol, proxy=proxy_list[i-1])
                 
             all_df = all_df.append(curr_df, ignore_index=True)
             all_df = all_df.dropna(subset=['timestamp'], how='all')
@@ -358,7 +355,7 @@ def get_trends(symbol='XBT'):
 def save_features(features, symbol):
     features.to_csv('data/{}_features.csv'.format(symbol), index=None)
 
-def run_backtest(symbol='XBT'):
+def run_backtest(symbol='XBT', parameter_file='algos/daddy/parameters.json'):
     update_trades(symbol=symbol)
     last_date = pd.to_datetime(library.max_date('{}_trades'.format(symbol)).astimezone(pytz.UTC)).tz_localize(None)
 
@@ -435,7 +432,7 @@ def run_backtest(symbol='XBT'):
     dupe['timestamp'] = dupe['timestamp'] + pd.Timedelta(minutes=10)
     features = features.append(dupe, ignore_index=True)
 
-    parameters = json.load(open('algos/daddy/parameters.json'))
+    parameters = json.load(open(parameter_file))
     run = perform_backtest(features, parameters)
     analysis = run[0].analyzers.getbyname('tradeanalyzer').get_analysis()
     portfolio, trades, operations, stops_triggered = run[0].get_logs()

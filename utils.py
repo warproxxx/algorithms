@@ -6,7 +6,7 @@ import redis
 if not os.path.isdir("logs/"):
     os.makedirs("logs/")
 
-def print(to_print):
+def print(to_print, symbol=""):
     frame = inspect.stack()[1]
     module = inspect.getmodule(frame[0])
     dirs = module.__file__.split("/")
@@ -19,21 +19,17 @@ def print(to_print):
     else:
         filename = dirs[-1].split(".")[0]
 
-
-    if "daddy_" in filename:
-        if "eth_daddy" in filename:
-            filename = "ETH_daddy_bot"
-        else:
-            filename = "XBT_daddy_bot"
-            
-    if "vol_trend_" in filename:
-        filename = "vol_trend_bot"
-    if "altcoin_" in filename:
-        filename = "altcoin_bot"
-    if "ratio_" in filename:
-        filename = "ratio_bot"
-    if "chadlor_" in filename:
-        filename = "chadlor_bot"
+    if symbol == "":
+        if "vol_trend_" in filename:
+            filename = "vol_trend_bot"
+        if "altcoin_" in filename:
+            filename = "altcoin_bot"
+        if "ratio_" in filename:
+            filename = "ratio_bot"
+        if "chadlor_" in filename:
+            filename = "chadlor_bot"
+    else:
+        filename = "{}_daddy_bot".format(symbol)
         
     if isinstance(to_print, str) == False:
         try:
@@ -51,14 +47,15 @@ def flush_redis():
     for key in r.scan_iter("202*"):
         r.delete(key)
 
-    r.set('first_execution', 1)
-    r.set('first_nine', 1)
-    r.set('got_this_turn', 0)
-
     try:
         r.get('daddy_enabled').decode()
     except:
         r.set('daddy_enabled', 0)
+        
+    try:
+        r.get('eth_daddy_enabled').decode()
+    except:
+        r.set('eth_daddy_enabled', 0)
 
     try:
         r.get('vol_trend_enabled').decode()
