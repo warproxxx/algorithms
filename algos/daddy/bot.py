@@ -127,7 +127,7 @@ class daddyBot():
         self.EXCHANGES = pd.read_csv(self.config_file) #update exchanges
         EXCHANGES = self.EXCHANGES 
 
-        analysis, backtest_date = run_backtest()
+        analysis, backtest_date = run_backtest(self.symbol)
         save_file_name = self.r.get('save_file_name').decode()
         backtest_date = pd.to_datetime(backtest_date) - pd.Timedelta(minutes=10)
         save_file_name = pd.to_datetime(save_file_name)

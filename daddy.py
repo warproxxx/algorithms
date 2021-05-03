@@ -19,6 +19,7 @@ from utils import print
 f = FeedHandler(retries=100000)
 
 EXCHANGES = pd.concat([pd.read_csv('algos/daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv')])
+EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
 EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
 
