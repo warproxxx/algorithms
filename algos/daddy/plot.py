@@ -60,13 +60,14 @@ def create_plot(symbol='XBT', biased=True):
                 
     fig.update_layout(hovermode="x unified")
 
-    max_y = df['close'].max() + 1000
+    max_y = df['close'].max() + 0.025 * df['close'].max()
+    min_y = df['close'].min() - 0.025 * df['close'].min()
 
     for increase_point in decrease_to_increase:
-        fig.add_shape(dict(type="line", x0=increase_point, y0=3000, x1=increase_point, y1=max_y, line=dict(color="green", width=1)))
+        fig.add_shape(dict(type="line", x0=increase_point, y0=min_y, x1=increase_point, y1=max_y, line=dict(color="green", width=1)))
 
     for decrease_point in increase_to_decrease:
-        fig.add_shape(dict(type="line", x0=decrease_point, y0=3000, x1=decrease_point, y1=max_y, line=dict(color="red", width=1)))
+        fig.add_shape(dict(type="line", x0=decrease_point, y0=min_y, x1=decrease_point, y1=max_y, line=dict(color="red", width=1)))
 
     fig.update_layout(
             xaxis=go.layout.XAxis(

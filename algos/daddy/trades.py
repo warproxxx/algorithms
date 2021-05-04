@@ -252,7 +252,7 @@ def get_features(curr_df, coin):
     
 
     if coin == 'ETH':
-        readable_bins = [0, 40, 200, np.inf]
+        readable_bins = [0, 10, 40, np.inf]
     elif coin == 'XBT':
         readable_bins = [0, 2, 10, np.inf]
         
