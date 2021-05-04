@@ -65,17 +65,17 @@ class daddyBot():
     def print(self, to_print):
         utils_print(to_print, symbol=self.symbol)
 
-    def after_stuffs(self, exchange_name):
-        lt = self.lts[exchange_name]
+    def after_stuffs(self, name):
+        lt = self.lts[name]
 
         try:
             lt.set_position()
         except Exception as e:
-            self.print("Error in setting pos in {}".format(exchange_name))
+            self.print("Error in setting pos in {}".format(name))
             
         lt.update_parameters()
 
-        current_pos = self.r.get('{}_current_pos'.format(exchange_name)).decode()
+        current_pos = self.r.get('{}_current_pos'.format(name)).decode()
 
         if current_pos == 'NONE':
             lt.close_stop_order()
@@ -101,13 +101,13 @@ class daddyBot():
             
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
-                    self.print("Opened position from backtest_verification for {}".format(details['name']))
-                    self.r.set('daddy_position', 1)
+                    self.print("Opening position from backtest_verification for {}".format(details['name']))
                     lt.fill_order('buy', method=details['buy_method'])
+                    lt.add_stop_loss()
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
                     self.print("Closed long position from backtest_verification for {}".format(details['name']))
-                    self.r.set('daddy_position', 0)
                     lt.fill_order('sell', method=details['sell_method'])
+                    lt.close_stop_order()
                 else:
                     self.print("As required for {}".format(details['name']))
             else:
