@@ -845,7 +845,7 @@ class liveTrading():
         current_pos, avgEntryPrice, amount = self.get_position()
 
         if current_pos == 'LONG':
-            if self.threshold_tiggered == False:
+            if self.threshold_tiggered == False and order_type == 'sell':
                 try:
                     amount, price = self.get_max_amount(order_type)
                     order = self.market_trade(order_type, amount)

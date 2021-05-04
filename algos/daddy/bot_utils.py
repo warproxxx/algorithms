@@ -27,8 +27,6 @@ from utils import print as utils_print
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
-
-
 async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass           
 
