@@ -109,6 +109,12 @@
     table.table td .add {
         display: none;
     }
+
+    #table-bold tr:first-child {
+      font-weight:bold;
+      text-transform: uppercase;
+    }
+
     </style>
 
 </head>
@@ -185,14 +191,32 @@
 
           <div>
             <div style = "float:left; width:49%; margin-right:2%;">
-              <b>Backtest Logs:</b><br/>
-              <textarea rows="8" style="width:100%;" id="logs" name="trade_logs" readonly>{{trade_logs}}</textarea>
+              <table style="width:49%;" class="table-bordered" id="table-bold">
+
+                {% for key, value in trades.items %}
+                <tr>
+                    {% for inside_key, inside_value in value.items %}
+                      <td>{{inside_value}}</td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+              </table>
+
               <br/><br/>
             </div>
             
             <div>
-              <b>Features:</b><br/>
-              <textarea rows="8" style="width:49%;" id="logs" name="trade_logs" readonly>{{features_log}}</textarea>
+              <table style="width:49%;" class="table-bordered" id="table-bold">
+
+                {% for key, value in features.items %}
+                  <tr>
+                      {% for inside_key, inside_value in value.items %}
+                        <td>{{inside_value}}</td>
+                      {% endfor %}
+                  </tr>
+                {% endfor %}
+              </table>
+              
               <br/><br/>
             </div>
           </div>
@@ -406,7 +430,7 @@
   <a class="scroll-to-top rounded" href="#page-top">
     <i class="fas fa-angle-up"></i>
   </a>
-  
+
   <script>
       // Edit row on edit button click
       $(document).on("click", ".edit", function(){		
@@ -454,7 +478,8 @@
       });
 
         // alert(parameters['best_tested']['mult']);
-        
+
+
   </script>
 
   <!-- Bootstrap core JavaScript-->

@@ -767,18 +767,20 @@ def daddy_core(request, symbol, pars_file, config_file):
     trades = pd.read_csv('data/{}USD_trades.csv'.format(symbol))[['Date', 'Type', 'Price']]
     trades = trades[-6:]
     trades = trades.round(2)
-    s = io.StringIO()
-    trades[-6:].to_csv(s, index=None)
-    trade_logs = s.getvalue()
+    trades.loc[-1] = trades.columns
+    trades.index = trades.index + 1 
+    trades = trades.sort_index()
+    trades = trades.T.to_dict()
 
-    features = pd.read_csv('data/{}_features.csv'.format(symbol))[['percentage_large', 'buy_percentage_large', 'macd', 'rsi']]
+    features = pd.read_csv('data/{}_features.csv'.format(symbol))[['timestamp', 'close', 'change', 'percentage_large', 'buy_percentage_large', 'macd', 'rsi']]
     features = features[-6:]
     features = features.round(2)
-    s = io.StringIO()
-    features.to_csv(s, index=None)
-    features_log = s.getvalue()
+    features.loc[-1] = features.columns
+    features.index = features.index + 1 
+    features = features.sort_index()
+    features = features.T.to_dict()
 
-    return {'all_parameters': all_parameters, 'symbol': symbol, 'all_parameters_json': all_parameters_json, 'trade_logs': trade_logs, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'features_log': features_log, "trend_start_date": trend_start_date}
+    return {'all_parameters': all_parameters, 'symbol': symbol, 'all_parameters_json': all_parameters_json, 'trades': trades, 'parameters': parameters, 'exchanges': exchanges, 'new_df': new_df, 'trade_methods': trade_methods, 'csv_file': csv_file, 'run_log': run_log, 'features': features, "trend_start_date": trend_start_date}
     
 
 def eth_daddy_interface(request):
