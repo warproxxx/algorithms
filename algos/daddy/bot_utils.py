@@ -85,13 +85,6 @@ class daddyBot():
     def perform_backtrade_verification(self, details, analysis):
         lts = self.lts
 
-        try:
-            chadlor_position = int(self.r.get('chadlor_position').decode())
-        except:
-            chadlor_position = 0
-
-        chadlor_position = 0
-
         if details['trade'] == 1:
             lt = lts[details['name']]
             
@@ -112,12 +105,9 @@ class daddyBot():
                     self.r.set('daddy_position', 1)
                     lt.fill_order('buy', method=details['buy_method'])
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
-                    if chadlor_position == 0:
-                        self.print("Closed long position from backtest_verification for {}".format(details['name']))
-                        self.r.set('daddy_position', 0)
-                        lt.fill_order('sell', method=details['sell_method'])
-                    else:
-                        self.print("Daddy isn't in position but chadlor is long so not closing")
+                    self.print("Closed long position from backtest_verification for {}".format(details['name']))
+                    self.r.set('daddy_position', 0)
+                    lt.fill_order('sell', method=details['sell_method'])
                 else:
                     self.print("As required for {}".format(details['name']))
             else:
