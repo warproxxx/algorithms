@@ -187,7 +187,12 @@ class liveTrading():
                     stats = self.exchange.user_post_leverage_save({"symbol": self.symbol_here, "leverage": str(self.lev)})
                 elif self.exchange_name == 'ftx':
                     try:
-                        stats = self.exchange.private_post_account_leverage({"leverage": 20}) #only allows [1,3,5,10,20,50,100]
+                        if self.symbol == 'BTC-PERP' or self.symbol == 'ETH-PERP':
+                            leverage = 50
+                        else:
+                            leverage = 20
+
+                        stats = self.exchange.private_post_account_leverage({"leverage": leverage}) #only allows [1,3,5,10,20,50,100]
                         break
                     except Exception as e:
                         break
