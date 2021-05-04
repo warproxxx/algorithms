@@ -831,15 +831,21 @@ class liveTrading():
             trading_array.append(final_amount)
         
         for amount in trading_array:
-            order = self.market_trade(order_type, amount) 
-            time.sleep(sleep_time)
+            try:
+                order = self.market_trade(order_type, amount) 
+                time.sleep(sleep_time)
+            except Exception as e:
+                print("Exception: {}".format(str(e)))
 
         current_pos, avgEntryPrice, amount = self.get_position()
 
         if current_pos == 'LONG':
             if self.threshold_tiggered == False:
-                amount, price = self.get_max_amount(order_type)
-                order = self.market_trade(order_type, amount)
+                try:
+                    amount, price = self.get_max_amount(order_type)
+                    order = self.market_trade(order_type, amount)
+                except Exception as e:
+                    print("Exception: {}".format(str(e)))
 
         
 
