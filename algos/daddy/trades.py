@@ -58,9 +58,9 @@ def get_df(start_time, symbol, proxy=None, total_range=30):
     start_time = pd.to_datetime(start_time).tz_localize(None)
     
     if start_time.date() == datetime.datetime.utcnow().date():
-        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}{}&count={}&start={}&reverse=false&startTime={}".format(symbol, config['secondary_currency']['symbol'], 1000, i * 1000, start_time) for i in range(total_range)]
+        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}{}&count={}&start={}&reverse=false&startTime={}".format(symbol, config['secondary_currency'][symbol], 1000, i * 1000, start_time) for i in range(total_range)]
     else:
-        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}{}&count={}&start={}&reverse=false&startTime={}&endTime={}".format(symbol, config['secondary_currency']['symbol'], 1000, i * 1000, start_time, pd.to_datetime(start_time.date() + pd.Timedelta(days=1))) for i in range(total_range)]
+        urls = ["https://www.bitmex.com/api/v1/trade?symbol={}{}&count={}&start={}&reverse=false&startTime={}&endTime={}".format(symbol, config['secondary_currency'][symbol], 1000, i * 1000, start_time, pd.to_datetime(start_time.date() + pd.Timedelta(days=1))) for i in range(total_range)]
     
     threads = [None] * len(urls)
     results = [None] * len(urls)
@@ -140,7 +140,7 @@ def aws_scrape(name, symbol):
     df = pd.read_csv(temp, compression='gzip')
     os.remove(temp)
 
-    aws_df = df[df['symbol'] == '{}{}'.format(symbol, config['secondary_currency']['symbol'])]
+    aws_df = df[df['symbol'] == '{}{}'.format(symbol, config['secondary_currency'][symbol])]
     aws_df['timestamp'] = pd.to_datetime(aws_df['timestamp'], format="%Y-%m-%dD%H:%M:%S.%f")
     aws_df = aws_df.sort_values('timestamp').reset_index(drop=True)
     return aws_df
@@ -253,10 +253,9 @@ def get_features(curr_df, coin):
     readable_bins = []
     
 
-    if coin == 'ETH':
-        readable_bins = [0, 10, 40, np.inf]
-    elif coin == 'XBT':
-        readable_bins = [0, 2, 10, np.inf]
+    select_bins = config['bin_size'][coin]
+    readable_bins = select_bins.copy()
+    readable_bins.append(np.inf)
         
     readable_labels = ['small', 'medium', 'large']
     curr_df['new_range'] = pd.cut(curr_df['homeNotional'], readable_bins, include_lowest=True, labels=readable_labels).astype(str)
@@ -297,7 +296,7 @@ def update_price(symbol='XBT'):
 
     if (pd.to_datetime(start_time).date() < pd.Timestamp.utcnow().date()):
         try:
-            new_url = 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=1d&partial=false&symbol={}{}&count=500&reverse=false&startTime={}'.format(symbol, config['secondary_currency']['symbol'], start_time)
+            new_url = 'https://www.bitmex.com/api/v1/trade/bucketed?binSize=1d&partial=false&symbol={}{}&count=500&reverse=false&startTime={}'.format(symbol, config['secondary_currency'][symbol], start_time)
             res = requests.get(new_url)
             price_df = pd.DataFrame(json.loads(res.text))
             price_df['timestamp'] = pd.to_datetime(price_df['timestamp'])
