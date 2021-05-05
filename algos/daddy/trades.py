@@ -47,8 +47,13 @@ def get_data(url, index, proxy):
           "http": "http://" + proxy,
           "https": "https://" + proxy,
         }
+
+        print(url)
+        print(proxies)
+        
         res = requests.get(url, proxies=proxies)
-    
+
+        
     results[index] = pd.DataFrame(json.loads(res.text))
 
 def get_df(start_time, symbol, proxy=None, total_range=30):
