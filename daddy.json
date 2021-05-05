@@ -1,0 +1,5 @@
+{
+    "symbols" : ["XBT", "ETH", "DOGE"],
+    "bin_size": {"ETH": [0, 40, 200], "XBT": [0, 2, 10], "DOGE": [0, 100000, 200000]},
+    "secondary_currency": {"ETH": "USD", "XBT": "USD", "DOGE": "USDT"}
+}

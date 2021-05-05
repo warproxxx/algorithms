@@ -790,6 +790,13 @@ def eth_daddy_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
+def doge_daddy_interface(request):
+    if request.user.is_authenticated:
+        pars = daddy_core(request, 'DOGE', 'algos/doge_daddy/parameters.json', 'algos/doge_daddy/exchanges.csv')
+        return render(request, "frontend_interface/daddy_index.html", pars)
+    else:
+        return HttpResponseRedirect('/login')
+
 def daddy_interface(request):
     if request.user.is_authenticated:
         pars = daddy_core(request, 'XBT', 'algos/daddy/parameters.json', 'algos/daddy/exchanges.csv')

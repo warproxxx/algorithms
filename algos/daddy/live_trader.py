@@ -121,11 +121,9 @@ class liveTrading():
                             'enableRateLimit': True,
                             'options': {'defaultMarket': 'futures'}
                         })
-                    
-            if symbol == "BTC-PERP":
-                self.symbol_here = "BTC-PERP"
-            elif symbol == "ETH-PERP":
-                self.symbol_here = "ETH-PERP"
+            
+            if "-PERP" in symbol:
+                self.symbol_here = symbol
 
             self.exchange.headers = {
                                         'FTX-SUBACCOUNT': subaccount,
