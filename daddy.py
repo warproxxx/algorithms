@@ -19,7 +19,7 @@ from utils import print
 
 f = FeedHandler(retries=100000)
 
-EXCHANGES = pd.concat([pd.read_csv('algos/daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv')])
+EXCHANGES = pd.concat([pd.read_csv('algos/daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv')])
 EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
 EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
@@ -34,33 +34,9 @@ def bot():
     eth_daddy_thread = multiprocessing.Process(target=eth_daddy_bot, args=())
     eth_daddy_thread.start()
 
-    while True:
-        try:
-            if float(r.get('daddy_enabled').decode()) != 1:
-                if daddy_thread.is_alive():
-                    print("Daddy Bot terminated")
-                    daddy_thread.terminate()
+    doge_daddy_thread = multiprocessing.Process(target=doge_daddy_bot, args=())
+    doge_daddy_thread.start()
 
-            if daddy_thread.is_alive() == False:
-                if float(r.get('daddy_enabled').decode()) == 1:
-                    print("Daddy Bot started")
-                    daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
-                    daddy_thread.start()
-
-            if float(r.get('eth_daddy_enabled').decode()) != 1:
-                if eth_daddy_thread.is_alive():
-                    print("ETH Daddy Bot terminated")
-                    eth_daddy_thread.terminate()
-
-            if eth_daddy_thread.is_alive() == False:
-                if float(r.get('eth_daddy_enabled').decode()) == 1:
-                    print("ETH Daddy Bot started")
-                    eth_daddy_thread = multiprocessing.Process(target=eth_daddy_thread, args=())
-                    eth_daddy_thread.start()
-
-
-        except Exception as e:
-            print(str(e))
 
 if __name__ == "__main__":
     initial_tasks()
