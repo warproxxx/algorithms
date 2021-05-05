@@ -8,8 +8,7 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
-#fix the symbol
-def eth_daddy_bot():
+def doge_daddy_bot():
     print("DOGE daddy bot")
     schedule.every().day.at("00:30").do(create_chart, symbol='DOGE')
 
