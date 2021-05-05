@@ -48,9 +48,6 @@ def get_data(url, index, proxy):
           "https": "https://" + proxy,
         }
 
-        print(url)
-        print(proxies)
-        
         res = requests.get(url, proxies=proxies)
 
         
