@@ -126,7 +126,6 @@ class daddyBot():
 
         backtest_thread = {}
 
-        #so this isn't same for some reason
         self.print("Symbol:{} Backtest Date: {} Save file name: {}".format(self.symbol, backtest_date, save_file_name))
         if backtest_date == save_file_name:
             for idx, details in EXCHANGES.iterrows():

@@ -1,2 +1,1 @@
-config = json.load(open("daddy.json"))
-config['secondary_currency']['symbol']
+Fix the too many triggered order error before
