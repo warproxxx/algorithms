@@ -8,7 +8,7 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
-def doge_daddy_bot():
+def ltc_daddy_bot():
     print("LTC daddy bot")
     schedule.every().day.at("00:30").do(create_chart, symbol='LTC')
 
