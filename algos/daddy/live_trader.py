@@ -14,13 +14,11 @@ from algos.daddy.defines import trade_methods
 import sys
 from utils import print
 
-
 def round_down(value, decimals):
     with decimal.localcontext() as ctx:
         d = decimal.Decimal(value)
         ctx.rounding = decimal.ROUND_DOWN
         return float(round(d, decimals))
-
         
 class liveTrading():
     def __init__(self, exchange, name, symbol='BTC/USD', testnet=True, parameter_file="algos/daddy/parameters.json", config_file='algos/daddy/exchanges.csv'):

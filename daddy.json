@@ -1,5 +1,5 @@
 {
-    "symbols" : ["XBT", "ETH", "DOGE"],
-    "bin_size": {"ETH": [0, 40, 200], "XBT": [0, 2, 10], "DOGE": [0, 100000, 200000]},
-    "secondary_currency": {"ETH": "USD", "XBT": "USD", "DOGE": "USDT"}
+    "symbols" : ["XBT", "ETH", "DOGE", "BCH", "LTC"],
+    "bin_size": {"XBT": [0, 2, 10], "ETH": [0, 40, 200], "DOGE": [0, 100000, 200000], "BCH": [0, 5, 20], "LTC": [0, 15, 100]},
+    "secondary_currency": {"XBT": "USD", "ETH": "USD", "DOGE": "USDT", "BCH": "USD", "LTC": "USD"}
 }

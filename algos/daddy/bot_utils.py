@@ -75,11 +75,6 @@ class daddyBot():
 
         current_pos = self.r.get('{}_current_pos'.format(name)).decode()
 
-        if current_pos == 'NONE':
-            lt.close_stop_order()
-        else:
-            lt.update_stop()
-
     def perform_backtrade_verification(self, details, analysis):
         lts = self.lts
 
@@ -101,11 +96,9 @@ class daddyBot():
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
                     self.print("Opening position from backtest_verification for {}".format(details['name']))
                     lt.fill_order('buy', method=details['buy_method'])
-                    lt.add_stop_loss()
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
                     self.print("Closed long position from backtest_verification for {}".format(details['name']))
                     lt.fill_order('sell', method=details['sell_method'])
-                    lt.close_stop_order()
                 else:
                     self.print("As required for {}".format(details['name']))
             else:
