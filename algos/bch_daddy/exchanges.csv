@@ -1,2 +1,2 @@
 name,exchange,types,name_type,cryptofeed_name,ccxt_symbol,symbol,cryptofeed_symbol,subaccount,increment,trade,collateral,max_trade,buy_method,sell_method,html_color
-doge_ftx,ftx,book,fund,FTX,DOGE-PERP,DOGEUSDT,DOGE-PERP,daddy_DOGE,0.000001,1,USD,0.0,10sec_average,10sec_average,info
+bch_ftx,ftx,book,fund,FTX,BCH-PERP,BCHUSDT,BCH-PERP,daddy_BCH,0.1,1,USD,0.0,10sec_average,10sec_average,info
