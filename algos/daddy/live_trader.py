@@ -59,8 +59,6 @@ class liveTrading():
             if symbol == "BTC/USD":
                 self.symbol_here = "XBTUSD"
 
-            self.increment = .5
-
         elif exchange == 'binance_futures':
             if testnet == True:
                 apiKey = os.getenv('BINANCE_TESTNET_ID')
@@ -81,7 +79,6 @@ class liveTrading():
             if symbol == "BTC/USDT":
                 self.symbol_here = "BTCUSDT"
 
-            self.increment = .1
         elif exchange == 'bybit':
             if testnet == True:
                 apiKey = os.getenv('BYBIT_TESTNET_ID')
@@ -102,7 +99,6 @@ class liveTrading():
             if symbol == "BTC/USD":
                 self.symbol_here = "BTCUSD"
 
-            self.increment = .5
         elif exchange == 'ftx':
             config = pd.read_csv(self.config_file)
             subaccount = config[(config['name'] == self.name)].iloc[0]['subaccount']
@@ -129,7 +125,6 @@ class liveTrading():
                                         'FTX-SUBACCOUNT': subaccount,
                                     }
 
-            self.increment = 0.5
         elif exchange == 'okex':
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
@@ -149,7 +144,6 @@ class liveTrading():
             if self.symbol == "BTC-USD-SWAP":
                 self.symbol_here = "BTC-USD-SWAP"
 
-            self.increment = 0.1
         elif exchange == 'huobi_swap':
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
@@ -161,10 +155,9 @@ class liveTrading():
             if self.symbol == "BTC-USD":
                 self.symbol_here = "BTC-USD"
 
-            self.increment = 0.1
             self.lev = 20
                         
-
+        self.increment = config[(config['name'] == self.name)].iloc[0]['increment']
         self.r = redis.Redis(host='localhost', port=6379, db=0)            
         self.update_parameters()
     
