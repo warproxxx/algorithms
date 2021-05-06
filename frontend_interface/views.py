@@ -12,7 +12,8 @@ import json
 
 import redis
 
-from algos.xbt_daddy.defines import trade_methods
+from algos.daddy.defines import trade_methods
+
 from algos.vol_trend.bot import get_position_balance
 from algos.altcoin.bot import get_positions
 from algos.ratio.bot import get_positions as get_ratio_positions
