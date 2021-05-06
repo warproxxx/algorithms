@@ -7,7 +7,7 @@ from cryptofeed.feedhandler import FeedHandler
 from cryptofeed import exchanges
 from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 
-from algos.daddy.bot_utils import daddy_trade, daddy_book, daddy_ticker
+from algos.xbt_daddy.bot_utils import daddy_trade, daddy_book, daddy_ticker
 
 from algos.xbt_daddy.bot import xbt_daddy_bot
 from algos.eth_daddy.bot import eth_daddy_bot

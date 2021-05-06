@@ -806,6 +806,7 @@ def xbt_daddy_interface(request):
 
 def daddy_interface(request):
     if request.user.is_authenticated:
+        r = redis.Redis(host='localhost', port=6379, db=0)
         bots = [x.split("/")[1] for x in glob('algos/*') if "_daddy" in x]
         
         positions = {}
@@ -814,40 +815,41 @@ def daddy_interface(request):
         for bot in bots:
             exchanges = pd.read_csv('algos/{}/exchanges.csv'.format(bot))
 
-            for idx, row in exchanges.iterrows():                
-                try:
-                    position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
-                except:
-                    position_since = 0
-                
-                try:
-                    avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
-                except:
-                    avgEntryPrice = 0
+            for idx, row in exchanges.iterrows():             
+                if row['trade'] == 1: 
+                    try:
+                        position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
+                    except:
+                        position_since = 0
+                    
+                    try:
+                        avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
+                    except:
+                        avgEntryPrice = 0
 
-                try:
-                    pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
-                except:
-                    pos_size = 0
-                
-                try:
-                    pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
-                except:
-                    pnl_percentage = 0
+                    try:
+                        pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
+                    except:
+                        pos_size = 0
+                    
+                    try:
+                        pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
+                    except:
+                        pnl_percentage = 0
 
-                try:
-                    free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
-                except:
-                    free_balance = 0
-                
-                row['position_since'] = position_since
-                row['avgEntryPrice'] = avgEntryPrice
-                row['pnl_percentage'] = pnl_percentage
-                row['pos_size'] = pos_size
-                row['balance'] = free_balance
-                row['url'] = bot
+                    try:
+                        free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
+                    except:
+                        free_balance = 0
+                    
+                    row['position_since'] = position_since
+                    row['avgEntryPrice'] = avgEntryPrice
+                    row['pnl_percentage'] = pnl_percentage
+                    row['pos_size'] = pos_size
+                    row['balance'] = free_balance
+                    row['url'] = bot
 
-                new_df.append(row.to_dict())
+                    new_df.append(row.to_dict())
 
 
         new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
