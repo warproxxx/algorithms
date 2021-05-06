@@ -809,7 +809,7 @@ def daddy_interface(request):
     if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)
         bots = [x.split("/")[1] for x in glob('algos/*') if "_daddy" in x]
-        
+        print(bots)
         positions = {}
         new_df = []
 
@@ -834,6 +834,7 @@ def daddy_interface(request):
                         pos_size = 0
                     
                     try:
+                        parameters = json.load(open('algos/{}/parameters.json'.format(bot)))
                         pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
                     except:
                         pnl_percentage = 0
