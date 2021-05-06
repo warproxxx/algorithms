@@ -37,7 +37,7 @@ class liveTrading():
         self.name = name
 
         name_here = name.upper()
-        
+        config = pd.read_csv(self.config_file)
 
         if exchange == 'bitmex':
             if testnet == True:
@@ -100,7 +100,6 @@ class liveTrading():
                 self.symbol_here = "BTCUSD"
 
         elif exchange == 'ftx':
-            config = pd.read_csv(self.config_file)
             subaccount = config[(config['name'] == self.name)].iloc[0]['subaccount']
 
 
