@@ -805,6 +805,20 @@ def xbt_daddy_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
+def ltc_daddy_interface(request):
+    if request.user.is_authenticated:
+        pars = daddy_core(request, 'LTC', 'algos/ltc_daddy/parameters.json', 'algos/ltc_daddy/exchanges.csv')
+        return render(request, "frontend_interface/daddy_index.html", pars)
+    else:
+        return HttpResponseRedirect('/login')
+
+def bch_daddy_interface(request):
+    if request.user.is_authenticated:
+        pars = daddy_core(request, 'BCH', 'algos/bch_daddy/parameters.json', 'algos/bch_daddy/exchanges.csv')
+        return render(request, "frontend_interface/daddy_index.html", pars)
+    else:
+        return HttpResponseRedirect('/login')
+
 def daddy_interface(request):
     if request.user.is_authenticated:
         r = redis.Redis(host='localhost', port=6379, db=0)
