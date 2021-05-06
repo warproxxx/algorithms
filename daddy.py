@@ -9,7 +9,7 @@ from cryptofeed.defines import TRADES, L2_BOOK, BID, ASK, TICKER
 
 from algos.daddy.bot_utils import daddy_trade, daddy_book, daddy_ticker
 
-from algos.daddy.bot import daddy_bot
+from algos.xbt_daddy.bot import xbt_daddy_bot
 from algos.eth_daddy.bot import eth_daddy_bot
 from algos.doge_daddy.bot import doge_daddy_bot
 
@@ -30,8 +30,8 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 r.set('update_running', 0)
 
 def bot():
-    daddy_thread = multiprocessing.Process(target=daddy_bot, args=())
-    daddy_thread.start()
+    xbt_daddy_thread = multiprocessing.Process(target=xbt_daddy_bot, args=())
+    xbt_daddy_thread.start()
     
     eth_daddy_thread = multiprocessing.Process(target=eth_daddy_bot, args=())
     eth_daddy_thread.start()

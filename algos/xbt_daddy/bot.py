@@ -8,12 +8,12 @@ def start_schedlued():
         schedule.run_pending()
         time.sleep(1)
 
-def daddy_bot():
+def xbt_daddy_bot():
     print("BTC daddy bot")
     schedule.every().day.at("00:30").do(create_chart, symbol='XBT')
 
     schedule_thread = threading.Thread(target=start_schedlued)
     schedule_thread.start()
 
-    bot_thread = threading.Thread(target=start_bot, args=('XBT', False, 'algos/daddy/exchanges.csv', "algos/daddy/parameters.json", ))
+    bot_thread = threading.Thread(target=start_bot, args=('XBT', False, 'algos/xbt_daddy/exchanges.csv', "algos/xbt_daddy/parameters.json", ))
     bot_thread.start()

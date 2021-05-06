@@ -12,7 +12,7 @@ import json
 
 import redis
 
-from algos.daddy.defines import trade_methods
+from algos.xbt_daddy.defines import trade_methods
 from algos.vol_trend.bot import get_position_balance
 from algos.altcoin.bot import get_positions
 from algos.ratio.bot import get_positions as get_ratio_positions
@@ -797,15 +797,86 @@ def doge_daddy_interface(request):
     else:
         return HttpResponseRedirect('/login')
 
-def daddy_interface(request):
+def xbt_daddy_interface(request):
     if request.user.is_authenticated:
-        pars = daddy_core(request, 'XBT', 'algos/daddy/parameters.json', 'algos/daddy/exchanges.csv')
+        pars = daddy_core(request, 'XBT', 'algos/xbt_daddy/parameters.json', 'algos/xbt_daddy/exchanges.csv')
         return render(request, "frontend_interface/daddy_index.html", pars)
     else:
         return HttpResponseRedirect('/login')
 
-def eth_interface(request):
-    pass
+def daddy_interface(request):
+    if request.user.is_authenticated:
+        bots = [x.split("/")[1] for x in glob('algos/*') if "_daddy" in x]
+        
+        positions = {}
+        new_df = []
+
+        for bot in bots:
+            exchanges = pd.read_csv('algos/{}/exchanges.csv'.format(bot))
+
+            for idx, row in exchanges.iterrows():                
+                try:
+                    position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
+                except:
+                    position_since = 0
+                
+                try:
+                    avgEntryPrice = round(float(r.get('{}_avgEntryPrice'.format(row['name'])).decode()), 2)
+                except:
+                    avgEntryPrice = 0
+
+                try:
+                    pos_size = round(float(r.get('{}_pos_size'.format(row['name'])).decode()), 2)
+                except:
+                    pos_size = 0
+                
+                try:
+                    pnl_percentage = round(((float(r.get('{}_{}_best_ask'.format(row['exchange'], row['cryptofeed_symbol'].lower())).decode())- float(avgEntryPrice))/float(avgEntryPrice)) * 100 * parameters['mult'], 2)
+                except:
+                    pnl_percentage = 0
+
+                try:
+                    free_balance = round(float(r.get('{}_balance'.format(row['name'])).decode()), 3)
+                except:
+                    free_balance = 0
+                
+                row['position_since'] = position_since
+                row['avgEntryPrice'] = avgEntryPrice
+                row['pnl_percentage'] = pnl_percentage
+                row['pos_size'] = pos_size
+                row['balance'] = free_balance
+                row['url'] = bot
+
+                new_df.append(row.to_dict())
+
+
+        new_df = pd.DataFrame(new_df).set_index('name').T.to_dict()
+
+        all_trades = {}
+
+        for bot in bots:
+            symbol = bot.replace("_daddy", "").upper()
+            file = 'data/{}USD_trades.csv'.format(symbol)
+
+            if os.path.isfile(file):
+                trades = pd.read_csv(file)[['Date', 'Type', 'Price']]
+                trades = trades[-6:]
+                trades = trades.round(2)
+                trades.loc[-1] = trades.columns
+                trades.index = trades.index + 1 
+                trades = trades.sort_index()
+                trades = trades.T.to_dict()
+                all_trades[bot] = trades
+
+        print(all_trades)
+        try:
+            run_log = open("logs/daddy_live_trader.log").read()
+        except:
+            run_log = ""
+
+        return render(request, "frontend_interface/daddy.html", {'new_df': new_df, 'run_log': run_log, 'all_trades': all_trades})
+    else:
+        return HttpResponseRedirect('/login')
 
 def delete(request):
     req = request.GET.dict()
