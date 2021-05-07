@@ -73,8 +73,6 @@ class daddyBot():
             
         lt.update_parameters()
 
-        current_pos = self.r.get('{}_current_pos'.format(name)).decode()
-
     def perform_backtrade_verification(self, details, analysis):
         lts = self.lts
 
