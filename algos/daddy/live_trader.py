@@ -864,7 +864,7 @@ class liveTrading():
         take_biggest: Takes the biggest. If not filled, waits 30 second and takes it again. If not filled by end, takes at market.
         '''
 
-        print("Time at filling order is: {}".format(datetime.datetime.now()))
+        print("\nTime at filling order is: {}".format(datetime.datetime.now()))
         # self.close_open_orders()
 
         for lp in range(self.attempts):         
