@@ -144,9 +144,7 @@ class daddyBot():
                 if (self.r.get(unique_save_file) == None):
                     self.r.set(unique_save_file, 1)
                     self.print("\n\033[1m" + str(datetime.datetime.utcnow()) + "\033[0;0m:")
-                    self.process_trades() 
-        
-
+                    self.process_trades()
 
 def start_bot(symbol, TESTNET, config_file, parameter_file):
     update_trades(symbol=symbol)

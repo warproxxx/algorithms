@@ -980,6 +980,9 @@ class liveTrading():
             elif method == "8sec_average":
                 self.second_average(12, 7.8, order_type)
                 break
+            elif method == "7sec_average":
+                self.second_average(12, 6.8, order_type)
+                break
             elif method == "10sec_average":
                 self.second_average(12, 9.8, order_type)
                 break
