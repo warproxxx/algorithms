@@ -34,6 +34,9 @@ class liveTrading():
         self.attempts = 5
         self.name = name
 
+        apiKey = '{}_ID'.format(self.exchange_name.upper())
+        apiSecret = '{}_SECRET'.format(self.exchange_name.upper())
+
         name_here = name.upper()
         config = pd.read_csv(self.config_file)
 
@@ -41,9 +44,6 @@ class liveTrading():
             if testnet == True:
                 apiKey = os.getenv('BITMEX_TESTNET_ID')
                 apiSecret = os.getenv('BITMEX_TESTNET_SECRET')
-            else:
-                apiKey = os.getenv('{}_ID'.format(exchange_name.upper()))
-                apiSecret = os.getenv('{}_SECRET'.format(exchange_name.upper()))
 
             self.exchange = ccxt.bitmex({
                             'apiKey': apiKey,
@@ -61,9 +61,6 @@ class liveTrading():
             if testnet == True:
                 apiKey = os.getenv('BINANCE_TESTNET_ID')
                 apiSecret = os.getenv('BINANCE_TESTNET_SECRET')
-            else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             self.exchange = ccxt.binance({
                             'apiKey': apiKey,
@@ -81,9 +78,6 @@ class liveTrading():
             if testnet == True:
                 apiKey = os.getenv('BYBIT_TESTNET_ID')
                 apiSecret = os.getenv('BYBIT_TESTNET_SECRET')
-            else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             self.exchange = ccxt.bybit({
                             'apiKey': apiKey,
@@ -103,9 +97,6 @@ class liveTrading():
 
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
-            else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
 
             
             self.exchange = ccxt.ftx({
@@ -126,9 +117,7 @@ class liveTrading():
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
             else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
-                password = os.getenv('{}_PASSWORD'.format(name_here))
+                password = os.getenv('{}_PASSWORD'.format(self.exchange_name.upper()))
 
             
             self.exchange = ccxt.okex({
@@ -144,10 +133,8 @@ class liveTrading():
         elif exchange == 'huobi_swap':
             if testnet == True:
                 sys.exit("Testnet is not available for this exchange")
-            else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
-                self.exchange = HuobiDM("https://api.hbdm.com", apiKey, apiSecret)
+
+            self.exchange = HuobiDM("https://api.hbdm.com", apiKey, apiSecret)
 
             if self.symbol == "BTC-USD":
                 self.symbol_here = "BTC-USD"
