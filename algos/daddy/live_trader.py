@@ -34,8 +34,8 @@ class liveTrading():
         self.attempts = 5
         self.name = name
 
-        apiKey = '{}_ID'.format(self.exchange_name.upper())
-        apiSecret = '{}_SECRET'.format(self.exchange_name.upper())
+        apiKey = os.getenv('{}_ID'.format(self.exchange_name.upper()))
+        apiSecret = os.getenv('{}_SECRET'.format(self.exchange_name.upper()))
 
         name_here = name.upper()
         config = pd.read_csv(self.config_file)
