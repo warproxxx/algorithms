@@ -83,7 +83,11 @@ class daddyBot():
             
             current_pos, avgEntryPrice, _ = lt.get_position()
             obook = lt.get_orderbook()
-            position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
+
+            try:
+                position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
+            except:
+                position_since = 0
 
             try:
                 pnl_percentage = ((obook['best_bid'] - avgEntryPrice)/avgEntryPrice) * 100 * float(lt.parameters['mult'])
