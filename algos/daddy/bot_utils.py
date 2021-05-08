@@ -139,10 +139,10 @@ class daddyBot():
 
         lts = self.lts
 
-         for idx, details in EXCHANGES.iterrows():
-                if details['trade'] == 1:
-                    lt = lts[details['name']]
-                    lt.set_position()
+        for idx, details in EXCHANGES.iterrows():
+            if details['trade'] == 1:
+                lt = lts[details['name']]
+                lt.set_position()
 
     def call_every(self):
         while True:
