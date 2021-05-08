@@ -774,7 +774,7 @@ def daddy_core(request, symbol, pars_file, config_file):
     trades = trades.sort_index()
     trades = trades.T.to_dict()
 
-    features = pd.read_csv('data/{}_features.csv'.format(symbol))[['timestamp', 'close', 'change', 'percentage_large', 'buy_percentage_large', 'macd', 'rsi']]
+    features = pd.read_csv('data/{}_features.csv'.format(symbol))[['timestamp', 'macd', 'rsi', 'close', 'change', 'percentage_large', 'buy_percentage_large']]
     features = features[-6:]
     features = features.round(3)
     features.loc[-1] = features.columns
