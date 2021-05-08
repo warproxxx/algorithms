@@ -89,7 +89,7 @@ class daddyBot():
                 pnl_percentage = 0
 
             self.print("\n{}:".format(datetime.datetime.utcnow()))
-            self.print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
+            self.print("Exchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
             
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
