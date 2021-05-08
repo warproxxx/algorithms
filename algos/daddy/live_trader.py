@@ -637,7 +637,7 @@ class liveTrading():
         Performs limit trade detecting exchange for the given amount
         '''
         if amount > 0:
-            print("Sending limit {} order for {} of size {} @ {} on {} in {}".format(order_type, self.symbol, amount, price, self.exchange_name, datetime.datetime.now()))
+            print("Sending limit {} order for {} of size {} @ {} on {} in {}".format(order_type, self.symbol, amount, price, self.exchange_name, datetime.datetime.utcnow()))
 
             if self.exchange_name == 'bitmex':
                 params = {
@@ -750,7 +750,7 @@ class liveTrading():
         '''
 
         if amount > 0:
-            print("Sending market {} order for {} of size {} on {} in {}".format(order_type, self.symbol, amount, self.exchange_name, datetime.datetime.now()))
+            print("Sending market {} order for {} of size {} on {} in {}".format(order_type, self.symbol, amount, self.exchange_name, datetime.datetime.utcnow()))
 
             if self.exchange_name == 'bitmex':
                 order = self.exchange.create_order(self.symbol, 'market', order_type, amount, None)
@@ -864,7 +864,7 @@ class liveTrading():
         take_biggest: Takes the biggest. If not filled, waits 30 second and takes it again. If not filled by end, takes at market.
         '''
 
-        print("\nTime at filling order is: {}".format(datetime.datetime.now()))
+        print("\nTime at filling order is: {}".format(datetime.datetime.utcnow()))
         # self.close_open_orders()
 
         for lp in range(self.attempts):         
@@ -933,11 +933,11 @@ class liveTrading():
                             print("Best Bid is {} and Best Ask is {}".format(orderbook['best_ask'], orderbook['best_bid']))
 
                             if order_type == 'buy':
-                                current_full_time = str(datetime.datetime.now().minute)
+                                current_full_time = str(datetime.datetime.utcnow().minute)
                                 current_time_check = current_full_time[1:]
 
-                                if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.now().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
-                                    print("Time at sending market order is: {}".format(datetime.datetime.now()))
+                                if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.utcnow().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
+                                    print("Time at sending market order is: {}".format(datetime.datetime.utcnow()))
                                     order = self.send_market_order(order_type)
                                     break
 
@@ -949,11 +949,11 @@ class liveTrading():
                                     order, limit_price = self.send_limit_order(order_type)
 
                             elif order_type == 'sell':
-                                current_full_time = str(datetime.datetime.now().minute)
+                                current_full_time = str(datetime.datetime.utcnow().minute)
                                 current_time_check = current_full_time[1:]
 
-                                if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.now().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
-                                    print("Time at sending market order is: {}".format(datetime.datetime.now()))
+                                if ((current_full_time == '9' or current_time_check == '9') and (datetime.datetime.utcnow().second > 50)) or ((current_full_time == '0' or current_time_check == '0')):
+                                    print("Time at sending market order is: {}".format(datetime.datetime.utcnow()))
                                     order = self.send_market_order(order_type)
                                     break
 

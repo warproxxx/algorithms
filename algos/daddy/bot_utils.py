@@ -79,7 +79,13 @@ class daddyBot():
         if details['trade'] == 1:
             lt = lts[details['name']]
             
-            current_pos, avgEntryPrice, _ = lt.get_position()
+            current_pos = r.get('{}_current_pos'.format(details['name']))
+
+            try:
+                avgEntryPrice = float(r.get('{}_avgEntryPrice'.format(details['name'])))
+            except:
+                avgEntryPrice = 0
+
             obook = lt.get_orderbook()
             position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
 
@@ -88,7 +94,8 @@ class daddyBot():
             except:
                 pnl_percentage = 0
 
-            self.print("\nExchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
+            self.print("\n{}:".format(datetime.datetime.utcnow()))
+            self.print("Exchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
             
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
@@ -103,6 +110,8 @@ class daddyBot():
                 self.print("As required for {}".format(details['name']))
 
             self.after_stuffs(details['name'])   
+            position_since = position_since + 1
+            r.set('{}_position_since'.format(details['name']), position_since)
 
 
     def process_trades(self):
@@ -123,10 +132,21 @@ class daddyBot():
                 if details['trade'] == 1:
                     backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
                     backtest_thread[details['name']].start()
+    
+    def set_positions(self):
+        self.EXCHANGES = pd.read_csv(self.config_file)
+        EXCHANGES = self.EXCHANGES 
+
+        lts = self.lts
+
+         for idx, details in EXCHANGES.iterrows():
+                if details['trade'] == 1:
+                    lt = lts[details['name']]
+                    lt.set_position()
 
     def call_every(self):
         while True:
-            time.sleep(1)
+            time.sleep(.5)
 
             curr_time = datetime.datetime.utcnow()
 
@@ -138,14 +158,17 @@ class daddyBot():
             current_full_time = str(timestamp.minute)
             current_time_check = current_full_time[1:]
 
+            if current_full_time == '7' or current_time_check == '7':
+                if (self.r.get(unique_save_file + "7") == None):
+                    self.r.set(unique_save_file + "7", 1)
+                    self.set_positions()
+
             if current_full_time == '8' or current_time_check == '8':
                 self.r.set('{}_save_file_name'.format(self.symbol), save_file)
                 if (self.r.get(unique_save_file) == None):
                     self.r.set(unique_save_file, 1)
                     self.print("\n\033[1m" + str(datetime.datetime.utcnow()) + "\033[0;0m:")
                     self.process_trades() 
-        
-
 
 def start_bot(symbol, TESTNET, config_file, parameter_file):
     update_trades(symbol=symbol)
