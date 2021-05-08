@@ -25,6 +25,8 @@ from algos.daddy.trades import update_trades, run_backtest
 
 from utils import print as utils_print
 
+from trade_analysis import get_trade_funding_data
+
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
@@ -124,6 +126,19 @@ class daddyBot():
                 if details['trade'] == 1:
                     backtest_thread[details['name']] = threading.Thread(target=self.perform_backtrade_verification, args=(details, analysis, ))
                     backtest_thread[details['name']].start()
+
+    def save_trades(self):
+        for idx, row in self.EXCHANGES.iterrows():
+
+            if row['trade'] == 1:       
+
+        while True:
+            mex_trades, mex_funding = get_trades('bitmex')
+            mex_trades = process_data(mex_trades)
+            mex_trades.to_csv("data/mex_trades.csv", index=None)
+            mex_funding.to_csv("data/mex_funding.csv", index=None)
+            time.sleep(60 * 60)
+
 
     def call_every(self):
         while True:
