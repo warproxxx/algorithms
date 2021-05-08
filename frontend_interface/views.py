@@ -417,7 +417,7 @@ def show_trades(request):
             trades = trades.merge(fundings, on='transactTime', how='left')
 
             trades['slippage'] = trades.apply(calc_slippage, axis=1)
-            trades = trades.round(2)
+            trades = trades.round(3)
             trades = trades.rename(columns={'actualPrice': 'avgPrice'})
             trades = trades[['transactTime', 'side', 'amount', 'avgPrice', 'expectedPrice', 'fee', 'funding_paid', 'slippage']]
         except:
@@ -768,7 +768,7 @@ def daddy_core(request, symbol, pars_file, config_file):
 
     trades = pd.read_csv('data/{}USD_trades.csv'.format(symbol))[['Date', 'Type', 'Price']]
     trades = trades[-6:]
-    trades = trades.round(2)
+    trades = trades.round(3)
     trades.loc[-1] = trades.columns
     trades.index = trades.index + 1 
     trades = trades.sort_index()
@@ -776,7 +776,7 @@ def daddy_core(request, symbol, pars_file, config_file):
 
     features = pd.read_csv('data/{}_features.csv'.format(symbol))[['timestamp', 'close', 'change', 'percentage_large', 'buy_percentage_large', 'macd', 'rsi']]
     features = features[-6:]
-    features = features.round(2)
+    features = features.round(3)
     features.loc[-1] = features.columns
     features.index = features.index + 1 
     features = features.sort_index()
@@ -880,7 +880,7 @@ def daddy_interface(request):
             if os.path.isfile(file):
                 trades = pd.read_csv(file)[['Date', 'Type', 'Price']]
                 trades = trades[-6:]
-                trades = trades.round(2)
+                trades = trades.round(3)
                 trades.loc[-1] = trades.columns
                 trades.index = trades.index + 1 
                 trades = trades.sort_index()
