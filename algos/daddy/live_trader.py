@@ -42,8 +42,8 @@ class liveTrading():
                 apiKey = os.getenv('BITMEX_TESTNET_ID')
                 apiSecret = os.getenv('BITMEX_TESTNET_SECRET')
             else:
-                apiKey = os.getenv('{}_ID'.format(name_here))
-                apiSecret = os.getenv('{}_SECRET'.format(name_here))
+                apiKey = os.getenv('{}_ID'.format(exchange_name.upper()))
+                apiSecret = os.getenv('{}_SECRET'.format(exchange_name.upper()))
 
             self.exchange = ccxt.bitmex({
                             'apiKey': apiKey,
