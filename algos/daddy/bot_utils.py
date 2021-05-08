@@ -25,7 +25,7 @@ from algos.daddy.trades import update_trades, run_backtest
 
 from utils import print as utils_print
 
-from trade_analysis import get_trade_funding_data
+# from trade_analysis import get_trade_funding_data
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
