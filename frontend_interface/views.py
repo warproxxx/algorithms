@@ -656,16 +656,17 @@ def daddy_core(request, symbol, pars_file, config_file):
             with open('{}/{}.json'.format(pars_folder, new_pars['name']), 'w') as f:
                 json.dump(new_pars, f)
 
-        elif 'bitmex[trade]' in dic:
+        elif 'update_exchanges_form' in dic:
             dic.pop('csrfmiddlewaretoken', None)
             curr_df = pd.DataFrame()
 
             for idx, value in dic.items():
-                splitted = idx.split("[")
-                name = splitted[0]
-                column = splitted[1].replace("]", "")
-                
-                curr_df = curr_df.append(pd.Series({'name': name, 'column': column, 'value': value}), ignore_index=True)
+                if idx != "update_exchanges_form":
+                    splitted = idx.split("[")
+                    name = splitted[0]
+                    column = splitted[1].replace("]", "")
+                    
+                    curr_df = curr_df.append(pd.Series({'name': name, 'column': column, 'value': value}), ignore_index=True)
 
             new_exchanges = {}
 

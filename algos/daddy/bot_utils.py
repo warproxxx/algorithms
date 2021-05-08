@@ -90,7 +90,7 @@ class daddyBot():
 
             self.print("\n{}:".format(datetime.datetime.utcnow()))
             self.print("Exchange      : {}\nAvg Entry     : {}\nPnL Percentage: {}%\nPosition Since: {}".format(details['name'], avgEntryPrice, round(pnl_percentage,2), position_since))
-            
+
             if 'open' in analysis['total']:
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
                     self.print("Opening position from backtest_verification for {}".format(details['name']))

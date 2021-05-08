@@ -332,7 +332,7 @@
 
                         {% for key, value in exchanges.items %}
                             <tr>
-                                <td>{{key}}</td>
+                                <td><input type="hidden" name="update_exchanges_form">{{key}}</input></td>
                                 {% for inside_key, inside_value in value.items %}
 
                                     {% if inside_key == "trade" %}
