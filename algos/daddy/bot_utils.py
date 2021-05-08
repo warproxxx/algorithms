@@ -133,15 +133,15 @@ class daddyBot():
 
     def save_trades(self):
         for idx, row in self.EXCHANGES.iterrows():
+            if row['trade'] == 1:     
+                pass  
 
-            if row['trade'] == 1:       
-
-        while True:
-            mex_trades, mex_funding = get_trades('bitmex')
-            mex_trades = process_data(mex_trades)
-            mex_trades.to_csv("data/mex_trades.csv", index=None)
-            mex_funding.to_csv("data/mex_funding.csv", index=None)
-            time.sleep(60 * 60)
+        # while True:
+        #     mex_trades, mex_funding = get_trades('bitmex')
+        #     mex_trades = process_data(mex_trades)
+        #     mex_trades.to_csv("data/mex_trades.csv", index=None)
+        #     mex_funding.to_csv("data/mex_funding.csv", index=None)
+        #     time.sleep(60 * 60)
 
 
     def call_every(self):
