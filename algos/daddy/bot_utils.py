@@ -154,7 +154,7 @@ class daddyBot():
             time.sleep(60 * 60)
 
     def call_every(self):
-        save_thread = threading.Thread(target=save_trades)
+        save_thread = threading.Thread(target=self.save_trades)
         save_thread.start()
         
         while True:
