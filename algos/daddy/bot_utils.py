@@ -136,22 +136,26 @@ class daddyBot():
             today = datetime.datetime.utcnow().date().strftime("%Y-%m-%d")
 
             if row['trade'] == 1:     
-                trades_file = "data/{}_{}_trades.csv".format(today, row['name'])
-                funding_file = "data/{}_{}_fundings.csv".format(today, row['name'])
-                json_file = "data/{}_{}_summary.json".format(today, row['name'])
+                try:
+                    trades_file = "data/{}_{}_trades.csv".format(today, row['name'])
+                    funding_file = "data/{}_{}_fundings.csv".format(today, row['name'])
+                    json_file = "data/{}_{}_summary.json".format(today, row['name'])
 
-                if not os.path.isfile(trades_file):
-                    trades, fundings = get_trade_funding_data(row)
-                    trades = process_data(trades, row)
-                    summary, print_trades, buys, sells = get_details(trades, fundings)
-                    print_trades.to_csv(trades_file, index=None)
-                    fundings.to_csv(funding_file, index=None)
-                    json.dump(summary, open(json_file, 'w'))
+                    if not os.path.isfile(trades_file):
+                        trades, fundings = get_trade_funding_data(row)
+                        trades = process_data(trades, row)
+                        summary, print_trades, buys, sells = get_details(trades, fundings)
+                        print_trades.to_csv(trades_file, index=None)
+                        fundings.to_csv(funding_file, index=None)
+                        json.dump(summary, open(json_file, 'w'))
+                except:
+                    pass
             
             time.sleep(60 * 60)
 
     def call_every(self):
-        self.save_trades()
+        save_thread = threading.Thread(target=save_trades)
+        save_thread.start()
         
         while True:
             time.sleep(1)
