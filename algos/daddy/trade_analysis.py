@@ -260,7 +260,7 @@ def get_details(trades, funding):
     summary['Avg Slippage to 00 (Neg Bad)'] = calculate_slippage(buys, sells, 'price', 'expectedPrice')
     summary['Avg Slippage to 08 (Neg Bad)'] = calculate_slippage(buys, sells, 'price', 'close')
 
-    print_trades = trades[['transactTime', 'side', 'price', 'fee']]
+    print_trades = trades[['transactTime', 'side', 'price', 'amount', 'fee']]
     print_trades = print_trades.round(3)
     
     return summary, print_trades, buys, sells
