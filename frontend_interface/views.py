@@ -411,9 +411,18 @@ def show_trades(request):
 
         name = file.split("/")[-1]
         ext = name.split(".")[-1]
-        response = HttpResponse(content_type='text/{}'.format(ext))
-        response['Content-Disposition'] = 'attachment; filename={}'.format(name)
-        return response
+
+        if ext == "csv":
+            df = pd.read_csv(file)
+            response = HttpResponse(content_type='text/{}'.format(ext))
+            response['Content-Disposition'] = 'attachment; filename={}'.format(name)
+            df.to_csv(path_or_buf=response,index=None)
+            return response
+        elif ext == "json":
+            json_data = json.load(open(file))
+            response = HttpResponse(json_data, content_type='application/json')
+            response['Content-Disposition'] = 'attachment; filename={}'.format(name)
+            return response
 
 def interface(request):
     if request.user.is_authenticated:
