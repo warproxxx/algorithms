@@ -25,7 +25,7 @@ from algos.daddy.trades import update_trades, run_backtest
 
 from utils import print as utils_print
 
-# from trade_analysis import get_trade_funding_data
+from algos.daddy.trade_analysis import get_trade_funding_data, process_data, get_details
 
 r = redis.Redis(host='localhost', port=6379, db=0)
 
@@ -133,18 +133,26 @@ class daddyBot():
 
     def save_trades(self):
         for idx, row in self.EXCHANGES.iterrows():
+            today = datetime.datetime.utcnow().date().strftime("%Y-%m-%d")
+
             if row['trade'] == 1:     
-                pass  
+                trades_file = "data/{}_{}_trades.csv".format(today, row['name'])
+                funding_file = "data/{}_{}_fundings.csv".format(today, row['name'])
+                json_file = "data/{}_{}_summary.json".format(today, row['name'])
 
-        # while True:
-        #     mex_trades, mex_funding = get_trades('bitmex')
-        #     mex_trades = process_data(mex_trades)
-        #     mex_trades.to_csv("data/mex_trades.csv", index=None)
-        #     mex_funding.to_csv("data/mex_funding.csv", index=None)
-        #     time.sleep(60 * 60)
-
+                if not os.path.isfile(trades_file):
+                    trades, fundings = get_trade_funding_data(row)
+                    trades = process_data(trades, row)
+                    summary, print_trades, buys, sells = get_details(trades, fundings)
+                    print_trades.to_csv(trades_file, index=None)
+                    fundings.to_csv(funding_file, index=None)
+                    json.dump(summary, open(json_file, 'w'))
+            
+            time.sleep(60 * 60)
 
     def call_every(self):
+        self.save_trades()
+        
         while True:
             time.sleep(1)
 
