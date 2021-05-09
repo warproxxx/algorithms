@@ -22,6 +22,8 @@ from algos.altcoin.defines import trade_methods as altcoin_methods
 
 import random
 
+import datetime
+
 def calc_slippage(ser):
     if ser['side'] == 'BUY':
         return (((ser['expectedPrice'] - ser['actualPrice'])/ser['actualPrice']) * 100)
@@ -397,37 +399,20 @@ def csv_downloader(request):
 def show_trades(request):
     if request.user.is_authenticated:
         get = request.GET.dict()
+        today = datetime.datetime.utcnow().date().strftime("%Y-%m-%d")
 
-        try:
-            trades = pd.read_csv('data/mex_trades.csv')
-            trades['transactTime'] = pd.to_datetime(trades['transactTime'])
-            trades['transactTime_trades'] = trades['transactTime']
+        if get['type'] == 'trades':
+            file = "data/{}_{}_trades.csv".format(today, get['exchange'])
+        elif get['type'] == 'get':
+            file = "data/{}_{}_fundings.csv".format(today, get['exchange'])
+        elif get['type'] == 'summary':
+            file = "data/{}_{}_summary.json".format(today, get['exchange'])
 
-            funding = pd.read_csv('data/mex_funding.csv')
-            funding['transactTime'] = pd.to_datetime(funding['transactTime'])
 
-            funding['funding_paid'] = funding['price'] * funding['execComm']
-
-            sells = trades[trades['side'] == 'SELL']
-
-            fundings = pd.merge_asof(funding, sells, on='transactTime', direction='forward')[['transactTime_trades', 'funding_paid']]
-            fundings = fundings.groupby('transactTime_trades').sum()
-            fundings = fundings.reset_index().rename(columns={'transactTime_trades': 'transactTime'})
-
-            trades = trades.merge(fundings, on='transactTime', how='left')
-
-            trades['slippage'] = trades.apply(calc_slippage, axis=1)
-            trades = trades.round(3)
-            trades = trades.rename(columns={'actualPrice': 'avgPrice'})
-            trades = trades[['transactTime', 'side', 'amount', 'avgPrice', 'expectedPrice', 'fee', 'funding_paid', 'slippage']]
-        except:
-            trades = pd.DataFrame()
-
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename=daddy_trades.csv'
-
-        trades = trades[trades['transactTime'] >= "2021-02-05 14:00:00"]
-        trades.to_csv(path_or_buf=response,index=None)
+        name = file.split("/")[-1]
+        ext = name.split(".")[-1]
+        response = HttpResponse(content_type='text/{}'.format(ext))
+        response['Content-Disposition'] = 'attachment; filename={}'.format(name)
         return response
 
 def interface(request):
@@ -698,7 +683,7 @@ def daddy_core(request, symbol, pars_file, config_file):
 
     new_df = []
 
-    for idx, row in exchanges.iterrows():                
+    for idx, row in exchanges.iterrows():      
         try:
             position_since = round(float(r.get('{}_position_since'.format(row['name'])).decode()), 2)
         except:

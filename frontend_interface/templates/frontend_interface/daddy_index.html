@@ -154,7 +154,7 @@
               <div class="col-lg-4">
                 <div class="card mb-4 border-left-{{value.html_color}}">
                   <div class="card-body">
-                    <b><a href="/trades?exchange={{key|upper}}" target="_blank" style="color:#404E67;">{{key|upper}}</a></b>
+                    <b><a href="#" target="_blank" style="color:#404E67;" class="yourlink_{{key}}">{{key|upper}}</a></b>
                     <br/><br/>
                     Average Entry: {{value.avgEntryPrice }}$<br/>
                     PnL Percentage: {{ value.pnl_percentage }}%<br/>
@@ -164,6 +164,16 @@
                   </div>
                 </div>
               </div>
+
+              <script>
+                $('a.yourlink_{{key}}').click(function(e) {
+                    e.preventDefault();
+                    window.open('/trades?exchange={{key}}&type=trade');
+                    window.open('/trades?exchange={{key}}&type=funding');
+                    window.open('/trades?exchange={{key}}&type=summary');
+                });
+              </script>
+
               {% endif %}
               {% endfor %}
 
@@ -172,7 +182,8 @@
 
           
 
-          <center>
+          <center>            
+            <br/>
             <form method="POST">
               {% csrf_token %}
               Trend Start Date: <input type="text" name="trend_start_date" value="{{trend_start_date}}" style="width: 120px;">
