@@ -401,9 +401,9 @@ def show_trades(request):
         get = request.GET.dict()
         today = datetime.datetime.utcnow().date().strftime("%Y-%m-%d")
 
-        if get['type'] == 'trades':
+        if get['type'] == 'trade':
             file = "data/{}_{}_trades.csv".format(today, get['exchange'])
-        elif get['type'] == 'get':
+        elif get['type'] == 'funding':
             file = "data/{}_{}_fundings.csv".format(today, get['exchange'])
         elif get['type'] == 'summary':
             file = "data/{}_{}_summary.json".format(today, get['exchange'])
