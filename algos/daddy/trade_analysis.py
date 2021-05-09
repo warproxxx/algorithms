@@ -178,20 +178,28 @@ def process_data(trades, row):
     trades['qty'] = trades['qty'].astype(float)
     trades['commission'] = trades['commission'].astype(float)
 
-    try:
+    exchange_name = trades.iloc[0]['exchange']
+
+    if exchange_name == 'BITMEX':
+        trades['commission_usd'] = trades['commission'] * trades['price']
+    elif exchange_name == 'FTX':
         trades['commission_usd'] = trades['commission_usd'].astype(float)
-    except:
-        pass
+    elif exchange_name == 'HUOBI':
+        trades['commission_usd'] = trades['commission'] * trades['price']
 
     trades = trades.sort_values('transactTime').reset_index(drop=True)
     trades['actualExecuted'] = trades['transactTime']
     trades['transactTime'] = trades['transactTime'].agg(lambda x : x.round('10min'))
 
-    exchange_name = trades.iloc[0]['exchange']
+    
     trades = trades.groupby(['transactTime', 'side']).apply(merge_trades)
     trades = trades.reset_index()
 
     symbol = row['symbol'].replace("USDT", "").replace("USDC", "").replace("USD", "")
+
+    if symbol == "BTC":
+        symbol = "XBT"
+
     price_df = pd.read_csv('data/{}_features.csv'.format(symbol))
     price_df['timestamp'] = pd.to_datetime(price_df['timestamp'])
     price_df['expectedPrice'] = price_df['close'].shift(-1)
@@ -205,9 +213,6 @@ def rounded_get(var, string):
 
 def get_details(trades, funding):
     exchange_name = funding.iloc[0]['exchange']
-
-    if exchange_name == 'BITMEX':
-        trades['fee'] = trades['fee'] * trades['close']
 
     buys = trades[trades['side'] == 'BUY']
     sells = trades[trades['side'] == 'SELL']
@@ -255,6 +260,7 @@ def get_details(trades, funding):
     summary['Avg Slippage to 00 (Neg Bad)'] = calculate_slippage(buys, sells, 'price', 'expectedPrice')
     summary['Avg Slippage to 08 (Neg Bad)'] = calculate_slippage(buys, sells, 'price', 'close')
 
-    print_trades = trades[['transactTime', 'side', 'price', 'transactTime', 'fee']]
+    print_trades = trades[['transactTime', 'side', 'price', 'fee']]
+    print_trades = print_trades.round(3)
     
     return summary, print_trades, buys, sells
