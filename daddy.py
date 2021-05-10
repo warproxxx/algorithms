@@ -21,6 +21,11 @@ from main import initial_tasks
 
 from utils import print
 
+import os
+
+if not os.path.isdir("data/"):
+    os.makedirs("data/")
+
 f = FeedHandler(retries=100000)
 
 EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv'), pd.read_csv('algos/bch_daddy/exchanges.csv'), pd.read_csv('algos/ltc_daddy/exchanges.csv')])
