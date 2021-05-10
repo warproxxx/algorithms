@@ -22,6 +22,9 @@ from algos.ratio.bot import ratio_bot
 import ccxt
 from algos.daddy.huobi.HuobiDMService import HuobiDM
 
+if not os.path.isdir("data/"):
+    os.makedirs("data/")
+
 r = redis.Redis(host='localhost', port=6379, db=0)
 
 def initial_tasks():
