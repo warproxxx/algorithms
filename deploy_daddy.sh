@@ -63,4 +63,4 @@ sudo service mongod start
 sudo update-rc.d mongod defaults
 echo 'service mongod start' | sudo tee -a /etc/rc.local
 
-echo -e "\n\nNow add the API keys and start the program :)"
+echo -e "\n\nNow add the API keys, run interface and update parameters and start the program :)"
