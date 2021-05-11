@@ -142,6 +142,9 @@ class liveTrading():
             self.lev = 20
                         
         self.increment = config[(config['name'] == self.name)].iloc[0]['increment']
+        number_str = '{0:f}'.format(self.increment)
+        self.round_places = len(number_str.split(".")[1])
+
         self.r = redis.Redis(host='localhost', port=6379, db=0)            
         self.update_parameters()
     
@@ -475,8 +478,8 @@ class liveTrading():
         for lp in range(self.attempts):
             try:
                 current_pos, avgEntryPrice, amount = self.get_position()
-                close_at = int(avgEntryPrice * self.parameters['stop_percentage'])
-
+                close_at = float(avgEntryPrice * self.parameters['stop_percentage'])
+                close_at = round_down(close_at, self.round_places)
 
                 if self.exchange_name == 'bitmex':
                     params = {
@@ -533,7 +536,8 @@ class liveTrading():
                     self.add_stop_loss()
                 else:
                     pos, entryPrice, amount = self.get_position()
-                    close_at = int(entryPrice * self.parameters['stop_percentage'])
+                    close_at = float(entryPrice * self.parameters['stop_percentage'])
+                    close_at = round_down(close_at, self.round_places)
 
                     ratio = float(stop[0]) / close_at
         
