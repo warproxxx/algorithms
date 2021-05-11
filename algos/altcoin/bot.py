@@ -134,7 +134,7 @@ def get_positions():
 
 def close_thread(row):
     lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
-    lt.fill_order('close', row['position'].lower())
+    # lt.fill_order('close', row['position'].lower())
 
 def open_thread(row, force):
     print(row)
@@ -147,19 +147,19 @@ def open_thread(row, force):
                 elif row['target_pos'] * row['curr_pos'] == -1:
                     print("Closing and opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
-                    lt.fill_order('close', row['position'].lower())
-                    lt.fill_order('open', row['backtest_position'].lower())
+                    # lt.fill_order('close', row['position'].lower())
+                    # lt.fill_order('open', row['backtest_position'].lower())
                 else:
                     print("Opening for {}".format(row['name']))
                     lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
-                    lt.fill_order('open', row['backtest_position'].lower())
+                    # lt.fill_order('open', row['backtest_position'].lower())
             except Exception as e:
                 print(str(e))
         else:
             try:
                 print("Opening for {}".format(row['name']))
                 lt = liveTrading(symbol=row['name'], subalgo=row['subalgo'])
-                lt.fill_order('open', row['backtest_position'].lower())
+                # lt.fill_order('open', row['backtest_position'].lower())
             except Exception as e:
                 print(str(e))
 
@@ -232,8 +232,8 @@ def close_thread_perform(row):
     lt = liveTrading(row['name'], row['subalgo'])
     pos, _, _ = lt.get_position()
 
-    if pos != "NONE":
-        lt.fill_order('close', pos.lower())
+    # if pos != "NONE":
+    #     lt.fill_order('close', pos.lower())
 
     amount = lt.get_balance()
 
