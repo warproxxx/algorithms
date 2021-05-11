@@ -108,7 +108,11 @@ class daddyBot():
                     lt.close_stop_order()
                 else:
                     self.print("As required for {}".format(details['name']))
-                    lt.update_stop()
+
+                    if current_pos != "NONE":
+                        lt.update_stop()
+                    else:
+                        lt.close_stop_order()
             else:
                 self.print("As required for {}".format(details['name']))
 
