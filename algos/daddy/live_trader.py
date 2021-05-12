@@ -543,22 +543,18 @@ class liveTrading():
             if len(stop) == 0:
                 self.add_stop_loss()
             else:
-                if len(stop) > 1:
+                pos, entryPrice, amount = self.get_position()
+                close_at = float(entryPrice * self.parameters['stop_percentage'])
+                close_at = round_down(close_at, self.round_places)
+
+                ratio = float(stop[0]) / close_at
+    
+                if (ratio <= 1.01 and ratio >= 0.99):
+                    pass
+                else:
+                    print("Removing {} stop at {} to add stop at {}".format(self.symbol, stop[0], close_at))
                     self.close_stop_order()
                     self.add_stop_loss()
-                else:
-                    pos, entryPrice, amount = self.get_position()
-                    close_at = float(entryPrice * self.parameters['stop_percentage'])
-                    close_at = round_down(close_at, self.round_places)
-
-                    ratio = float(stop[0]) / close_at
-        
-                    if (ratio <= 1.01 and ratio >= 0.99):
-                        pass
-                    else:
-                        print("Removing stop at {} to add stop at {}".format(stop[0], close_at))
-                        self.close_stop_order()
-                        self.add_stop_loss()
 
     def actually_get_balance(self):
         if self.exchange_name == 'bitmex':
