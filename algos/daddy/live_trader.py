@@ -424,26 +424,37 @@ class liveTrading():
             except Exception as e:
                 print(e)
 
+    def get_orders(self):
+        if self.exchange_name == 'bitmex':
+            orders = self.exchange.fetch_open_orders()
+        elif self.exchange_name == 'binance_futures':
+            orders = self.exchange.fapiPrivate_get_openorders()
+        elif self.exchange_name == 'bybit':
+            orders = self.exchange.openapi_get_stop_order_list()['result']['data']
+        elif self.exchange_name == 'ftx':
+            orders = self.exchange.request('conditional_orders', api='private', method='GET', params={'market': self.symbol_here})['result']
+        elif self.exchange_name == 'okex':
+            orders = self.exchange.swap_get_order_algo_instrument_id({'instrument_id': self.symbol, 'order_type': "1", "status": "1"})['orderStrategyVOS']
+        elif self.exchange_name == 'huobi_swap':
+            orders = self.exchange.send_post_request('/swap-api/v1/swap_trigger_openorders', {'contract_code': self.symbol})['data']['orders']
+
+        return orders
 
     def get_stop(self):
         start_time = time.time()
 
         for lp in range(self.attempts):
             try:
-                if self.exchange_name == 'bitmex':
-                    orders = self.exchange.fetch_open_orders()
-                elif self.exchange_name == 'binance_futures':
-                    orders = self.exchange.fapiPrivate_get_openorders()
-                elif self.exchange_name == 'bybit':
-                    orders = self.exchange.openapi_get_stop_order_list()['result']['data']
-                elif self.exchange_name == 'ftx':
-                    orders = self.exchange.request('conditional_orders', api='private', method='GET', params={'market': self.symbol_here})['result']
-                elif self.exchange_name == 'okex':
-                    orders = self.exchange.swap_get_order_algo_instrument_id({'instrument_id': self.symbol, 'order_type': "1", "status": "1"})['orderStrategyVOS']
-                elif self.exchange_name == 'huobi_swap':
-                    orders = self.exchange.send_post_request('/swap-api/v1/swap_trigger_openorders', {'contract_code': self.symbol})['data']['orders']
+                
+                orders = self.get_orders()
+
+                if len(orders) > 1:
+                    self.close_stop_order()
+                    self.add_stop_loss()
+                    orders = self.get_orders()
 
                 if len(orders) > 0:
+
                     for order in orders:
                         if self.exchange_name == 'bitmex':
                             if order['info']['ordType'] == 'Stop':
@@ -477,6 +488,7 @@ class liveTrading():
     def add_stop_loss(self):
         for lp in range(self.attempts):
             try:
+                self.close_stop_order()
                 current_pos, avgEntryPrice, amount = self.get_position()
                 close_at = float(avgEntryPrice * self.parameters['stop_percentage'])
                 close_at = round_down(close_at, self.round_places)
