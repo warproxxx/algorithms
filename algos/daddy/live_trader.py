@@ -280,8 +280,8 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-
-                print(e)
+                
+                print("Error in close open order: {}".format(str(e)))
                 pass
 
     def close_stop_order(self):
@@ -386,8 +386,8 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-
-                print(e)
+                
+                print("Error in get position: {}".format(str(e)))
                 time.sleep(1)
                 pass
 
@@ -417,12 +417,12 @@ class liveTrading():
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
-
-                print(e)
+                
+                print("Error inside set position: {}".format(str(e)))
                 time.sleep(1)
                 pass
             except Exception as e:
-                print(e)
+                print("Error inside set positon: {}".format(str(e)))
 
     def get_orders(self):
         if self.exchange_name == 'bitmex':
@@ -476,7 +476,7 @@ class liveTrading():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
 
-                print(e)
+                print("Error in get stop: {}".format(str(e)))
                 time.sleep(1)
                 pass
 
@@ -525,6 +525,7 @@ class liveTrading():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
                     break
                 
+                print("Error in add stop")
                 print(str(e))
                 pass
 
