@@ -286,7 +286,7 @@ class liveTrading():
 
     def close_stop_order(self):
         if self.exchange_name == 'ftx':
-            self.exchange.cancel_all_orders({'conditionalOrdersOnly':True})
+            self.exchange.cancel_all_orders()
             print("Cancel all")
 
         self.close_open_orders(close_stop=True)
