@@ -26,6 +26,10 @@ import redis
 import uuid
 
 from algos.daddy.backtest import perform_backtest
+import warnings
+
+warnings.filterwarnings("ignore")
+
 
 store = Arctic('localhost')
 config = json.load(open("daddy.json"))
