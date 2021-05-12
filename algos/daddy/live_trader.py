@@ -292,7 +292,7 @@ class liveTrading():
             if len(orders) > 0:
                 for order in orders:
                     self.exchange.options['cancelOrder']['method'] = 'privateDeleteConditionalOrdersOrderId';
-                    self.exchange.cancel_order(order['id'], self.symbol)
+                    self.exchange.cancel_order(order['id'], self.symbol_here)
 
         self.close_open_orders(close_stop=True)
     
@@ -523,12 +523,15 @@ class liveTrading():
 
                     order = self.exchange.create_order(self.symbol, "stop", "sell", amount, None, params)
                     return order
+                    break
                 elif self.exchange_name == 'okex':
                     order = self.exchange.swap_post_order_algo({'instrument_id': self.symbol, 'type': '3', 'order_type': '1', 'size': str(amount), 'algo_type': "2", "trigger_price": str(close_at)})
                     return order
+                    break
                 elif self.exchange_name == 'huobi_swap':
                     order = self.exchange.send_post_request('/swap-api/v1/swap_trigger_order', {'contract_code': self.symbol, 'trigger_type': 'le', 'trigger_price': close_at, 'order_price': close_at-1000, 'volume': amount, 'direction': 'sell', 'offset': 'close'})
                     return order
+                    break
             except Exception as e:
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
