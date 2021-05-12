@@ -448,11 +448,6 @@ class liveTrading():
                 
                 orders = self.get_orders()
 
-                if len(orders) > 1:
-                    self.close_stop_order()
-                    self.add_stop_loss()
-                    orders = self.get_orders()
-
                 if len(orders) > 0:
 
                     for order in orders:
@@ -488,7 +483,6 @@ class liveTrading():
     def add_stop_loss(self):
         for lp in range(self.attempts):
             try:
-                self.close_stop_order()
                 current_pos, avgEntryPrice, amount = self.get_position()
                 close_at = float(avgEntryPrice * self.parameters['stop_percentage'])
                 close_at = round_down(close_at, self.round_places)

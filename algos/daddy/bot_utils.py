@@ -61,9 +61,30 @@ class daddyBot():
             if details['trade'] == 1:       
                 self.lts[name] = liveTrading(exchange_name, name, symbol=details['ccxt_symbol'],testnet=TESTNET, parameter_file=parameter_file, config_file=config_file) 
                 self.lts[name].set_position()
+                self.stop_loss_work(name)
 
     def print(self, to_print):
         utils_print(to_print, symbol=self.symbol)
+
+    def stop_loss_work(self, name):
+        lt = self.lts[name]
+        current_pos, avgEntryPrice, _ = lt.get_position()
+        orders = lt.get_orders()
+
+        if current_pos != "NONE":
+            if len(orders) == 0:
+                print("There is no stop in {}, adding it".format(name))
+                lt.add_stop_loss()
+            elif len(orders) > 1:
+                print("There are multiple stops in {}. Removing to readd".format(name))
+                lt.close_stop_order()
+                lt.add_stop_loss()
+            elif len(orders) == 1:
+                lt.update_stop()
+        else:
+            if len(orders) == 1:
+                print("There is an open stop without position in {}. Removing".format(name))
+                lt.close_stop_order()
 
     def after_stuffs(self, name):
         lt = self.lts[name]
@@ -72,7 +93,8 @@ class daddyBot():
             lt.set_position()
         except Exception as e:
             self.print("Error in setting pos in {}".format(name))
-            
+
+        self.stop_loss_work(name)
         lt.update_parameters()
 
     def perform_backtrade_verification(self, details, analysis):
@@ -108,11 +130,6 @@ class daddyBot():
                     lt.close_stop_order()
                 else:
                     self.print("As required for {}".format(details['name']))
-
-                    if current_pos != "NONE":
-                        lt.update_stop()
-                    else:
-                        lt.close_stop_order()
             else:
                 self.print("As required for {}".format(details['name']))
 
