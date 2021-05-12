@@ -154,9 +154,6 @@ def aws_scrape(name, symbol):
 def get_bitmex_data(start, end, symbol, sleep=True):
     all_df = []
 
-    if start.date() != end.date():
-        end = end + pd.Timedelta(days=1)
-
     for scrape_date in pd.date_range(start, end):
         if scrape_date.date() == datetime.datetime.utcnow().date() - pd.Timedelta(days=1):
             curr_time = datetime.datetime.utcnow()
@@ -180,7 +177,7 @@ def update_trades(symbol='XBT'):
     try:
         start = pd.to_datetime(library.max_date('{}_trades'.format(symbol)).astimezone(pytz.UTC)).tz_localize(None)
         
-        if start.hour == 23 and start.minute >= 58:
+        if start.hour == 23 and start.minute >= 51:
             start = pd.to_datetime(start.date() + pd.Timedelta(days=1))
     except:
         start = original_start
