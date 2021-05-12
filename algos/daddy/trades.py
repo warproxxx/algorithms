@@ -434,7 +434,7 @@ def run_backtest(symbol='XBT', parameter_file='algos/daddy/parameters.json'):
         trend_start_date = pd.to_datetime(r.get('trend_start_date_{}'.format(symbol)).decode())
         features = features[features['timestamp'] >= trend_start_date]
     except Exception as e:
-        print(str(e))
+        print("Error in trend_start_date: {} the var is: trend_start_date_{}".format(str(e), symbol))
         curr_group =pd.to_datetime(curr_group)
         features = features[features['timestamp'] >= curr_group]
         
