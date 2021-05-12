@@ -285,6 +285,10 @@ class liveTrading():
                 pass
 
     def close_stop_order(self):
+        if self.exchange == 'ftx':
+            self.exchange.cancel_all_orders()
+            print("Cancel all")
+            
         self.close_open_orders(close_stop=True)
     
     def get_orderbook(self):
