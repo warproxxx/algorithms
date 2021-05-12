@@ -37,7 +37,7 @@ def print(to_print, symbol=""):
         except:
             to_print = "Error Printing"
     
-    sys.stdout.write("%s:%d - %s: %s\n" % (caller.filename, caller.lineno, to_print)) 
+    sys.stdout.write("%s:%d - %s\n" % (caller.filename, caller.lineno, to_print)) 
     # sys.stdout.write(to_print + "\n")
     open("logs/{}.log".format(filename), "a").write(to_print + "\n")
 
