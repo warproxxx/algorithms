@@ -11,8 +11,8 @@ def print(to_print, symbol=""):
     module = inspect.getmodule(frame[0])
     dirs = module.__file__.split("/")
 
-    # caller = inspect.getframeinfo(inspect.stack()[1][0])
-    # sys.stdout.write("%s:%d - %s" % (caller.filename, caller.lineno)) 
+    caller = inspect.getframeinfo(inspect.stack()[1][0])
+    
 
     if len(dirs) > 1:
         filename = dirs[-2] + "_" + dirs[-1].split(".")[0]
@@ -36,8 +36,9 @@ def print(to_print, symbol=""):
             to_print = "{}".format(to_print)
         except:
             to_print = "Error Printing"
-        
-    sys.stdout.write(to_print + "\n")
+    
+    sys.stdout.write("%s:%d - %s: %s\n" % (caller.filename, caller.lineno, to_print)) 
+    # sys.stdout.write(to_print + "\n")
     open("logs/{}.log".format(filename), "a").write(to_print + "\n")
 
 
