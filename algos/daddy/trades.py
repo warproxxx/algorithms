@@ -154,6 +154,9 @@ def aws_scrape(name, symbol):
 def get_bitmex_data(start, end, symbol, sleep=True):
     all_df = []
 
+    if start.date() != end.date():
+        end = end + pd.Timedelta(days=1)
+
     for scrape_date in pd.date_range(start, end):
         if scrape_date.date() == datetime.datetime.utcnow().date() - pd.Timedelta(days=1):
             curr_time = datetime.datetime.utcnow()
