@@ -28,7 +28,7 @@ if not os.path.isdir("data/"):
 
 f = FeedHandler(retries=100000)
 
-EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv'), pd.read_csv('algos/bch_daddy/exchanges.csv'), pd.read_csv('algos/ltc_daddy/exchanges.csv')])
+EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv')])
 EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
 EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
@@ -46,11 +46,11 @@ def bot():
     doge_daddy_thread = multiprocessing.Process(target=doge_daddy_bot, args=())
     doge_daddy_thread.start()
 
-    ltc_daddy_thread = multiprocessing.Process(target=ltc_daddy_bot, args=())
-    ltc_daddy_thread.start()
+    # ltc_daddy_thread = multiprocessing.Process(target=ltc_daddy_bot, args=())
+    # ltc_daddy_thread.start()
 
-    bch_daddy_thread = multiprocessing.Process(target=bch_daddy_bot, args=())
-    bch_daddy_thread.start()
+    # bch_daddy_thread = multiprocessing.Process(target=bch_daddy_bot, args=())
+    # bch_daddy_thread.start()
 
 
 if __name__ == "__main__":
