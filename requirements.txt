@@ -2,7 +2,7 @@ pandas==1.1.2
 numpy==1.20.1
 cryptofeed==1.6.2
 ta==0.5.17
-ccxt==1.41.82
+ccxt==1.41.9
 backtrader==1.9.76.123
 Django==2.2.4
 arctic==1.79.4
