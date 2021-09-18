@@ -4,7 +4,7 @@ cryptofeed
 ta==0.5.17
 ccxt
 backtrader
-Django==2.2.4
+Django
 arctic
 schedule
 requests
