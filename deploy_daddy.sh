@@ -29,7 +29,7 @@ if [ ! -f /etc/nginx/sites-available/node ]; then
     sudo touch /etc/nginx/sites-available/node
     echo 'server {' | sudo tee -a  /etc/nginx/sites-available/node
     echo '    listen 80;' | sudo tee -a  /etc/nginx/sites-available/node
-    echo '    server_name daddy.scfund.io;' | sudo tee -a  /etc/nginx/sites-available/node
+    echo '    server_name daddy.waterbot.xyz;' | sudo tee -a  /etc/nginx/sites-available/node
     echo '' | sudo tee -a  /etc/nginx/sites-available/node
     echo '    location / {' | sudo tee -a  /etc/nginx/sites-available/node
     echo '        proxy_set_header   X-Forwarded-For $remote_addr;' | sudo tee -a  /etc/nginx/sites-available/node
@@ -49,7 +49,7 @@ pause
 
 sudo service nginx stop
 sudo apt-get install certbot python3-certbot-nginx -y
-sudo certbot --nginx --preferred-challenges http -d daddy.scfund.io --redirect --email daniel@scfund.io --agree-tos --no-eff-email
+sudo certbot --nginx --preferred-challenges http -d daddy.waterbot.xyz --redirect --email daniel@waterbot.xyz --agree-tos --no-eff-email
 
 
 wget -qO - https://www.mongodb.org/static/pgp/server-4.4.asc | sudo apt-key add -
