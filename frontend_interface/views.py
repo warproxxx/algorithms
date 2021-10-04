@@ -893,11 +893,11 @@ def daddy_interface(request):
 
 def delete(request):
     req = request.GET.dict()
-    file = "algos/daddy/parameters/" + req['name'] + ".json"
+    file = "algos/{}_daddy/parameters/{}.json".format(req['symbol'].lower(), req['name'])
 
     if os.path.isfile(file):
         os.remove(file)
-    return HttpResponseRedirect('/daddy')
+    return HttpResponseRedirect('/{}_daddy'.format(req['symbol'].lower()))
 
 def clearLog(request):
     req = request.GET.dict()

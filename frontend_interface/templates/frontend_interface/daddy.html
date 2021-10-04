@@ -247,7 +247,7 @@
 
        function deletePar()
        {
-         var url = "/delete?name=" + $("#delete_par").val()
+         var url = "/delete?name=" + $("#delete_par").val() + "&symbol=" + $("#curr_symbol").val() 
          window.location.href = url;
        }
 
