@@ -37,10 +37,8 @@ async def daddy_book(book, receipt_timestamp):
     bid = float(list(book.book[BID].keys())[-1])
     ask = float(list(book.book[ASK].keys())[0])
 
-    print(book)
-
-    r.set('{}_{}_best_bid'.format(book.feed.lower(), book.symbol.lower()), bid)
-    r.set('{}_{}_best_ask'.format(book.feed.lower(), book.symbol.lower()), ask)
+    r.set('{}_{}_best_bid'.format(book.exchange.lower(), book.symbol.lower()), bid)
+    r.set('{}_{}_best_ask'.format(book.exchange.lower(), book.symbol.lower()), ask)
 
 async def daddy_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
     pass
