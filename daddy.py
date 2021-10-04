@@ -28,7 +28,7 @@ if not os.path.isdir("data/"):
 
 f = FeedHandler()
 
-EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv')])
+EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv')])
 EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
 EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
@@ -43,8 +43,8 @@ def bot():
     eth_daddy_thread = multiprocessing.Process(target=eth_daddy_bot, args=())
     eth_daddy_thread.start()
 
-    doge_daddy_thread = multiprocessing.Process(target=doge_daddy_bot, args=())
-    doge_daddy_thread.start()
+    # doge_daddy_thread = multiprocessing.Process(target=doge_daddy_bot, args=())
+    # doge_daddy_thread.start()
 
     # ltc_daddy_thread = multiprocessing.Process(target=ltc_daddy_bot, args=())
     # ltc_daddy_thread.start()
