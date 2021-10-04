@@ -299,8 +299,8 @@ class liveTrading():
     def get_orderbook(self):
         orderbook = {}
 
-        orderbook['best_ask'] = float(self.r.get('{}_{}_best_ask'.format(self.exchange_name, self.symbol_here.lower())).decode())
-        orderbook['best_bid'] = float(self.r.get('{}_{}_best_bid'.format(self.exchange_name, self.symbol_here.lower())).decode())
+        orderbook['best_ask'] = float(self.r.get('{}_{}_best_ask'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
+        orderbook['best_bid'] = float(self.r.get('{}_{}_best_bid'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
 
         return orderbook
 

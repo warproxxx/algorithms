@@ -32,13 +32,14 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, amount, price):
     pass           
 
-async def daddy_book(feed, pair, book, timestamp, receipt_timestamp):
-    if float(r.get('daddy_enabled').decode()) == 1:
-        bid = float(list(book[BID].keys())[-1])
-        ask = float(list(book[ASK].keys())[0])
+async def daddy_book(book, receipt_timestamp):
 
-        r.set('{}_{}_best_bid'.format(feed.lower(), pair.lower()), bid)
-        r.set('{}_{}_best_ask'.format(feed.lower(), pair.lower()), ask)
+    if float(r.get('daddy_enabled').decode()) == 1:
+        bid = float(list(book.book[BID].keys())[-1])
+        ask = float(list(book.book[ASK].keys())[0])
+
+        r.set('{}_{}_best_bid'.format(book.feed.lower(), book.symbol.lower()), bid)
+        r.set('{}_{}_best_ask'.format(book.feed.lower(), book.symbol.lower()), ask)
 
 async def daddy_ticker(feed, pair, bid, ask, timestamp, receipt_timestamp):  
     pass
