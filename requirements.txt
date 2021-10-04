@@ -12,3 +12,4 @@ redis
 scipy
 plotly
 websockets
+tzlocal==2.1
