@@ -5,7 +5,7 @@ ta==0.5.17
 ccxt
 backtrader
 Django
-arctic
+git+https://github.com/man-group/arctic
 schedule
 requests
 redis

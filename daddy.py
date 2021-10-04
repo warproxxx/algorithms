@@ -26,7 +26,7 @@ import os
 if not os.path.isdir("data/"):
     os.makedirs("data/")
 
-f = FeedHandler(retries=100000)
+f = FeedHandler()
 
 EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv'), pd.read_csv('algos/doge_daddy/exchanges.csv')])
 EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
@@ -97,6 +97,6 @@ if __name__ == "__main__":
                     callbacks[TICKER] = ticker_callbacks
 
                 print("{} {} {}".format(pairs, callbacks, channels))
-                f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
+                f.add_feed(b(symbols=pairs, channels=channels, callbacks=callbacks, retries=1000000000000), timeout=-1)
 
     f.run()
