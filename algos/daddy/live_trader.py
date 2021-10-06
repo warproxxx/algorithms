@@ -579,7 +579,7 @@ class liveTrading():
         elif self.exchange_name == 'bybit':
             return float(self.exchange.fetch_balance()['info']['result']['BTC']['available_balance'])
         elif self.exchange_name == 'ftx':
-            return float(self.exchange.fetch_balance()['USD']['free'])
+            return float(self.exchange.fetch_balance()['USD']['total'])
         elif self.exchange_name == 'okex':
             return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['equity'])
         elif self.exchange_name == 'huobi_swap':
