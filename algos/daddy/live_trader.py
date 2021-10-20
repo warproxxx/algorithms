@@ -300,8 +300,8 @@ class liveTrading():
         orderbook = {}
 
         book = self.exchange.fetch_order_book(self.symbol)
-        orderbook['best_ask'] =  book['bids'][0][0]
-        orderbook['best_bid'] = book['asks'][0][0]
+        orderbook['best_ask'] =  book['asks'][0][0]
+        orderbook['best_bid'] = book['bids'][0][0]
 
         return orderbook
 
