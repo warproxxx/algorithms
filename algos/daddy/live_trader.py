@@ -299,10 +299,18 @@ class liveTrading():
     def get_orderbook(self):
         orderbook = {}
 
-        orderbook['best_ask'] = float(self.r.get('{}_{}_best_ask'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
-        orderbook['best_bid'] = float(self.r.get('{}_{}_best_bid'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
+        book = exchange.fetch_order_book(self.symbol)
+        orderbook['best_ask'] =  book['bids'][0][0]
+        orderbook['best_bid'] = book['asks'][0][0]
 
         return orderbook
+
+        # orderbook = {}
+
+        # orderbook['best_ask'] = float(self.r.get('{}_{}_best_ask'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
+        # orderbook['best_bid'] = float(self.r.get('{}_{}_best_bid'.format(self.exchange_name, self.symbol_here.lower().replace("-perp", "-usd-perp"))).decode())
+
+        # return orderbook
 
     def get_position(self):
         '''
