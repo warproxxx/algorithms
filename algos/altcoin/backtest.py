@@ -7,6 +7,7 @@ import json
 import os
 import io
 from glob import glob
+import ta
 
 import backtrader as bt
 
@@ -16,12 +17,14 @@ from scipy.ndimage import gaussian_filter
 import requests
 
 from datetime import datetime
-from utils import print
+# from utils import print
 
 import time
 
 import redis
 import traceback
+import warnings
+warnings.filterwarnings('ignore')
 
 def create_multiple_plot(df, variable_names, time='Time', verbose=False):        
     fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
@@ -122,51 +125,22 @@ def get_df(symbol, cache=False):
 
     return df
 
-def add_volatility(price_df, days=30, gaussian=3.):
-    price_df["30D_volatility"] = price_df['close'].rolling(days).std()/10
-    gaussian_vols = []
-
-    for idx, row in price_df.iterrows():
-        gaussian_vols.append(gaussian_filter(price_df[:idx+1]['30D_volatility'], gaussian)[-1])
-
-    price_df['30D_volatility'] = gaussian_vols
-    
-    curr_group = ""
-    new_price_df = pd.DataFrame()
-
-    for i in range(1, len(price_df)):
-        row = price_df.iloc[i]
-        curr_vol = price_df.iloc[i]['30D_volatility']
-        prev_vol = price_df.iloc[i-1]['30D_volatility']
-        three_vol = price_df.iloc[i-2]['30D_volatility']
-
-        if pd.isnull(prev_vol) == False:
-            if curr_group == "":
-                curr_group = price_df.iloc[i]['startTime']
-
-
-            if (three_vol - prev_vol) * (prev_vol - curr_vol) < 0:
-                curr_group = price_df.iloc[i]['startTime']
-
-
-
-            row['curr_group'] = curr_group
-            new_price_df = new_price_df.append(row, ignore_index=True)
-
-
-    new_price_df = new_price_df.sort_values('startTime')
-    new_price_df = new_price_df[['startTime', 'open', 'high', 'low', 'close', 'volume', '30D_volatility', 'curr_group']]
-    return new_price_df
+def get_hma(col, n):
+    WMA1 = ta.trend.WMAIndicator(col, window=int(n/2)).wma()
+    WMA2 = ta.trend.WMAIndicator(col, window=n).wma()
+    raw_wma = (2 * WMA1) - WMA2
+    hma = ta.trend.WMAIndicator(raw_wma, window=int(round(n**0.5))).wma()
+    return hma
 
 def get_figure(df):
-    decrease_to_increase = pd.to_datetime(df[(df['30D_volatility'] < df['30D_volatility'].shift(1)) & (df['30D_volatility'].shift(-1) > df['30D_volatility'])]['startTime'])
-    increase_to_decrease = pd.to_datetime(df[(df['30D_volatility'] > df['30D_volatility'].shift(1)) & (df['30D_volatility'].shift(-1) < df['30D_volatility'])]['startTime'])
+    decrease_to_increase = pd.to_datetime(df[(df['price_hall'] < df['price_hall'].shift(1)) & (df['price_hall'].shift(-1) > df['price_hall'])]['startTime'])
+    increase_to_decrease = pd.to_datetime(df[(df['price_hall'] > df['price_hall'].shift(1)) & (df['price_hall'].shift(-1) < df['price_hall'])]['startTime'])
 
-    hovertexts = list(("30D volatility : " + df['30D_volatility'].replace(np.nan, 0).round(2).astype(str)).values)
+    hovertexts = list(("30D volatility : " + df['price_hall'].replace(np.nan, 0).round(2).astype(str)).values)
     fig = go.Figure(layout=go.Layout(xaxis={'spikemode': 'across'}))
 
     fig.add_trace(go.Scatter(x=df['startTime'], y=df['close'], name='Close Price', yaxis="y1", hovertext = hovertexts, line={"color": "#636EFA"}, fillcolor="black"))
-    fig.add_trace(go.Scatter(x=df['startTime'], y=df['30D_volatility'], name='30D volatility', yaxis="y2", line={"color": "#EF553B"}))
+    fig.add_trace(go.Scatter(x=df['startTime'], y=df['price_hall'], name='30D volatility', yaxis="y2", line={"color": "#EF553B"}))
 
 
     fig.update_layout(
@@ -221,19 +195,26 @@ class CommInfoFractional(bt.CommissionInfo):
     def getsize(self, price, cash):
         '''Returns fractional size for cash operation @price'''
         return self.p.leverage * (cash / price)
+
+def get_params_lines(columns):
     
-class Custom_Data(bt.feeds.PandasData):
-    lines = ('30D_volatility', 'curr_group', )
-    params = (
-        ('datetime', 0),
-        ('open', 1),
-        ('high', 2),
-        ('low', 3),
-        ('close', 4),
-        ('volume', 5),
-        ('30D_volatility', 6),
-        ('curr_group', 7)
-    )
+    lines = []
+    params = [['datetime', 0], ['open', 1], ['high', 2], ['low', 3], ['close', 4], ['volume', 5]]
+    count = 6
+
+    for col in columns[6:]:
+        lines.append(col)
+        params.append([col, count])
+        count = count + 1
+        
+    new_lines = tuple(lines)
+    new_params = tuple(map(tuple, params))
+    
+    class PandasData_Custom(bt.feeds.PandasData):
+        lines = new_lines
+        params = new_params
+        
+    return PandasData_Custom
     
 def get_sharpe(col):
     change = col.pct_change(1)
@@ -245,10 +226,9 @@ def get_sharpe(col):
 
     return sharpe
 
-
-class unbiasedTest(bt.Strategy):
-    params = dict(number_days={})
-    
+class tradingStrategy(bt.Strategy):
+    params = dict(parameters={})
+        
     def __init__(self):        
         self.trades = io.StringIO()
         self.trades_writer = csv.writer(self.trades)
@@ -258,21 +238,12 @@ class unbiasedTest(bt.Strategy):
 
         self.portfolioValue = io.StringIO()
         self.portfolioValue_writer = csv.writer(self.portfolioValue)
-        
-        self.first_time = True
-        
-        self.number_days = self.params.number_days['number_days']
-        self.lag = self.params.number_days['lag']
-        self.start_month = self.params.number_days['start_month']
-
-        self.entered = False
 
     def log(self, txt, dt=None):
         dt = dt or self.datas[0].datetime.datetime(0)
-        print("Datetime: {} Message: {}".format(dt, txt))
-    
+#         print("Datetime: {} Message: {}".format(dt, txt))
+
     def notify_order(self, order):
-            
         if order.status in [order.Submitted, order.Accepted]:
             return
 
@@ -280,190 +251,58 @@ class unbiasedTest(bt.Strategy):
             if order.isbuy():
                 ordertype = "BUY"
                 self.log("BUY EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
+                self.buyprice = order.executed.price
+                self.buycomm = order.executed.comm
             else:
                 ordertype = "SELL"
                 self.log("SELL EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
-            
-#             print(order)
-            self.trades_writer.writerow([self.datas[0].datetime.datetime(0), ordertype, order.info['name'], order.executed.price, order.executed.size, order.executed.comm])
-            self.bar_executed = len(self)
-
-        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            self.log("Order Canceled/Margin/Rejected")
-            self.log(order.Rejected)
-
-        self.order = None
-
-    def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-
-        self.log('OPERATION PROFIT, GROSS: {}, NET: {}'.format(trade.pnl, trade.pnlcomm))
-        self.operations_writer.writerow([self.datas[0].datetime.datetime(0), trade.pnlcomm])
-
-    def start(self):
-        self.order = None 
-
-    def get_logs(self):
-        self.portfolioValue.seek(0)
-        portfolioValueDf = pd.read_csv(self.portfolioValue, names=['Date', 'Value'])
-        portfolioValueDf['Date'] = pd.to_datetime(portfolioValueDf['Date'])
-
-        self.trades.seek(0)
-        tradesDf = pd.read_csv(self.trades, names=['Date', 'Type', 'Data', 'Price', 'Size', 'Comission'])
-        tradesDf['Date'] = pd.to_datetime(tradesDf['Date'])
-        tradesDf['Total Spent'] = tradesDf['Price'] * tradesDf['Size']
-
-        self.operations.seek(0)
-        operationsDf = pd.read_csv(self.operations, names=['Date', 'Profit'])
-        operationsDf['Date'] = pd.to_datetime(operationsDf['Date'])
-        operationsDf = operationsDf.merge(portfolioValueDf, on='Date',how='left')
-        operationsDf['original_value'] = operationsDf['Value'] - operationsDf['Profit']
-        operationsDf['pct_change'] = (operationsDf.Value - operationsDf.original_value)/operationsDf.original_value * 100
-
-        return portfolioValueDf, tradesDf, operationsDf
-    
-    def next(self):       
-        self.portfolioValue_writer.writerow([self.datas[0].datetime.datetime(0), self.broker.getvalue()])
-        
-        price_data = self.datas[0]
-        price_pos = self.getposition(price_data).size
-        curr_group = pd.to_datetime(price_data.curr_group[0])
-        curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
-        
-        if curr_datetime.day == 1 + self.lag and curr_datetime.month == self.start_month:
-            n_days = (curr_group-curr_datetime).days
-            
-            four_days_ago_price = price_data.open[n_days - self.number_days]
-            today_price = price_data.close[n_days]
-                        
-            if today_price >= four_days_ago_price:
-                price_direction = 1
-            else:
-                price_direction = -1
-            
-            pos_direction = 1 if price_pos > 0 else -1
-
-            order=self.order_target_percent(target=0.99*price_direction)
-            order.addinfo(name=price_data._name)
-            
-            self.entered = True
-
-        
-        if self.entered == True:
-            curr_group = pd.to_datetime(price_data.curr_group[0])
-            curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
-
-            if curr_group == curr_datetime:
-                four_days_ago_price = price_data.open[-1 * self.number_days]
-                today_price = price_data.close[0]
-
-                if today_price >= four_days_ago_price:
-                    price_direction = 1
-                else:
-                    price_direction = -1
-
-                pos_direction = 1 if price_pos > 0 else -1
-
-                if pos_direction != price_direction:
-                    order=self.order_target_percent(target=0.99*price_direction)
-                    order.addinfo(name=price_data._name)
-
-class priceStrategy(bt.Strategy):
-    params = dict(number_days={})
-    
-    def __init__(self):        
-        self.trades = io.StringIO()
-        self.trades_writer = csv.writer(self.trades)
-
-        self.operations = io.StringIO()
-        self.operations_writer = csv.writer(self.operations)
-
-        self.portfolioValue = io.StringIO()
-        self.portfolioValue_writer = csv.writer(self.portfolioValue)
-        
-        self.first_time = True
-        
-        self.number_days = self.params.number_days
-
-    def log(self, txt, dt=None):
-        dt = dt or self.datas[0].datetime.datetime(0)
-        # print("Datetime: {} Message: {}".format(dt, txt))
-    
-    def notify_order(self, order):
-            
-        if order.status in [order.Submitted, order.Accepted]:
-            return
-
-        if order.status in [order.Completed]:
-            if order.isbuy():
-                ordertype = "BUY"
-                self.log("BUY EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
-            else:
-                ordertype = "SELL"
-                self.log("SELL EXECUTED, Type: {}, Price: {}, Cost: {}, Comm: {}".format(order.info['name'], order.executed.price, order.executed.value, order.executed.comm))
-            
-#             print(order)
-            self.trades_writer.writerow([self.datas[0].datetime.datetime(0), ordertype, order.info['name'], order.executed.price, order.executed.size, order.executed.comm])
-            self.bar_executed = len(self)
-
-        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
-            self.log("Order Canceled/Margin/Rejected")
-            self.log(order.Rejected)
-
-        self.order = None
-
-    def notify_trade(self, trade):
-        if not trade.isclosed:
-            return
-
-        self.log('OPERATION PROFIT, GROSS: {}, NET: {}'.format(trade.pnl, trade.pnlcomm))
-        self.operations_writer.writerow([self.datas[0].datetime.datetime(0), trade.pnlcomm])
-
-    def start(self):
-        self.order = None 
-
-    def get_logs(self):
-        self.portfolioValue.seek(0)
-        portfolioValueDf = pd.read_csv(self.portfolioValue, names=['Date', 'Value'])
-        portfolioValueDf['Date'] = pd.to_datetime(portfolioValueDf['Date'])
-
-        self.trades.seek(0)
-        tradesDf = pd.read_csv(self.trades, names=['Date', 'Type', 'Data', 'Price', 'Size', 'Comission'])
-        tradesDf['Date'] = pd.to_datetime(tradesDf['Date'])
-        tradesDf['Total Spent'] = tradesDf['Price'] * tradesDf['Size']
-
-        self.operations.seek(0)
-        operationsDf = pd.read_csv(self.operations, names=['Date', 'Profit'])
-        operationsDf['Date'] = pd.to_datetime(operationsDf['Date'])
-        operationsDf = operationsDf.merge(portfolioValueDf, on='Date',how='left')
-        operationsDf['original_value'] = operationsDf['Value'] - operationsDf['Profit']
-        operationsDf['pct_change'] = (operationsDf.Value - operationsDf.original_value)/operationsDf.original_value * 100
-
-        return portfolioValueDf, tradesDf, operationsDf
-    
-    def next(self):       
-        self.portfolioValue_writer.writerow([self.datas[0].datetime.datetime(0), self.broker.getvalue()])
-        price_data = self.datas[0]
-        price_pos = self.getposition(price_data).size
-        
-        curr_group = pd.to_datetime(price_data.curr_group[0])
-        curr_datetime = pd.to_datetime(price_data.datetime.datetime(0))
-        
-        if curr_group == curr_datetime:
-            four_days_ago_price = price_data.open[-1 * self.number_days]
-            today_price = price_data.close[0]
-            
-            if today_price >= four_days_ago_price:
-                price_direction = 1
-            else:
-                price_direction = -1
                 
-            pos_direction = 1 if price_pos > 0 else -1
+            self.trades_writer.writerow([self.datas[0].datetime.datetime(0), ordertype, order.executed.price, order.executed.value, order.executed.comm])
+            self.bar_executed = len(self)
             
-            if pos_direction != price_direction:
-                order=self.order_target_percent(target=0.99*price_direction)
-                order.addinfo(name=price_data._name)
+        elif order.status in [order.Canceled, order.Margin, order.Rejected]:
+            self.log("Order Canceled/Margin/Rejected")
+            self.log(order.Rejected)
+
+        self.order = None
+    
+    def notify_trade(self, trade):
+        if not trade.isclosed:
+            return
+        self.log('OPERATION PROFIT, GROSS: {}, NET: {}'.format(trade.pnl, trade.pnlcomm))
+        self.operations_writer.writerow([self.datas[0].datetime.datetime(0), trade.pnlcomm])
+
+    def start(self):
+        self.order = None 
+        
+    def get_logs(self):
+        self.portfolioValue.seek(0)
+        portfolioValueDf = pd.read_csv(self.portfolioValue, names=['Date', 'Value'])
+        portfolioValueDf['Date'] = pd.to_datetime(portfolioValueDf['Date'])
+
+        self.trades.seek(0)
+        tradesDf = pd.read_csv(self.trades, names=['Date', 'Type', 'Price', 'Total Spent', 'Comission'])
+        tradesDf['Date'] = pd.to_datetime(tradesDf['Date'])
+
+        self.operations.seek(0)
+        operationsDf = pd.read_csv(self.operations, names=['Date', 'Profit'])
+        operationsDf['Date'] = pd.to_datetime(operationsDf['Date'])
+        operationsDf = operationsDf.merge(portfolioValueDf, on='Date',how='left')
+        operationsDf['original_value'] = operationsDf['Value'] - operationsDf['Profit']
+        operationsDf['pct_change'] = (operationsDf.Value - operationsDf.original_value)/operationsDf.original_value * 100
+
+        return portfolioValueDf, tradesDf, operationsDf, 0
+
+    def next(self):        
+        self.portfolioValue_writer.writerow([self.datas[0].datetime.datetime(0), self.broker.getvalue()])  
+        
+        if self.position:
+            if self.datas[0].price_hall[0] < self.datas[0].price_hall[-1]:
+                self.close()
+
+        if not self.position:
+            if self.datas[0].price_hall[0] > self.datas[0].price_hall[-1] and self.datas[0].volatility[0] > 40 and self.broker.getvalue() > self.params.parameters['stop']:
+                self.order_target_percent(target=.999)
 
 def plot(df, portfolio, name):
     fig_html = get_figure(df)
@@ -471,6 +310,9 @@ def plot(df, portfolio, name):
     portfolio = portfolio.merge(df[['startTime', 'close']], left_on='Date', right_on='startTime')[['Date', 'Value', 'close']]
     fig = create_multiple_plot(portfolio, ['Value', 'close'], 'Date')
     price_html = fig.to_html()
+
+    if not os.path.isdir('frontend_interface/static/'):
+        os.makedirs('frontend_interface/static/')
 
     with open('frontend_interface/static/{}_vol.html'.format(name), 'w') as file:
         file.write(fig_html)
@@ -483,8 +325,6 @@ def perform_backtests(skip_setting=False):
         os.makedirs("data/")
 
     config = pd.read_csv('algos/altcoin/config.csv')
-    config['vol_day'] = config['vol_day'].astype(int)
-    config['prev_day'] = config['prev_day'].astype(int)
     porfolios = pd.DataFrame()
 
     for idx, row in config.iterrows():
@@ -495,75 +335,28 @@ def perform_backtests(skip_setting=False):
                 initial_cash = 1000
 
                 pair = row['name']
-                gaussian = row['gaussian']
-                days = row['vol_day']
-                number_days = row['prev_day']
                 allocation = row['allocation']
 
                 price_df = get_df(pair)
-                price_df = add_volatility(price_df, days=days, gaussian=gaussian)
-                price_df['curr_group'] = pd.to_datetime(price_df['curr_group']).astype(int)
-                price_df['startTime'] = pd.to_datetime(price_df['startTime'])
+                price_df['price_hall'] = get_hma(price_df['close'], 30)
+                price_df['volatility'] = (price_df['close'].std()/price_df['close']) * 100
 
                 price_data = Custom_Data(dataname=price_df)
 
                 cerebro = bt.Cerebro()
 
                 cerebro.adddata(price_data, name='data')
-                cerebro.addstrategy(priceStrategy, number_days=number_days)
+                cerebro.addstrategy(tradingStrategy)
                 cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
-                cerebro.addanalyzer(bt.analyzers.Calmar)
-                cerebro.addanalyzer(bt.analyzers.DrawDown)
-                cerebro.addanalyzer(bt.analyzers.Returns)
                 cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
-                cerebro.addanalyzer(bt.analyzers.TimeReturn)
-                cerebro.addanalyzer(bt.analyzers.PyFolio)
-                cerebro.addanalyzer(bt.analyzers.PositionsValue)
 
                 cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075*mult)/100, mult=mult), slip_open=True, slip_out=True)  # 0.5%
                 run = cerebro.run()
                 portfolio, trades, operations = run[0].get_logs()
-
-                trades.to_csv("data/trades_{}.csv".format(pair), index=None)
                 plot(price_df, portfolio, pair)
 
-                now = pd.Timestamp.utcnow().date()
-                now = pd.to_datetime(now.replace(day=1))
-
-                start = pd.to_datetime(price_df['curr_group'].iloc[-1])
-                start = start.replace(day=1)
-
-                first_group = price_df[price_df['startTime'] >= start].iloc[0]['curr_group']
-
-                start_from = pd.to_datetime(first_group) - pd.Timedelta(days=int(row['prev_day']) + 4)
-                # start_from = now - pd.Timedelta(days=20)
-                start_month = price_df['startTime'].iloc[-1].month
-
-                price_df = price_df[(price_df['startTime'] >= start_from)].reset_index(drop=True)
-                    
-                price_data = Custom_Data(dataname=price_df)
-                initial_cash = 1000
-
-                cerebro = bt.Cerebro()
-
-                cerebro.adddata(price_data, name='data')
-
-                details = {'number_days': int(row['prev_day']), 'start_month': start_month, 'lag': 0}
-                cerebro.addstrategy(unbiasedTest, number_days=details)
-                cerebro.addanalyzer(bt.analyzers.SharpeRatio, riskfreerate=0.0, annualize=True, timeframe=bt.TimeFrame.Days)
-                cerebro.addanalyzer(bt.analyzers.Calmar)
-                cerebro.addanalyzer(bt.analyzers.DrawDown)
-                cerebro.addanalyzer(bt.analyzers.Returns)
-                cerebro.addanalyzer(bt.analyzers.TradeAnalyzer)
-                cerebro.addanalyzer(bt.analyzers.TimeReturn)
-                cerebro.addanalyzer(bt.analyzers.PyFolio)
-                cerebro.addanalyzer(bt.analyzers.PositionsValue)
-
-                cerebro.broker = bt.brokers.BackBroker(cash=initial_cash, slip_perc=0.01/100, commission = CommInfoFractional(commission=(0.075)/100, leverage=row['mult']), slip_open=True, slip_out=True)  # 0.5%
-                run = cerebro.run()
-
-                portfolio, trades, operations = run[0].get_logs()
-
+                trades.to_csv("data/trades_{}.csv".format(pair), index=None)
+                
                 curr = portfolio[portfolio['Value'] < 0]
 
                 if len(curr) > 0:
@@ -581,6 +374,9 @@ def perform_backtests(skip_setting=False):
                     porfolios = portfolio
                 else:
                     porfolios = porfolios.merge(portfolio, on='Date', how='left')
+
+                
+
         except Exception as e:
             print(traceback.format_exc())
 
