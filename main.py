@@ -17,7 +17,6 @@ import threading
 from utils import flush_redis
 from algos.vol_trend.bot import vol_bot
 from algos.altcoin.bot import alt_bot
-from algos.ratio.bot import ratio_bot
 
 import ccxt
 from algos.daddy.huobi.HuobiDMService import HuobiDM
