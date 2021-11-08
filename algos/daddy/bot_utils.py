@@ -33,8 +33,12 @@ async def daddy_trade(feed, pair, order_id, timestamp, receipt_timestamp, side, 
     pass           
 
 async def daddy_book(book, receipt_timestamp):
+    key = -1
 
-    bid = float(list(book.book[BID].keys())[-1])
+    if book.exchange.lower() == 'dydx':
+        key = 0
+
+    bid = float(list(book.book[BID].keys())[key])
     ask = float(list(book.book[ASK].keys())[0])
 
     r.set('{}_{}_best_bid'.format(book.exchange.lower(), book.symbol.lower()), bid)

@@ -6,8 +6,8 @@ from algos.daddy.bot_utils import daddy_trade, daddy_book, daddy_ticker
 
 import pandas as pd
 
-EXCHANGES = pd.read_csv('test_exchanges.csv')
-f = FeedHandler(retries=100000)
+EXCHANGES = pd.read_csv('algos/eth_daddy/exchanges.csv')
+f = FeedHandler()
 
 for idx, row in EXCHANGES.iterrows():
     if row['trade'] == 1:
@@ -47,6 +47,6 @@ for idx, row in EXCHANGES.iterrows():
                 callbacks[TICKER] = ticker_callbacks
 
             print("{} {} {}".format(pairs, callbacks, channels))
-            f.add_feed(b(pairs=pairs, channels=channels, callbacks=callbacks), timeout=-1)
+            f.add_feed(b(symbols=pairs, channels=channels, callbacks=callbacks, retries=1000000000000), timeout=-1)
 
 f.run()
