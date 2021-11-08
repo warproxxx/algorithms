@@ -119,8 +119,9 @@ class daddyBot():
                 position_since = 0
 
             try:
-                pnl_percentage = ((obook['best_bid'] - avgEntryPrice)/avgEntryPrice) * 100 * float(lt.parameters['mult'])
-            except:
+                pnl_percentage = ((float(obook['best_bid']) - float(avgEntryPrice))/float(avgEntryPrice)) * 100 * float(lt.parameters['mult'])
+            except Exception as e:
+                print("Exception: {}".format(str(e)))
                 pnl_percentage = 0
 
             self.print("\n{}:".format(datetime.datetime.utcnow()))
