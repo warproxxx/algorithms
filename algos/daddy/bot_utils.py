@@ -98,7 +98,7 @@ class daddyBot():
         except Exception as e:
             self.print("Error in setting pos in {}".format(name))
 
-        self.stop_loss_work(name)
+        # self.stop_loss_work(name)
         lt.update_parameters()
 
     def perform_backtrade_verification(self, details, analysis):

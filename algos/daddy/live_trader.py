@@ -13,6 +13,8 @@ import inspect
 from algos.daddy.defines import trade_methods
 import sys
 from utils import print
+from dydx3 import Client
+from dydx3.constants import API_HOST_MAINNET, TIME_IN_FORCE_GTT
 
 def round_down(value, decimals):
     with decimal.localcontext() as ctx:
@@ -140,6 +142,17 @@ class liveTrading():
                 self.symbol_here = "BTC-USD"
 
             self.lev = 20
+        elif exchange == 'dydx':
+            if testnet == True:
+                sys.exit("Testnet is not available for this exchange")
+
+            api_key_credentials = {"key":os.getenv('DYDX_KEY'),"passphrase":os.getenv('DYDX_PASS'), "secret": os.getenv('DYDX_SECRET')}
+            self.exchange = Client(API_HOST_MAINNET, api_key_credentials=api_key_credentials, stark_private_key=os.getenv('DYDX_STARK_KEY'))
+            account_response = self.exchange.private.get_account(ethereum_address=os.getenv('DYDX_PUB_KEY'))
+            self.position_id = account_response.data['account']['positionId']
+
+            self.symbol_here = self.symbol
+            self.eth_address = os.getenv('DYDX_PUB_KEY')
                         
         self.increment = config[(config['name'] == self.name)].iloc[0]['increment']
         number_str = '{0:f}'.format(self.increment)
@@ -245,6 +258,9 @@ class liveTrading():
                         self.exchange.send_post_request('/swap-api/v1/swap_trigger_cancelall', {'contract_code': self.symbol})
 
                     self.exchange.send_post_request('/swap-api/v1/swap_cancelall', {'contract_code': self.symbol})
+                    orders = []
+                elif self.exchange_name == 'dydx':
+                    self.exchange.private.cancel_all_orders()
                     orders = []
 
         
@@ -398,6 +414,13 @@ class liveTrading():
                         return "LONG", float(pos['cost_open']), int(pos['available'])
                     else:
                         return 'NONE', 0, 0
+                elif self.exchange_name == 'dydx':
+                    position = self.client.private.get_positions(market=self.symbol, status='OPEN').data
+                    if len(position['positions']) > 0:
+                        pos = position['positions'][0]['size']
+                        return pos['side'], pos['entryPrice'], pos['size']
+                    else:
+                        return 'NONE', 0, 0
 
             except ccxt.BaseError as e:
                 if "many requests" in str(e).lower():
@@ -454,6 +477,8 @@ class liveTrading():
             orders = self.exchange.swap_get_order_algo_instrument_id({'instrument_id': self.symbol, 'order_type': "1", "status": "1"})['orderStrategyVOS']
         elif self.exchange_name == 'huobi_swap':
             orders = self.exchange.send_post_request('/swap-api/v1/swap_trigger_openorders', {'contract_code': self.symbol})['data']['orders']
+        elif self.exchange_name == 'dydx':
+            orders = []
 
         return orders
 
@@ -540,6 +565,8 @@ class liveTrading():
                     order = self.exchange.send_post_request('/swap-api/v1/swap_trigger_order', {'contract_code': self.symbol, 'trigger_type': 'le', 'trigger_price': close_at, 'order_price': close_at-1000, 'volume': amount, 'direction': 'sell', 'offset': 'close'})
                     return order
                     break
+                elif self.exchange_name == 'dydx':
+                    return []
             except Exception as e:
                 if "many requests" in str(e).lower():
                     print("Too many requests in {}".format(inspect.currentframe().f_code.co_name))
@@ -592,7 +619,9 @@ class liveTrading():
             return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['equity'])
         elif self.exchange_name == 'huobi_swap':
             return float(self.exchange.send_post_request('/swap-api/v1/swap_account_position_info', {'contract_code': self.symbol})['data'][0]['margin_available'])
-
+        elif self.exchange_name == 'dydx':
+            account_response = self.exchange.private.get_account(ethereum_address=os.getenv('DYDX_PUB_KEY'))
+            return float(account_response.data['account']['freeCollateral'])
 
     def get_balance(self):
         exchanges = pd.read_csv(self.config_file)
@@ -635,6 +664,9 @@ class liveTrading():
             elif self.exchange_name == 'huobi_swap':
                 amount = int((balance * self.lev * price) // 100)
                 return amount, round(price, 1)
+            elif self.exchange_name == 'dydx':
+                amount = round_down(((balance * self.lev)/price) * 0.97, 2)
+                return amount, price
 
         elif order_type == 'sell':
             price = orderbook['best_bid'] + self.increment
@@ -783,13 +815,21 @@ class liveTrading():
                 elif order_type == 'sell':
                     order = self.exchange.swap_post_order({'instrument_id': self.symbol, 'size': int(amount), 'type': '3', 'order_type': 4})
             elif self.exchange_name == 'huobi_swap':
-                
                 if order_type == 'buy':
                     order = self.exchange.send_post_request('/swap-api/v1/swap_order', {'contract_code': self.symbol, 'volume': int(amount), 'direction': 'buy', 'offset': 'open', 'order_price_type': 'optimal_20', 'lever_rate': int(self.lev)})
                 elif order_type == 'sell':
                     order = self.exchange.send_post_request('/swap-api/v1/swap_order', {'contract_code': self.symbol, 'volume': int(amount), 'direction': 'sell', 'offset': 'close', 'order_price_type': 'optimal_20', 'lever_rate': int(self.lev)})
                 
                 return order
+            elif self.exchange_name == 'dydx':
+                orderbook = self.get_orderbook()
+
+                if order_type == 'buy':
+                    order = self.exchange.private.create_order(position_id=position_id, market=symbol, side='BUY', order_type='MARKET', size=str(amount), post_only=False, price=str(orderbook['best_bid'] * 1.02), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
+                elif order_type == 'sell':
+                    order = self.exchange.private.create_order(position_id=position_id, market=symbol, side='SELL', order_type='MARKET', size=str(amount), post_only=False, price=str(orderbook['best_ask'] * 0.98), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
+
+                return order.data
         else:
             print("Doing a zero trade")
             return []
@@ -838,6 +878,9 @@ class liveTrading():
             elif self.exchange_name == 'okex' or self.exchange_name == 'huobi_swap':
                 single_size = int(amount / intervals)     
                 final_amount = int(amount - (single_size * (intervals - 1)))
+            elif self.exchange_name == 'dydx':
+                single_size = round_down(amount / intervals, 3)
+                final_amount = round_down(amount - (single_size * (intervals - 1)), 3)
 
             trading_array = [single_size] * (intervals - 1)
             trading_array.append(final_amount)
