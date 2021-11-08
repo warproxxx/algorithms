@@ -153,7 +153,7 @@ class liveTrading():
 
             self.symbol_here = self.symbol
             self.eth_address = os.getenv('DYDX_PUB_KEY')
-                        
+        
         self.increment = config[(config['name'] == self.name)].iloc[0]['increment']
         number_str = '{0:f}'.format(self.increment)
         self.round_places = len(number_str.split(".")[1])
@@ -200,6 +200,8 @@ class liveTrading():
                         break
                     except Exception as e:
                         break
+                elif self.exchange_name == 'dydx':
+                    break
 
             except ccxt.BaseError as e:
 
@@ -315,9 +317,14 @@ class liveTrading():
     def get_orderbook(self):
         orderbook = {}
 
-        book = self.exchange.fetch_order_book(self.symbol)
-        orderbook['best_ask'] =  book['asks'][0][0]
-        orderbook['best_bid'] = book['bids'][0][0]
+        if self.exchange_name == 'dydx':
+            book = self.exchange.public.get_orderbook(self.symbol).data
+            orderbook['best_ask'] = float(book['asks'][0]['price'])
+            orderbook['best_bid'] = float(book['bids'][0]['price'])
+        else:
+            book = self.exchange.fetch_order_book(self.symbol)
+            orderbook['best_ask'] =  book['asks'][0][0]
+            orderbook['best_bid'] = book['bids'][0][0]
 
         return orderbook
 
@@ -415,9 +422,9 @@ class liveTrading():
                     else:
                         return 'NONE', 0, 0
                 elif self.exchange_name == 'dydx':
-                    position = self.client.private.get_positions(market=self.symbol, status='OPEN').data
+                    position = self.exchange.private.get_positions(market=self.symbol, status='OPEN').data
                     if len(position['positions']) > 0:
-                        pos = position['positions'][0]['size']
+                        pos = position['positions'][0]
                         return pos['side'], pos['entryPrice'], pos['size']
                     else:
                         return 'NONE', 0, 0
@@ -599,29 +606,33 @@ class liveTrading():
                     self.add_stop_loss()
 
     def actually_get_balance(self):
-        if self.exchange_name == 'bitmex':
-            symbol_only = self.symbol.split("/")[0]
-            return float(self.exchange.fetch_balance()['free'][symbol_only])
-        elif self.exchange_name == 'binance_futures':
-            balance = pd.DataFrame(self.exchange.fapiPrivate_get_balance())
-            balance = balance[balance['asset'] == 'USDT']
+        for lp in range(self.attempts):
+            try:
+                if self.exchange_name == 'bitmex':
+                    symbol_only = self.symbol.split("/")[0]
+                    return float(self.exchange.fetch_balance()['free'][symbol_only])
+                elif self.exchange_name == 'binance_futures':
+                    balance = pd.DataFrame(self.exchange.fapiPrivate_get_balance())
+                    balance = balance[balance['asset'] == 'USDT']
 
-            if len(balance) > 0:
-                free_balance = balance.iloc[0]['withdrawAvailable']
-                return float(free_balance)
-            else:
-                return 0
-        elif self.exchange_name == 'bybit':
-            return float(self.exchange.fetch_balance()['info']['result']['BTC']['available_balance'])
-        elif self.exchange_name == 'ftx':
-            return float(self.exchange.fetch_balance()['USD']['total'])
-        elif self.exchange_name == 'okex':
-            return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['equity'])
-        elif self.exchange_name == 'huobi_swap':
-            return float(self.exchange.send_post_request('/swap-api/v1/swap_account_position_info', {'contract_code': self.symbol})['data'][0]['margin_available'])
-        elif self.exchange_name == 'dydx':
-            account_response = self.exchange.private.get_account(ethereum_address=os.getenv('DYDX_PUB_KEY'))
-            return float(account_response.data['account']['freeCollateral'])
+                    if len(balance) > 0:
+                        free_balance = balance.iloc[0]['withdrawAvailable']
+                        return float(free_balance)
+                    else:
+                        return 0
+                elif self.exchange_name == 'bybit':
+                    return float(self.exchange.fetch_balance()['info']['result']['BTC']['available_balance'])
+                elif self.exchange_name == 'ftx':
+                    return float(self.exchange.fetch_balance()['USD']['total'])
+                elif self.exchange_name == 'okex':
+                    return float(self.exchange.request('{}/accounts'.format(self.symbol), api='swap', method='GET')['info']['equity'])
+                elif self.exchange_name == 'huobi_swap':
+                    return float(self.exchange.send_post_request('/swap-api/v1/swap_account_position_info', {'contract_code': self.symbol})['data'][0]['margin_available'])
+                elif self.exchange_name == 'dydx':
+                    account_response = self.exchange.private.get_account(ethereum_address=os.getenv('DYDX_PUB_KEY'))
+                    return float(account_response.data['account']['freeCollateral'])
+            except Exception as e:
+                print(str(e))
 
     def get_balance(self):
         exchanges = pd.read_csv(self.config_file)
@@ -825,9 +836,9 @@ class liveTrading():
                 orderbook = self.get_orderbook()
 
                 if order_type == 'buy':
-                    order = self.exchange.private.create_order(position_id=position_id, market=symbol, side='BUY', order_type='MARKET', size=str(amount), post_only=False, price=str(orderbook['best_bid'] * 1.02), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
+                    order = self.exchange.private.create_order(position_id=self.position_id, market=self.symbol, side='BUY', order_type='MARKET', size=str(amount), post_only=False, price=str(round_down(orderbook['best_bid'] * 1.02, 1)), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
                 elif order_type == 'sell':
-                    order = self.exchange.private.create_order(position_id=position_id, market=symbol, side='SELL', order_type='MARKET', size=str(amount), post_only=False, price=str(orderbook['best_ask'] * 0.98), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
+                    order = self.exchange.private.create_order(position_id=self.position_id, market=self.symbol, side='SELL', order_type='MARKET', size=str(amount), post_only=False, price=str(round_down(orderbook['best_ask'] * 0.98, 1)), limit_fee='0.001', expiration_epoch_seconds=int(pd.Timestamp.utcnow().timestamp()) + 120, time_in_force='IOC')
 
                 return order.data
         else:
@@ -879,12 +890,14 @@ class liveTrading():
                 single_size = int(amount / intervals)     
                 final_amount = int(amount - (single_size * (intervals - 1)))
             elif self.exchange_name == 'dydx':
-                single_size = round_down(amount / intervals, 3)
-                final_amount = round_down(amount - (single_size * (intervals - 1)), 3)
+                print(amount, intervals)
+                single_size = round_down(amount / intervals, 2)
+                final_amount = round_down(amount - (single_size * (intervals - 1)), 2)
 
             trading_array = [single_size] * (intervals - 1)
             trading_array.append(final_amount)
         
+        print(trading_array)
         for amount in trading_array:
             try:
                 order = self.market_trade(order_type, amount) 
@@ -925,8 +938,11 @@ class liveTrading():
         # self.close_open_orders()
 
         for lp in range(self.attempts):         
-            
-            curr_pos = self.r.get('{}_current_pos'.format(self.name)).decode()
+            try:
+                curr_pos = self.r.get('{}_current_pos'.format(self.name)).decode()
+            except:
+                self.set_position()
+                curr_pos = self.r.get('{}_current_pos'.format(self.name)).decode()
 
             if curr_pos == "NONE" and order_type=='sell': #to fix issue caused by backtrader verification idk why tho.
                 print("Had to manually prevent sell order")
