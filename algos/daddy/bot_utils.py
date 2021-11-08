@@ -77,7 +77,8 @@ class daddyBot():
 
         if current_pos != "NONE":
             if len(orders) == 0:
-                print("There is no stop in {}, adding it".format(name))
+                pass
+                # print("There is no stop in {}, adding it".format(name))
                 # lt.add_stop_loss()
             elif len(orders) > 1:
                 print("There are multiple stops in {}. Removing to readd".format(name))
@@ -110,6 +111,7 @@ class daddyBot():
             
             current_pos, avgEntryPrice, _ = lt.get_position()
             obook = lt.get_orderbook()
+            print(obook)
 
             try:
                 position_since = float(self.r.get('{}_position_since'.format(details['name'])).decode())
