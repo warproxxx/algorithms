@@ -37,8 +37,8 @@ r = redis.Redis(host='localhost', port=6379, db=0)
 r.set('update_running', 0)
 
 def bot():
-    xbt_daddy_thread = multiprocessing.Process(target=xbt_daddy_bot, args=())
-    xbt_daddy_thread.start()
+    # xbt_daddy_thread = multiprocessing.Process(target=xbt_daddy_bot, args=())
+    # xbt_daddy_thread.start()
     
     eth_daddy_thread = multiprocessing.Process(target=eth_daddy_bot, args=())
     eth_daddy_thread.start()
