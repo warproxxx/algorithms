@@ -78,13 +78,14 @@ class daddyBot():
         if current_pos != "NONE":
             if len(orders) == 0:
                 print("There is no stop in {}, adding it".format(name))
-                lt.add_stop_loss()
+                # lt.add_stop_loss()
             elif len(orders) > 1:
                 print("There are multiple stops in {}. Removing to readd".format(name))
                 lt.close_stop_order()
-                lt.add_stop_loss()
+                # lt.add_stop_loss()
             elif len(orders) == 1:
-                lt.update_stop()
+                # lt.update_stop()
+                pass
         else:
             if len(orders) == 1:
                 print("There is an open stop without position in {}. Removing".format(name))
@@ -127,7 +128,7 @@ class daddyBot():
                 if analysis['total']['open'] == 1 and current_pos == "NONE":
                     self.print("Opening position from backtest_verification for {}".format(details['name']))
                     lt.fill_order('buy', method=details['buy_method'])
-                    lt.add_stop_loss()
+                    # lt.add_stop_loss()
                 elif analysis['total']['open'] == 0 and current_pos != "NONE":
                     self.print("Closed long position from backtest_verification for {}".format(details['name']))
                     lt.fill_order('sell', method=details['sell_method'])
