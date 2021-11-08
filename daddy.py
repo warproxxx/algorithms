@@ -28,7 +28,7 @@ if not os.path.isdir("data/"):
 
 f = FeedHandler()
 
-EXCHANGES = pd.concat([pd.read_csv('algos/xbt_daddy/exchanges.csv'), pd.read_csv('algos/eth_daddy/exchanges.csv')])
+EXCHANGES = pd.concat([pd.read_csv('algos/eth_daddy/exchanges.csv')])
 EXCHANGES = EXCHANGES[EXCHANGES['trade'] == 1]
 EXCHANGES = EXCHANGES.drop_duplicates(subset=['exchange', 'symbol']) 
 EXCHANGES = EXCHANGES.fillna("")
